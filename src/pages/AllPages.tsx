@@ -5,7 +5,7 @@ import { Plus, Trash2, Edit2, Bell, Star, Calendar, Building, DollarSign, Trendi
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
-import type { StockItem, Employee, Notification, Coupon, AgendaEvent, Agency, Transaction, Delivery } from '../types'
+import type { StockItem, Employee, Notification, Coupon, AgendaEvent, Agency, Transaction, Delivery, Attendance, Leave, Order } from '../types'
 
 const COLORS = ['#7c3aed', '#06b6d4', '#10b981', '#f97316', '#ef4444', '#8b5cf6']
 
