@@ -4,37 +4,34 @@ import { Menu, X, LogOut, Bell, ChevronRight } from 'lucide-react'
 import { useAuthStore, useOrderStore, useStockStore, useNotificationStore } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 
-const navGroups = [
-  { label: 'Principal', items: [
-    { path: '/', label: 'Tableau de bord', icon: '📊' },
-    { path: '/orders', label: 'Commandes', icon: '🧺' },
-    { path: '/clothes', label: 'Suivi vêtements', icon: '👔' },
-  ]},
-  { label: 'Clients & Ventes', items: [
-    { path: '/clients', label: 'Clients', icon: '👥' },
-    { path: '/billing', label: 'Facturation', icon: '🧾' },
-    { path: '/cashier', label: 'Caisse', icon: '💰' },
-    { path: '/loyalty', label: 'Fidélité', icon: '⭐' },
-  ]},
-  { label: 'Opérations', items: [
-    { path: '/stock', label: 'Stock', icon: '📦' },
-    { path: '/delivery', label: 'Livraisons', icon: '🚚' },
-    { path: '/notifications', label: 'Notifications', icon: '🔔' },
-    { path: '/agenda', label: 'Agenda', icon: '📅' },
-  ]},
-  { label: 'Équipe', items: [
-    { path: '/hr', label: 'Employés & RH', icon: '👷' },
-  ]},
-  { label: 'Finance', items: [
-    { path: '/accounting', label: 'Comptabilité', icon: '📒' },
-    { path: '/reports', label: 'Rapports', icon: '📈' },
-  ]},
-  { label: 'Administration', items: [
-    { path: '/services', label: 'Services & Tarifs', icon: '💲' },
-    { path: '/multiagency', label: 'Multi-agences', icon: '🏢' },
-    { path: '/settings', label: 'Paramètres', icon: '⚙️' },
-  ]},
+export const ALL_MODULES = [
+  { path: '/', label: 'Tableau de bord', icon: '📊', group: 'Principal' },
+  { path: '/orders', label: 'Commandes', icon: '🧺', group: 'Principal' },
+  { path: '/clients', label: 'Clients', icon: '👥', group: 'Clients & Ventes' },
+  { path: '/billing', label: 'Facturation', icon: '🧾', group: 'Clients & Ventes' },
+  { path: '/cashier', label: 'Caisse', icon: '💰', group: 'Clients & Ventes' },
+  { path: '/loyalty', label: 'Fidélité', icon: '⭐', group: 'Clients & Ventes' },
+  { path: '/stock', label: 'Stock', icon: '📦', group: 'Opérations' },
+  { path: '/delivery', label: 'Livraisons', icon: '🚚', group: 'Opérations' },
+  { path: '/notifications', label: 'Notifications', icon: '🔔', group: 'Opérations' },
+  { path: '/agenda', label: 'Agenda', icon: '📅', group: 'Opérations' },
+  { path: '/hr', label: 'Employés & RH', icon: '👷', group: 'Équipe' },
+  { path: '/accounting', label: 'Comptabilité', icon: '📒', group: 'Finance' },
+  { path: '/reports', label: 'Rapports', icon: '📈', group: 'Finance' },
+  { path: '/services', label: 'Services & Tarifs', icon: '💲', group: 'Administration' },
+  { path: '/multiagency', label: 'Multi-agences', icon: '🏢', group: 'Administration' },
+  { path: '/settings', label: 'Paramètres', icon: '⚙️', group: 'Administration' },
+  { path: '/users', label: 'Utilisateurs', icon: '👤', group: 'Administration' },
 ]
+
+export const ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: ALL_MODULES.map(m => m.path),
+  caissier: ['/', '/cashier', '/billing', '/clients', '/loyalty'],
+  employe: ['/', '/orders'],
+  livreur: ['/', '/delivery'],
+  comptable: ['/', '/accounting', '/reports', '/billing'],
+  responsable: ['/', '/orders', '/clients', '/stock', '/hr', '/reports', '/billing', '/cashier', '/loyalty', '/notifications', '/agenda'],
+}
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -50,6 +47,20 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const pendingNotifs = getPendingNotifications().length
   const alertCount = lateCount + lowStockCount
 
+  // Permissions de l'utilisateur connecté
+  const userPermissions: string[] = user?.permissions?.length
+    ? user.permissions
+    : ROLE_PERMISSIONS[user?.role || 'employe'] || ['/']
+
+  const allowedModules = ALL_MODULES.filter(m => userPermissions.includes(m.path))
+
+  // Grouper les modules autorisés
+  const groups = allowedModules.reduce((acc, item) => {
+    if (!acc[item.group]) acc[item.group] = []
+    acc[item.group].push(item)
+    return acc
+  }, {} as Record<string, typeof ALL_MODULES>)
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     logout()
@@ -58,7 +69,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
@@ -74,7 +84,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 </div>
               </div>
             </div>
-
             <div className="flex items-center gap-2">
               {pendingNotifs > 0 && (
                 <button onClick={() => navigate('/notifications')} className="relative p-2 hover:bg-gray-100 rounded-lg">
@@ -105,22 +114,19 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
         <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-64 bg-white border-r border-gray-200 transition-transform duration-200 z-20 h-full overflow-y-auto flex-shrink-0 flex flex-col`}>
-          {/* Alerts in sidebar */}
           {(lateCount > 0 || lowStockCount > 0) && (
             <div className="m-3 p-3 bg-red-50 border border-red-200 rounded-xl">
               {lateCount > 0 && <p className="text-xs text-red-700 font-semibold">⚠️ {lateCount} retard(s)</p>}
               {lowStockCount > 0 && <p className="text-xs text-red-700 font-semibold mt-0.5">📦 {lowStockCount} rupture(s) stock</p>}
             </div>
           )}
-
           <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
-            {navGroups.map((group) => (
-              <div key={group.label}>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-1.5">{group.label}</p>
+            {Object.entries(groups).map(([groupLabel, items]) => (
+              <div key={groupLabel}>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-1.5">{groupLabel}</p>
                 <div className="space-y-0.5">
-                  {group.items.map((item) => {
+                  {items.map((item) => {
                     const isActive = location.pathname === item.path
                     return (
                       <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)}
@@ -135,14 +141,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               </div>
             ))}
           </nav>
-
           <div className="p-4 border-t border-gray-100">
             <p className="text-xs text-gray-400 text-center">PressingManager v1.0.0</p>
             <p className="text-xs text-gray-300 text-center">© 2024 — Tous droits réservés</p>
           </div>
         </aside>
 
-        {/* Content */}
         <main className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {children}

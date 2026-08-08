@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { ClientsPage } from './pages/clients/ClientsPage'
 import { OrdersPage } from './pages/orders/OrdersPage'
 import { CashierPage } from './pages/cashier/CashierPage'
+import { UsersPage } from './pages/users/UsersPage'
 import {
   StockPage, HRPage, NotificationsPage, LoyaltyPage,
   AgendaPage, MultiAgencyPage, AccountingPage, ReportsPage,
@@ -76,6 +77,7 @@ function App() {
         <Route path="/services" element={<Protected><ServicesPage /></Protected>} />
         <Route path="/delivery" element={<Protected><DeliveryPage /></Protected>} />
         <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
+        <Route path="/users" element={<Protected><UsersPage /></Protected>} />
         <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
       </Routes>
     </BrowserRouter>
