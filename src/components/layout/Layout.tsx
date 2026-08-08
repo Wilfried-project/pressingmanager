@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Menu, X, LogOut, Bell, ChevronRight } from 'lucide-react'
-import { useAuthStore, useOrderStore, useStockStore, useNotificationStore } from '../../lib/store'
+import { useAuthStore, useOrderStore, useStockStore, useNotificationStore, useShopConfig } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 
 export const ALL_MODULES = [
@@ -38,6 +38,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+const { config } = useShopConfig()
   const getLateOrders = useOrderStore(s => s.getLateOrders)
   const getLowStockItems = useStockStore(s => s.getLowStockItems)
   const getPendingNotifications = useNotificationStore(s => s.getPendingNotifications)
@@ -77,11 +78,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 bg-purple-600 rounded-xl flex items-center justify-center text-white text-lg">🧺</div>
-                <div className="hidden sm:block">
-                  <p className="text-lg font-bold text-purple-700 leading-none">PressingManager</p>
-                  <p className="text-xs text-gray-400">Gestion professionnelle</p>
-                </div>
+               {config.logo
+  ? <img src={config.logo} alt="logo" className="w-9 h-9 rounded-xl object-cover" />
+  : {config.logo
+  ? <img src={config.logo} alt="logo" className="w-9 h-9 rounded-xl object-cover" />
+  : <div className="w-9 h-9 bg-purple-600 rounded-xl flex items-center justify-center text-white text-lg">🧺</div>
+}
+<div className="hidden sm:block">
+  <p className="text-lg font-bold text-purple-700 leading-none">{config.name || 'PressingManager'}</p>
+  <p className="text-xs text-gray-400">{config.slogan || 'Gestion professionnelle'}</p>
+</div>
               </div>
             </div>
             <div className="flex items-center gap-2">

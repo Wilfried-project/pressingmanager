@@ -1,5 +1,5 @@
 import React from 'react'
-import { X, ChevronDown } from 'lucide-react'
+import { X } from 'lucide-react'
 
 // STAT CARD
 const colorMap: Record<string, any> = {
@@ -129,9 +129,29 @@ export const Field: React.FC<{ label: string; required?: boolean; children: Reac
   </div>
 )
 
-export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = ({ className = '', ...props }) => (
-  <input {...props} className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm ${className}`} />
-)
+// INPUT — fix zéro: si type=number et value=0 on affiche vide
+export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = ({ className = '', type, value, onChange, ...props }) => {
+  if (type === 'number') {
+    return (
+      <input
+        {...props}
+        type="number"
+        value={value === 0 || value === '0' ? '' : value}
+        onChange={onChange}
+        className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm ${className}`}
+      />
+    )
+  }
+  return (
+    <input
+      {...props}
+      type={type}
+      value={value}
+      onChange={onChange}
+      className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm ${className}`}
+    />
+  )
+}
 
 export const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = ({ children, className = '', ...props }) => (
   <select {...props} className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white ${className}`}>

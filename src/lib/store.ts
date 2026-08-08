@@ -204,3 +204,21 @@ export const useAgendaStore = create<AgendaStore>()(persist((set, get) => ({
   deleteEvent: (id) => set(s => ({ events: s.events.filter(e => e.id !== id) })),
   getEventsByDate: (date) => get().events.filter(e => e.date === date)
 }), { name: 'pm-agenda' }))
+// SHOP CONFIG
+export interface ShopConfig {
+  name: string; slogan: string; logo: string
+  primaryColor: string; phone: string; email: string
+  address: string; currency: string; footer: string
+}
+interface ShopConfigStore {
+  config: ShopConfig
+  setConfig: (c: Partial<ShopConfig>) => void
+}
+export const useShopConfig = create<ShopConfigStore>()(persist((set) => ({
+  config: {
+    name: 'Mon Pressing', slogan: 'Logiciel de gestion professionnelle',
+    logo: '', primaryColor: '#7c3aed', phone: '', email: '',
+    address: '', currency: 'XOF', footer: 'Merci pour votre confiance !'
+  },
+  setConfig: (c) => set(s => ({ config: { ...s.config, ...c } }))
+}), { name: 'pm-shop-config' }))
