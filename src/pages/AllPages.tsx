@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { useStockStore, useHRStore, useNotificationStore, useLoyaltyStore, useAgendaStore, useAgencyStore, useTransactionStore, useOrderStore, useClientStore, useDeliveryStore, useAuthStore } from '../lib/store'
+import { useStockStore, useHRStore, useNotificationStore, useLoyaltyStore, useAgendaStore, useAgencyStore, useTransactionStore, useOrderStore, useClientStore, useDeliveryStore, useAuthStore, useShopConfig } from '../lib/store'
 import { PageHeader, Button, Table, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Card, StatCard, SearchInput, Tabs, Alert } from '../components/ui'
 import { Plus, Trash2, Edit2, Bell, Calendar, Building, DollarSign, TrendingUp, TrendingDown, Package, Users, CheckCircle } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
@@ -618,6 +618,7 @@ export const DeliveryPage: React.FC = () => {
 // ============================================================
 export const BillingPage: React.FC = () => {
   const orders = useOrderStore(s => s.orders)
+  const { config } = useShopConfig()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('')
   const filtered = orders.filter(o => { const ms = o.ticket_number.toLowerCase().includes(search.toLowerCase()) || `${o.client?.first_name} ${o.client?.last_name}`.toLowerCase().includes(search.toLowerCase()); return ms && (!filter || o.payment_status === filter) })
@@ -629,11 +630,20 @@ export const BillingPage: React.FC = () => {
     const win = window.open('', '_blank')
     if (!win) return
     win.document.write(`<!DOCTYPE html><html><head><title>Facture #${order.ticket_number}</title><style>body{font-family:sans-serif;padding:40px;max-width:800px;margin:0 auto} .header{display:flex;justify-content:space-between;border-bottom:3px solid #7c3aed;padding-bottom:20px;margin-bottom:30px} table{width:100%;border-collapse:collapse;margin:20px 0} th{background:#7c3aed;color:white;padding:10px;text-align:left} td{padding:8px 10px;border-bottom:1px solid #eee} .total{font-size:18px;font-weight:900;color:#7c3aed} .footer{margin-top:40px;text-align:center;color:#999;font-size:12px;border-top:1px solid #eee;padding-top:20px}</style></head><body>
-    <div class="header"><div><h1 style="color:#7c3aed;margin:0">🧺 ${order.client?.first_name || 'PressingManager'}</h1></div><div style="text-align:right"><h2 style="color:#7c3aed;margin:0">FACTURE</h2><p>#${order.ticket_number}</p><p>${new Date(order.created_at).toLocaleDateString('fr-FR')}</p></div></div>
+    <div class="header">
+      <div>
+        ${config.logo ? `<img src="${config.logo}" alt="logo" style="width:60px;height:60px;object-fit:cover;border-radius:8px;margin-bottom:6px" />` : '<h1 style="color:#7c3aed;margin:0">🧺</h1>'}
+        <h1 style="color:#7c3aed;margin:0">${config.name || 'PressingManager'}</h1>
+        ${config.slogan ? `<p style="color:#666;font-size:13px;margin-top:4px">${config.slogan}</p>` : ''}
+        ${config.phone ? `<p style="color:#666;font-size:12px">📞 ${config.phone}</p>` : ''}
+        ${config.address ? `<p style="color:#666;font-size:12px">📍 ${config.address}</p>` : ''}
+      </div>
+      <div style="text-align:right"><h2 style="color:#7c3aed;margin:0">FACTURE</h2><p>#${order.ticket_number}</p><p>${new Date(order.created_at).toLocaleDateString('fr-FR')}</p></div>
+    </div>
     <h3>Client: ${order.client?.first_name} ${order.client?.last_name} — ${order.client?.phone}</h3>
     <table><tr><th>Article</th><th>Service</th><th>Qté</th><th>Prix unit.</th><th>Total</th></tr>${order.clothes.map(c => `<tr><td style="text-transform:capitalize">${c.type}</td><td>${(c.service||'').replace(/_/g,' ')}</td><td>${c.quantity}</td><td>${c.price.toLocaleString('fr-FR')} XOF</td><td>${(c.price*c.quantity).toLocaleString('fr-FR')} XOF</td></tr>`).join('')}</table>
     <div style="text-align:right"><p>Sous-total: ${order.subtotal.toLocaleString('fr-FR')} XOF</p>${order.discount > 0 ? `<p style="color:green">Remise: -${order.discount.toLocaleString('fr-FR')} XOF</p>` : ''}<p class="total">TOTAL: ${order.total.toLocaleString('fr-FR')} XOF</p>${order.remaining > 0 ? `<p style="color:red;font-weight:bold">Reste à payer: ${order.remaining.toLocaleString('fr-FR')} XOF</p>` : ''}</div>
-    <div class="footer">Merci pour votre confiance — Facture générée le ${new Date().toLocaleDateString('fr-FR')}</div>
+    <div class="footer">${config.footer || 'Merci pour votre confiance'} — Facture générée le ${new Date().toLocaleDateString('fr-FR')}</div>
     </body></html>`)
     win.document.close()
     setTimeout(() => win.print(), 500)

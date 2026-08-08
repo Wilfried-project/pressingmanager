@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react'
-import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore } from '../../lib/store'
+import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig } from '../../lib/store'
 import { PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Table, Card, getOrderStatusColor, getPriorityColor, getClothStatusColor } from '../../components/ui'
 import { Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
@@ -43,6 +43,8 @@ export const OrdersPage: React.FC = () => {
   const { addLoyaltyPoints } = useCS()
   const { addCashTransaction, getCurrentSession } = useCashStore()
   const { user } = useAuthStore()
+  const { addTransaction } = useTransactionStore()
+  const { config } = useShopConfig()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -190,6 +192,20 @@ export const OrdersPage: React.FC = () => {
       })
     }
 
+    // Enregistrement automatique en comptabilité
+    if (depositFinal > 0) {
+      addTransaction({
+        id: crypto.randomUUID(),
+        agency_id: 'default',
+        type: 'recette',
+        category: 'Vente pressing',
+        amount: depositFinal,
+        description: `Acompte commande #${ticket} — ${client.first_name} ${client.last_name}`,
+        date: new Date().toISOString().split('T')[0],
+        created_by: user?.full_name || 'Admin'
+      })
+    }
+
     const pts = Math.floor(total / 1000)
     if (pts > 0) addLoyaltyPoints(client.id, pts)
     resetForm()
@@ -235,6 +251,20 @@ export const OrdersPage: React.FC = () => {
       })
     }
 
+    // Enregistrement automatique en comptabilité
+    if (paymentAmount > 0) {
+      addTransaction({
+        id: crypto.randomUUID(),
+        agency_id: 'default',
+        type: 'recette',
+        category: 'Vente pressing',
+        amount: paymentAmount,
+        description: `Paiement livraison #${order.ticket_number} — ${order.client?.first_name} ${order.client?.last_name}`,
+        date: new Date().toISOString().split('T')[0],
+        created_by: user?.full_name || 'Admin'
+      })
+    }
+
     alert(`✅ Paiement enregistré !\nMontant reçu: ${paymentAmount.toLocaleString('fr-FR')} XOF\n${newRemaining > 0 ? `Reste: ${newRemaining.toLocaleString('fr-FR')} XOF` : 'Commande entièrement payée ✅'}`)
     setShowPaymentModal(null)
     setPaymentAmount(0)
@@ -276,9 +306,9 @@ export const OrdersPage: React.FC = () => {
     </style></head><body>
     <div class="ticket">
       <div class="header">
-        <div class="logo">🧺</div>
-        <div class="title">PRESSINGMANAGER</div>
-        <div class="subtitle">Reçu de dépôt — Ticket client</div>
+        ${config.logo ? `<img src="${config.logo}" alt="logo" style="width:50px;height:50px;object-fit:cover;border-radius:8px;margin-bottom:6px" />` : '<div class="logo">🧺</div>'}
+        <div class="title">${config.name || 'PRESSINGMANAGER'}</div>
+        <div class="subtitle">${config.slogan || 'Reçu de dépôt — Ticket client'}</div>
       </div>
       <div class="ticket-num">#${order.ticket_number}</div>
       <div class="section">
@@ -315,10 +345,10 @@ export const OrdersPage: React.FC = () => {
       </div>
       <div class="footer">
         <div class="footer-important">⚠️ Conservez ce ticket pour récupérer vos articles</div>
-        <div class="footer-note">Tout article non réclamé sous 30 jours sera</div>
-        <div class="footer-note">mis en vente pour frais de garde.</div>
+        <div class="footer-note">${config.footer || 'Merci pour votre confiance !'}</div>
+        ${config.phone ? `<div class="footer-note">📞 ${config.phone}</div>` : ''}
+        ${config.address ? `<div class="footer-note">📍 ${config.address}</div>` : ''}
         <div class="footer-note" style="margin-top:6px">Imprimé le ${new Date().toLocaleString('fr-FR')}</div>
-        <div class="footer-note" style="margin-top:4px;font-size:9px;color:#9ca3af">Merci de votre confiance !</div>
       </div>
     </div>
     <script>window.onload = () => { window.print(); }</script>
