@@ -133,7 +133,7 @@ export const OrdersPage: React.FC = () => {
       group: 'standard',
       is_blacklisted: false,
       agency_id: 'default',
-      created_at: new Date().toISOString(),
+      created_at: new Date().toISOString(), whatsapp: newClient.phone, address: "", balance: 0, credit: 0, notes: "",
       
       
       
