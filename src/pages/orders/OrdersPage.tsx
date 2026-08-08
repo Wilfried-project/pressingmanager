@@ -134,9 +134,9 @@ export const OrdersPage: React.FC = () => {
       is_blacklisted: false,
       agency_id: 'default',
       created_at: new Date().toISOString(),
-      total_spent: 0,
-      orders_count: 0,
-      permissions: [],
+      
+      
+      
     }
     addClient(client)
     setForm({ ...form, client_id: client.id })
@@ -512,7 +512,7 @@ export const OrdersPage: React.FC = () => {
                         <Input value={newClient.last_name} onChange={e => setNewClient({ ...newClient, last_name: e.target.value })} placeholder="Nom" />
                       </Field>
                       <Field label="Téléphone *">
-                        <Input value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} placeholder="+225 07..." keyboardType="phone-pad" />
+                        <Input value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} placeholder="+225 07..." />
                       </Field>
                       <Field label="Email">
                         <Input value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} placeholder="email@..." />
