@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react'
-import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS } from '../../lib/store'
+import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore } from '../../lib/store'
 import { PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Table, Card, getOrderStatusColor, getPriorityColor, getClothStatusColor } from '../../components/ui'
 import { Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
@@ -41,6 +41,8 @@ export const OrdersPage: React.FC = () => {
   const { clients, addClient } = useClientStore()
   const { addNotification } = useNotificationStore()
   const { addLoyaltyPoints } = useCS()
+  const { addCashTransaction, getCurrentSession } = useCashStore()
+  const { user } = useAuthStore()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -173,6 +175,21 @@ export const OrdersPage: React.FC = () => {
       created_by: 'system', created_at: now
     }
     addOrder(order)
+
+    // Enregistrement automatique en caisse
+    const session = getCurrentSession()
+    if (session && depositFinal > 0) {
+      addCashTransaction({
+        id: crypto.randomUUID(),
+        session_id: session.id,
+        type: 'entree',
+        amount: depositFinal,
+        reason: `Acompte commande #${ticket} — ${client.first_name} ${client.last_name}`,
+        created_by: user?.full_name || 'Admin',
+        created_at: new Date().toISOString()
+      })
+    }
+
     const pts = Math.floor(total / 1000)
     if (pts > 0) addLoyaltyPoints(client.id, pts)
     resetForm()
@@ -203,6 +220,21 @@ export const OrdersPage: React.FC = () => {
       payment_method: paymentMethod,
       ...(newRemaining <= 0 ? { status: 'livre', delivered_at: new Date().toISOString() } : {})
     })
+
+    // Enregistrement automatique en caisse
+    const session = getCurrentSession()
+    if (session && paymentAmount > 0) {
+      addCashTransaction({
+        id: crypto.randomUUID(),
+        session_id: session.id,
+        type: 'entree',
+        amount: paymentAmount,
+        reason: `Paiement livraison #${order.ticket_number} — ${order.client?.first_name} ${order.client?.last_name}`,
+        created_by: user?.full_name || 'Admin',
+        created_at: new Date().toISOString()
+      })
+    }
+
     alert(`✅ Paiement enregistré !\nMontant reçu: ${paymentAmount.toLocaleString('fr-FR')} XOF\n${newRemaining > 0 ? `Reste: ${newRemaining.toLocaleString('fr-FR')} XOF` : 'Commande entièrement payée ✅'}`)
     setShowPaymentModal(null)
     setPaymentAmount(0)
