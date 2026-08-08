@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS } from '../../lib/store'
 import { PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Table, Card, getOrderStatusColor, getPriorityColor, getClothStatusColor } from '../../components/ui'
-import { Plus, Eye, Trash2, ChevronRight, Printer, Bell } from 'lucide-react'
-import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail } from '../../types'
+import { Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard } from 'lucide-react'
+import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
 
 const CLOTH_TYPES: { value: ClothType; label: string; icon: string }[] = [
   { value: 'chemise', label: 'Chemise', icon: '👔' }, { value: 'pantalon', label: 'Pantalon', icon: '👖' },
@@ -38,22 +38,45 @@ const STATUS_STEPS = [
 
 export const OrdersPage: React.FC = () => {
   const { orders, addOrder, updateOrder, deleteOrder } = useOrderStore()
-  const clients = useClientStore(s => s.clients)
+  const { clients, addClient } = useClientStore()
   const { addNotification } = useNotificationStore()
   const { addLoyaltyPoints } = useCS()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [viewOrder, setViewOrder] = useState<Order | null>(null)
+  const [showPaymentModal, setShowPaymentModal] = useState<Order | null>(null)
+  const [paymentAmount, setPaymentAmount] = useState(0)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('especes')
 
-  const [form, setForm] = useState({ client_id: '', priority: 'normal' as Priority, expected_at: '', payment_method: 'especes' as PaymentMethod, payment_status: 'non_paye' as PaymentStatus, deposit: 0, notes: '' })
-  const [clothes, setClothes] = useState<Partial<Cloth>[]>([{ type: 'chemise', color: '', brand: '', size: '', material: '', quantity: 1, service: 'lavage_simple', price: 1500, special_instructions: '', condition_on_arrival: 'bon', defects: [] }])
+  // Recherche client
+  const [clientSearch, setClientSearch] = useState('')
+  const [showNewClientForm, setShowNewClientForm] = useState(false)
+  const [newClient, setNewClient] = useState({ first_name: '', last_name: '', phone: '', email: '' })
+
+  const [form, setForm] = useState({
+    client_id: '', priority: 'normal' as Priority,
+    expected_at: '', payment_method: 'especes' as PaymentMethod,
+    payment_status: 'non_paye' as PaymentStatus, deposit: 0, notes: ''
+  })
+  const [clothes, setClothes] = useState<Partial<Cloth>[]>([{
+    type: 'chemise', color: '', brand: '', size: '', material: '',
+    quantity: 1, service: 'lavage_simple', price: 1500,
+    special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: []
+  }])
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetail[]>([])
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const filtered = useMemo(() => orders.filter(o => {
-    const ms = o.ticket_number.toLowerCase().includes(search.toLowerCase()) || `${o.client?.first_name} ${o.client?.last_name}`.toLowerCase().includes(search.toLowerCase())
+    const ms = o.ticket_number.toLowerCase().includes(search.toLowerCase()) ||
+      `${o.client?.first_name} ${o.client?.last_name}`.toLowerCase().includes(search.toLowerCase())
     return ms && (!filterStatus || o.status === filterStatus)
   }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [orders, search, filterStatus])
+
+  const filteredClients = useMemo(() =>
+    clients.filter(c => !c.is_blacklisted && (
+      `${c.first_name} ${c.last_name} ${c.phone}`.toLowerCase().includes(clientSearch.toLowerCase())
+    )).slice(0, 8), [clients, clientSearch])
 
   const selectedClient = clients.find(c => c.id === form.client_id)
   const subtotal = clothes.reduce((s, c) => s + ((c.price || 0) * (c.quantity || 1)), 0)
@@ -63,9 +86,64 @@ export const OrdersPage: React.FC = () => {
   const total = totalAfterDiscount * expressMultiplier
   const remaining = total - form.deposit
 
-  const addCloth = () => setClothes([...clothes, { type: 'chemise', color: '', brand: '', size: '', material: '', quantity: 1, service: 'lavage_simple', price: 1500, special_instructions: '', condition_on_arrival: 'bon', defects: [] }])
+  // Acompte grisé si payé ou non payé
+  const isDepositDisabled = form.payment_status === 'paye' || form.payment_status === 'non_paye'
+
+  const addCloth = () => setClothes([...clothes, {
+    type: 'chemise', color: '', brand: '', size: '', material: '',
+    quantity: 1, service: 'lavage_simple', price: 1500,
+    special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: []
+  }])
   const updateCloth = (i: number, d: Partial<Cloth>) => { const n = [...clothes]; n[i] = { ...n[i], ...d }; setClothes(n) }
   const removeCloth = (i: number) => setClothes(clothes.filter((_, idx) => idx !== i))
+
+  // Photo vêtement
+  const handlePhotoUpload = (i: number, files: FileList | null) => {
+    if (!files) return
+    const readers = Array.from(files).map(file => new Promise<string>(resolve => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.readAsDataURL(file)
+    }))
+    Promise.all(readers).then(photos => {
+      updateCloth(i, { photos: [...(clothes[i].photos || []), ...photos] })
+    })
+  }
+
+  const removePhoto = (clothIdx: number, photoIdx: number) => {
+    const photos = [...(clothes[clothIdx].photos || [])]
+    photos.splice(photoIdx, 1)
+    updateCloth(clothIdx, { photos })
+  }
+
+  // Créer nouveau client à la volée
+  const handleCreateClient = () => {
+    if (!newClient.first_name || !newClient.phone) {
+      alert('Prénom et téléphone requis')
+      return
+    }
+    const client: Client = {
+      id: crypto.randomUUID(),
+      first_name: newClient.first_name,
+      last_name: newClient.last_name,
+      phone: newClient.phone,
+      email: newClient.email,
+      loyalty_points: 0,
+      discount_rate: 0,
+      group: 'standard',
+      is_blacklisted: false,
+      agency_id: 'default',
+      created_at: new Date().toISOString(),
+      total_spent: 0,
+      orders_count: 0,
+      permissions: [],
+    }
+    addClient(client)
+    setForm({ ...form, client_id: client.id })
+    setClientSearch(`${client.first_name} ${client.last_name}`)
+    setShowNewClientForm(false)
+    setNewClient({ first_name: '', last_name: '', phone: '', email: '' })
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,21 +156,23 @@ export const OrdersPage: React.FC = () => {
       qr_code: `QR-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
       status: 'recu' as const,
       status_history: [{ status: 'recu' as const, changed_at: now, changed_by: 'system', notes: 'Réception client' }],
-      photos: [], created_at: now
+      photos: c.photos || [], created_at: now
     } as Cloth))
+
+    const depositFinal = form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit
+    const remainingFinal = total - depositFinal
 
     const order: Order = {
       id: crypto.randomUUID(), ticket_number: ticket, agency_id: 'default',
       client_id: client.id, client, clothes: clothesFull,
       status: 'en_attente', priority: form.priority,
       received_at: now, expected_at: form.expected_at,
-      subtotal, discount, total, deposit: form.deposit, remaining,
+      subtotal, discount, total, deposit: depositFinal, remaining: remainingFinal,
       payment_method: form.payment_method, payment_status: form.payment_status,
       payment_details: paymentDetails, notes: form.notes,
       created_by: 'system', created_at: now
     }
     addOrder(order)
-    // Ajouter points fidélité (1 point par 1000 XOF)
     const pts = Math.floor(total / 1000)
     if (pts > 0) addLoyaltyPoints(client.id, pts)
     resetForm()
@@ -102,52 +182,116 @@ export const OrdersPage: React.FC = () => {
 
   const resetForm = () => {
     setForm({ client_id: '', priority: 'normal', expected_at: '', payment_method: 'especes', payment_status: 'non_paye', deposit: 0, notes: '' })
-    setClothes([{ type: 'chemise', color: '', brand: '', size: '', material: '', quantity: 1, service: 'lavage_simple', price: 1500, special_instructions: '', condition_on_arrival: 'bon', defects: [] }])
+    setClothes([{ type: 'chemise', color: '', brand: '', size: '', material: '', quantity: 1, service: 'lavage_simple', price: 1500, special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: [] }])
     setPaymentDetails([])
+    setClientSearch('')
+    setShowNewClientForm(false)
     setShowForm(false)
+  }
+
+  // Paiement à la livraison
+  const handlePaymentOnPickup = () => {
+    if (!showPaymentModal) return
+    const order = showPaymentModal
+    const newDeposit = order.deposit + paymentAmount
+    const newRemaining = order.total - newDeposit
+    const newStatus: PaymentStatus = newRemaining <= 0 ? 'paye' : 'acompte'
+    updateOrder(order.id, {
+      deposit: newDeposit,
+      remaining: Math.max(0, newRemaining),
+      payment_status: newStatus,
+      payment_method: paymentMethod,
+      ...(newRemaining <= 0 ? { status: 'livre', delivered_at: new Date().toISOString() } : {})
+    })
+    alert(`✅ Paiement enregistré !\nMontant reçu: ${paymentAmount.toLocaleString('fr-FR')} XOF\n${newRemaining > 0 ? `Reste: ${newRemaining.toLocaleString('fr-FR')} XOF` : 'Commande entièrement payée ✅'}`)
+    setShowPaymentModal(null)
+    setPaymentAmount(0)
   }
 
   const printTicket = (order: Order) => {
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(`<html><head><title>Ticket #${order.ticket_number}</title>
+    win.document.write(`<!DOCTYPE html><html><head><title>Ticket ${order.ticket_number}</title>
     <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Courier New', monospace; font-size: 12px; padding: 10px; max-width: 300px; margin: 0 auto; }
-    .center { text-align: center; } .bold { font-weight: bold; }
-    .divider { border-top: 1px dashed #000; margin: 8px 0; }
-    .row { display: flex; justify-content: space-between; margin: 3px 0; }
-    .big { font-size: 16px; font-weight: bold; }
-    .total { font-size: 18px; font-weight: bold; border-top: 2px solid #000; padding-top: 6px; margin-top: 6px; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: Arial, sans-serif; font-size: 12px; background: #fff; color: #000; }
+      .ticket { width: 80mm; margin: 0 auto; padding: 8px; }
+      .header { background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; text-align: center; padding: 16px 8px; border-radius: 8px 8px 0 0; }
+      .logo { font-size: 28px; margin-bottom: 4px; }
+      .title { font-size: 18px; font-weight: bold; letter-spacing: 1px; }
+      .subtitle { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+      .ticket-num { background: #fff; color: #7c3aed; font-size: 20px; font-weight: bold; text-align: center; padding: 10px; margin: 0; border-left: 3px solid #7c3aed; border-right: 3px solid #7c3aed; letter-spacing: 2px; }
+      .section { border: 1px solid #e5e7eb; border-top: none; padding: 10px; }
+      .section-title { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #7c3aed; letter-spacing: 1px; margin-bottom: 6px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
+      .row { display: flex; justify-content: space-between; margin: 3px 0; font-size: 11px; }
+      .row .label { color: #6b7280; }
+      .row .value { font-weight: 600; text-align: right; max-width: 60%; }
+      .articles { margin: 0; }
+      .article { border-bottom: 1px dashed #e5e7eb; padding: 5px 0; font-size: 11px; }
+      .article-name { font-weight: bold; color: #111; }
+      .article-detail { color: #6b7280; font-size: 10px; }
+      .article-price { font-weight: bold; color: #7c3aed; float: right; }
+      .totals { border: 2px solid #7c3aed; border-radius: 0 0 0 0; padding: 10px; }
+      .total-line { display: flex; justify-content: space-between; margin: 2px 0; font-size: 11px; }
+      .total-main { font-size: 16px; font-weight: bold; color: #7c3aed; border-top: 2px solid #7c3aed; padding-top: 6px; margin-top: 6px; display: flex; justify-content: space-between; }
+      .remaining { background: #fef2f2; color: #dc2626; font-weight: bold; text-align: center; padding: 6px; font-size: 12px; margin-top: 4px; border-radius: 4px; }
+      .paid { background: #f0fdf4; color: #16a34a; font-weight: bold; text-align: center; padding: 6px; font-size: 12px; margin-top: 4px; border-radius: 4px; }
+      .footer { border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 10px; text-align: center; background: #f9fafb; }
+      .footer-note { font-size: 10px; color: #6b7280; margin: 2px 0; }
+      .footer-important { font-size: 11px; font-weight: bold; color: #7c3aed; margin: 4px 0; }
+      .priority-badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; background: ${order.priority === 'vip' ? '#fef3c7' : order.priority === 'express' ? '#fee2e2' : '#f3f4f6'}; color: ${order.priority === 'vip' ? '#92400e' : order.priority === 'express' ? '#991b1b' : '#374151'}; }
+      @media print { body { margin: 0; } }
     </style></head><body>
-    <div class="center bold" style="font-size:16px">🧺 PressingManager</div>
-    <div class="center" style="font-size:10px">Reçu de dépôt</div>
-    <div class="divider"></div>
-    <div class="center big">#${order.ticket_number}</div>
-    <div class="center" style="font-size:10px">QR: ${order.clothes[0]?.qr_code || '-'}</div>
-    <div class="divider"></div>
-    <div class="row"><span>Client:</span><span>${order.client?.first_name} ${order.client?.last_name}</span></div>
-    <div class="row"><span>Tél:</span><span>${order.client?.phone}</span></div>
-    <div class="row"><span>Priorité:</span><span>${order.priority.toUpperCase()}</span></div>
-    <div class="row"><span>Date dépôt:</span><span>${new Date(order.received_at).toLocaleDateString('fr-FR')}</span></div>
-    <div class="row"><span>Date prévue:</span><span>${order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : '-'}</span></div>
-    <div class="divider"></div>
-    <div class="bold">Articles:</div>
-    ${order.clothes.map(c => `<div class="row"><span>${c.quantity}x ${c.type} (${c.service?.replace('_', ' ')})</span><span>${(c.price * c.quantity).toLocaleString('fr-FR')} XOF</span></div>`).join('')}
-    <div class="divider"></div>
-    <div class="row"><span>Sous-total:</span><span>${order.subtotal.toLocaleString('fr-FR')} XOF</span></div>
-    ${order.discount > 0 ? `<div class="row"><span>Remise:</span><span>-${order.discount.toLocaleString('fr-FR')} XOF</span></div>` : ''}
-    ${order.priority !== 'normal' ? `<div class="row"><span>Supplément ${order.priority}:</span><span>inclus</span></div>` : ''}
-    <div class="total"><div class="row"><span>TOTAL:</span><span>${order.total.toLocaleString('fr-FR')} XOF</span></div></div>
-    <div class="row"><span>Acompte reçu:</span><span>${order.deposit.toLocaleString('fr-FR')} XOF</span></div>
-    <div class="row bold"><span>Restant à payer:</span><span>${order.remaining.toLocaleString('fr-FR')} XOF</span></div>
-    <div class="divider"></div>
-    <div class="center" style="font-size:10px">Conservez ce ticket pour récupérer vos articles.</div>
-    <div class="center" style="font-size:10px">Merci pour votre confiance !</div>
-    <div class="center" style="font-size:9px;margin-top:8px">Imprimé le ${new Date().toLocaleString('fr-FR')}</div>
+    <div class="ticket">
+      <div class="header">
+        <div class="logo">🧺</div>
+        <div class="title">PRESSINGMANAGER</div>
+        <div class="subtitle">Reçu de dépôt — Ticket client</div>
+      </div>
+      <div class="ticket-num">#${order.ticket_number}</div>
+      <div class="section">
+        <div class="section-title">👤 Informations client</div>
+        <div class="row"><span class="label">Client</span><span class="value">${order.client?.first_name} ${order.client?.last_name}</span></div>
+        <div class="row"><span class="label">Téléphone</span><span class="value">${order.client?.phone}</span></div>
+        <div class="row"><span class="label">Date dépôt</span><span class="value">${new Date(order.received_at).toLocaleDateString('fr-FR')} à ${new Date(order.received_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
+        <div class="row"><span class="label">Date prévue</span><span class="value">${order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'À définir'}</span></div>
+        <div class="row"><span class="label">Priorité</span><span class="value"><span class="priority-badge">${order.priority.toUpperCase()}</span></span></div>
+      </div>
+      <div class="section articles">
+        <div class="section-title">👔 Articles (${order.clothes.length})</div>
+        ${order.clothes.map((c, idx) => `
+          <div class="article">
+            <span class="article-price">${((c.price || 0) * (c.quantity || 1)).toLocaleString('fr-FR')} XOF</span>
+            <div class="article-name">${c.quantity}x ${CLOTH_TYPES.find(t => t.value === c.type)?.icon || ''} ${c.type?.charAt(0).toUpperCase() + (c.type?.slice(1) || '')}</div>
+            <div class="article-detail">${c.service?.replace(/_/g, ' ')} ${c.color ? '• ' + c.color : ''} ${c.brand ? '• ' + c.brand : ''}</div>
+            <div class="article-detail">QR: ${c.qr_code}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="totals">
+        <div class="section-title">💰 Récapitulatif paiement</div>
+        <div class="total-line"><span>Sous-total</span><span>${order.subtotal.toLocaleString('fr-FR')} XOF</span></div>
+        ${order.discount > 0 ? `<div class="total-line" style="color:#16a34a"><span>Remise client</span><span>-${order.discount.toLocaleString('fr-FR')} XOF</span></div>` : ''}
+        ${order.priority !== 'normal' ? `<div class="total-line" style="color:#f97316"><span>Supplément ${order.priority}</span><span>inclus</span></div>` : ''}
+        <div class="total-main"><span>TOTAL</span><span>${order.total.toLocaleString('fr-FR')} XOF</span></div>
+        ${order.deposit > 0 ? `<div class="total-line" style="color:#2563eb;margin-top:4px"><span>Acompte versé</span><span>${order.deposit.toLocaleString('fr-FR')} XOF</span></div>` : ''}
+        ${order.remaining > 0
+          ? `<div class="remaining">⚠️ Reste à payer: ${order.remaining.toLocaleString('fr-FR')} XOF</div>`
+          : `<div class="paid">✅ Commande entièrement payée</div>`
+        }
+        <div class="total-line" style="margin-top:4px;font-size:10px;color:#6b7280"><span>Mode de paiement</span><span>${order.payment_method?.replace('_', ' ')}</span></div>
+      </div>
+      <div class="footer">
+        <div class="footer-important">⚠️ Conservez ce ticket pour récupérer vos articles</div>
+        <div class="footer-note">Tout article non réclamé sous 30 jours sera</div>
+        <div class="footer-note">mis en vente pour frais de garde.</div>
+        <div class="footer-note" style="margin-top:6px">Imprimé le ${new Date().toLocaleString('fr-FR')}</div>
+        <div class="footer-note" style="margin-top:4px;font-size:9px;color:#9ca3af">Merci de votre confiance !</div>
+      </div>
+    </div>
+    <script>window.onload = () => { window.print(); }</script>
     </body></html>`)
     win.document.close()
-    setTimeout(() => win.print(), 500)
   }
 
   const sendReadyNotification = (order: Order) => {
@@ -188,7 +332,6 @@ export const OrdersPage: React.FC = () => {
       <PageHeader title="Commandes" subtitle={`${orders.length} commande(s) au total`}
         action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Nouvelle commande</Button>} />
 
-      {/* Status overview */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
           { s: 'en_attente', l: 'En attente', c: 'bg-blue-50 border-blue-200 text-blue-700' },
@@ -205,7 +348,6 @@ export const OrdersPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Filters */}
       <Card className="p-4">
         <div className="flex flex-col sm:flex-row gap-3">
           <SearchInput value={search} onChange={setSearch} placeholder="Numéro ticket, nom client..." className="flex-1" />
@@ -220,7 +362,6 @@ export const OrdersPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* Table */}
       {filtered.length > 0 ? (
         <Table headers={['Ticket', 'Client', 'Articles', 'Total', 'Paiement', 'Statut', 'Priorité', 'Date limite', 'Actions']}>
           {filtered.map(order => (
@@ -238,7 +379,10 @@ export const OrdersPage: React.FC = () => {
                 <p className="font-bold text-sm">{order.total.toLocaleString('fr-FR')} XOF</p>
                 {order.remaining > 0 && <p className="text-xs text-red-500">Reste: {order.remaining.toLocaleString('fr-FR')}</p>}
               </td>
-              <td className="px-5 py-4"><Badge label={order.payment_status === 'paye' ? '✅ Payé' : order.payment_status === 'acompte' ? '⚠️ Acompte' : '❌ Non payé'} color={order.payment_status === 'paye' ? 'green' : order.payment_status === 'acompte' ? 'yellow' : 'red'} /></td>
+              <td className="px-5 py-4">
+                <Badge label={order.payment_status === 'paye' ? '✅ Payé' : order.payment_status === 'acompte' ? '⚠️ Acompte' : '❌ Non payé'}
+                  color={order.payment_status === 'paye' ? 'green' : order.payment_status === 'acompte' ? 'yellow' : 'red'} />
+              </td>
               <td className="px-5 py-4"><Badge label={order.status.replace('_', ' ')} color={getOrderStatusColor(order.status)} /></td>
               <td className="px-5 py-4"><Badge label={order.priority} color={getPriorityColor(order.priority)} /></td>
               <td className="px-5 py-4 text-sm text-gray-500">{order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : '-'}</td>
@@ -248,6 +392,13 @@ export const OrdersPage: React.FC = () => {
                   <button onClick={() => printTicket(order)} className="p-1.5 hover:bg-green-100 text-green-600 rounded-lg" title="Imprimer ticket"><Printer size={15} /></button>
                   {order.status === 'pret' && (
                     <button onClick={() => sendReadyNotification(order)} className="p-1.5 hover:bg-blue-100 text-blue-600 rounded-lg" title="Notifier client"><Bell size={15} /></button>
+                  )}
+                  {/* Paiement à la livraison */}
+                  {order.remaining > 0 && (
+                    <button onClick={() => { setShowPaymentModal(order); setPaymentAmount(order.remaining) }}
+                      className="p-1.5 hover:bg-yellow-100 text-yellow-600 rounded-lg" title="Encaisser paiement">
+                      <CreditCard size={15} />
+                    </button>
                   )}
                   <button onClick={() => { if (confirm('Supprimer cette commande ?')) deleteOrder(order.id) }} className="p-1.5 hover:bg-red-100 text-red-500 rounded-lg" title="Supprimer"><Trash2 size={15} /></button>
                 </div>
@@ -259,21 +410,122 @@ export const OrdersPage: React.FC = () => {
         <Card><EmptyState icon="🧺" message="Aucune commande trouvée" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Créer une commande</Button>} /></Card>
       )}
 
-      {/* NEW ORDER FORM */}
+      {/* MODAL PAIEMENT À LA LIVRAISON */}
+      {showPaymentModal && (
+        <Modal open={!!showPaymentModal} onClose={() => setShowPaymentModal(null)} title="💳 Encaissement à la livraison" size="sm">
+          <div className="space-y-4">
+            <div className="bg-purple-50 rounded-xl p-4">
+              <p className="text-sm text-gray-600">Client</p>
+              <p className="font-bold text-lg">{showPaymentModal.client?.first_name} {showPaymentModal.client?.last_name}</p>
+              <p className="text-sm text-gray-600 mt-2">Ticket</p>
+              <p className="font-bold text-purple-700">#{showPaymentModal.ticket_number}</p>
+            </div>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-600">Total commande</span>
+                <span className="font-bold">{showPaymentModal.total.toLocaleString('fr-FR')} XOF</span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-600">Déjà payé</span>
+                <span className="font-semibold text-green-600">{showPaymentModal.deposit.toLocaleString('fr-FR')} XOF</span>
+              </div>
+              <div className="flex justify-between border-t pt-2">
+                <span className="font-bold text-red-700">Reste à payer</span>
+                <span className="font-bold text-red-700 text-xl">{showPaymentModal.remaining.toLocaleString('fr-FR')} XOF</span>
+              </div>
+            </div>
+            <Field label="Montant encaissé (XOF)">
+              <Input type="number" value={paymentAmount} onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)} min="0" max={showPaymentModal.remaining} />
+            </Field>
+            <Field label="Mode de paiement">
+              <Select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}>
+                <option value="especes">💵 Espèces</option>
+                <option value="wave">🌊 Wave</option>
+                <option value="orange_money">🍊 Orange Money</option>
+                <option value="mtn">📱 MTN Money</option>
+                <option value="moov">📞 Moov Money</option>
+                <option value="carte">💳 Carte bancaire</option>
+              </Select>
+            </Field>
+            {paymentAmount > 0 && (
+              <div className={`p-3 rounded-xl text-sm font-semibold ${showPaymentModal.remaining - paymentAmount <= 0 ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-yellow-50 text-yellow-700 border border-yellow-200'}`}>
+                {showPaymentModal.remaining - paymentAmount <= 0
+                  ? '✅ Commande entièrement soldée'
+                  : `⚠️ Reste après paiement: ${(showPaymentModal.remaining - paymentAmount).toLocaleString('fr-FR')} XOF`
+                }
+              </div>
+            )}
+            <div className="flex gap-3">
+              <Button className="flex-1" onClick={handlePaymentOnPickup} disabled={paymentAmount <= 0} icon={<CreditCard size={16} />}>Confirmer paiement</Button>
+              <Button variant="secondary" className="flex-1" onClick={() => setShowPaymentModal(null)}>Annuler</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* FORMULAIRE NOUVELLE COMMANDE */}
       <Modal open={showForm} onClose={resetForm} title="Nouvelle commande" size="full">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Client & Config */}
           <div className="bg-purple-50 rounded-xl p-4">
             <h3 className="font-bold text-gray-900 mb-4">📋 Informations générales</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Field label="Client" required>
-                <Select required value={form.client_id} onChange={e => setForm({ ...form, client_id: e.target.value })}>
-                  <option value="">Sélectionner un client...</option>
-                  {clients.filter(c => !c.is_blacklisted).map(c => (
-                    <option key={c.id} value={c.id}>{c.first_name} {c.last_name} — {c.phone}</option>
-                  ))}
-                </Select>
-              </Field>
+
+              {/* Recherche client avec création à la volée */}
+              <div className="sm:col-span-2 lg:col-span-3">
+                <Field label="Client" required>
+                  <div className="relative">
+                    <Input
+                      placeholder="Rechercher par nom ou téléphone..."
+                      value={clientSearch}
+                      onChange={e => { setClientSearch(e.target.value); setForm({ ...form, client_id: '' }) }}
+                    />
+                    {clientSearch && !form.client_id && (
+                      <div className="absolute z-10 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                        {filteredClients.length > 0 ? (
+                          filteredClients.map(c => (
+                            <button key={c.id} type="button"
+                              onClick={() => { setForm({ ...form, client_id: c.id }); setClientSearch(`${c.first_name} ${c.last_name} — ${c.phone}`) }}
+                              className="w-full text-left px-4 py-3 hover:bg-purple-50 border-b border-gray-100 last:border-0">
+                              <p className="font-semibold text-sm">{c.first_name} {c.last_name}</p>
+                              <p className="text-xs text-gray-400">{c.phone} — {c.loyalty_points} pts</p>
+                            </button>
+                          ))
+                        ) : null}
+                        <button type="button"
+                          onClick={() => { setShowNewClientForm(true); setNewClient({ ...newClient, first_name: clientSearch }) }}
+                          className="w-full text-left px-4 py-3 hover:bg-green-50 text-green-700 font-semibold text-sm border-t border-gray-100">
+                          ➕ Créer "{clientSearch}" comme nouveau client
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </Field>
+                {/* Mini-formulaire nouveau client */}
+                {showNewClientForm && (
+                  <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                    <p className="font-bold text-green-800 mb-3">➕ Nouveau client</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Prénom *">
+                        <Input value={newClient.first_name} onChange={e => setNewClient({ ...newClient, first_name: e.target.value })} placeholder="Prénom" />
+                      </Field>
+                      <Field label="Nom">
+                        <Input value={newClient.last_name} onChange={e => setNewClient({ ...newClient, last_name: e.target.value })} placeholder="Nom" />
+                      </Field>
+                      <Field label="Téléphone *">
+                        <Input value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} placeholder="+225 07..." keyboardType="phone-pad" />
+                      </Field>
+                      <Field label="Email">
+                        <Input value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} placeholder="email@..." />
+                      </Field>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <Button type="button" onClick={handleCreateClient} size="sm">✅ Créer le client</Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setShowNewClientForm(false)}>Annuler</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <Field label="Priorité">
                 <Select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as Priority })}>
                   <option value="economique">💚 Économique</option>
@@ -295,17 +547,32 @@ export const OrdersPage: React.FC = () => {
                   <option value="carte">💳 Carte bancaire</option>
                   <option value="virement">🏦 Virement</option>
                   <option value="mixte">🔀 Paiement mixte</option>
+                  <option value="a_la_livraison">🚚 Paiement à la livraison</option>
                 </Select>
               </Field>
               <Field label="Statut paiement">
-                <Select value={form.payment_status} onChange={e => setForm({ ...form, payment_status: e.target.value as PaymentStatus })}>
+                <Select value={form.payment_status} onChange={e => {
+                  const ps = e.target.value as PaymentStatus
+                  setForm({ ...form, payment_status: ps, deposit: ps === 'paye' ? total : ps === 'non_paye' ? 0 : form.deposit })
+                }}>
                   <option value="non_paye">❌ Non payé</option>
                   <option value="acompte">⚠️ Acompte versé</option>
                   <option value="paye">✅ Payé en totalité</option>
                 </Select>
               </Field>
               <Field label="Acompte reçu (XOF)">
-                <Input type="number" min="0" value={form.deposit} onChange={e => setForm({ ...form, deposit: parseFloat(e.target.value) || 0 })} />
+                <Input
+                  type="number" min="0"
+                  value={form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit}
+                  onChange={e => setForm({ ...form, deposit: parseFloat(e.target.value) || 0 })}
+                  disabled={isDepositDisabled}
+                  className={isDepositDisabled ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}
+                />
+                {isDepositDisabled && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    {form.payment_status === 'paye' ? '✅ Payé en totalité — acompte automatique' : '❌ Non payé — aucun acompte'}
+                  </p>
+                )}
               </Field>
             </div>
             {selectedClient && (
@@ -319,13 +586,13 @@ export const OrdersPage: React.FC = () => {
             )}
           </div>
 
-          {/* Clothes */}
+          {/* Vêtements avec photos */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-gray-900">👔 Vêtements ({clothes.length})</h3>
               <Button type="button" variant="ghost" size="sm" icon={<Plus size={15} />} onClick={addCloth}>Ajouter</Button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {clothes.map((cloth, i) => (
                 <div key={i} className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
@@ -380,17 +647,52 @@ export const OrdersPage: React.FC = () => {
                       {clothes.length > 1 && <Button type="button" variant="danger" size="sm" onClick={() => removeCloth(i)}>Retirer</Button>}
                     </div>
                   </div>
+
+                  {/* Section Photos */}
+                  <div className="mt-3 border-t border-gray-200 pt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-bold text-gray-600">📸 Photos du vêtement ({(cloth.photos || []).length})</p>
+                      <div className="flex gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          ref={el => fileInputRefs.current[i] = el}
+                          onChange={e => handlePhotoUpload(i, e.target.files)}
+                          className="hidden"
+                        />
+                        <button type="button"
+                          onClick={() => fileInputRefs.current[i]?.click()}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold hover:bg-purple-200 transition">
+                          <Camera size={13} /> Ajouter photo
+                        </button>
+                      </div>
+                    </div>
+                    {(cloth.photos || []).length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {(cloth.photos || []).map((photo, pi) => (
+                          <div key={pi} className="relative">
+                            <img src={photo} alt={`Photo ${pi + 1}`} className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                            <button type="button" onClick={() => removePhoto(i, pi)}
+                              className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600">
+                              <X size={10} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">Aucune photo — cliquez pour photographier l'état du vêtement</p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Notes */}
           <Field label="Notes générales">
             <Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Informations supplémentaires pour l'équipe..." />
           </Field>
 
-          {/* Summary */}
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-5">
             <h3 className="font-bold text-gray-900 mb-3">💰 Récapitulatif</h3>
             <div className="space-y-2">
@@ -399,7 +701,7 @@ export const OrdersPage: React.FC = () => {
               {form.priority !== 'normal' && <div className="flex justify-between text-sm text-orange-600"><span>Supplément {form.priority} {form.priority === 'express' ? '(+20%)' : '(+50%)'}</span><span>inclus</span></div>}
               <div className="border-t border-purple-200 pt-2 flex justify-between font-bold text-xl"><span>TOTAL</span><span className="text-purple-700">{total.toLocaleString('fr-FR')} XOF</span></div>
               {form.deposit > 0 && <div className="flex justify-between text-sm text-blue-600"><span>Acompte versé</span><span>- {form.deposit.toLocaleString('fr-FR')} XOF</span></div>}
-              {remaining > 0 && <div className="flex justify-between font-bold text-red-600"><span>Restant à payer</span><span>{remaining.toLocaleString('fr-FR')} XOF</span></div>}
+              {remaining > 0 && form.payment_status !== 'paye' && <div className="flex justify-between font-bold text-red-600"><span>Restant à payer</span><span>{remaining.toLocaleString('fr-FR')} XOF</span></div>}
             </div>
           </div>
 
@@ -410,11 +712,10 @@ export const OrdersPage: React.FC = () => {
         </form>
       </Modal>
 
-      {/* ORDER DETAIL */}
+      {/* DÉTAIL COMMANDE */}
       {viewOrder && (
         <Modal open={!!viewOrder} onClose={() => setViewOrder(null)} title={`Commande #${viewOrder.ticket_number}`} size="xl">
           <div className="space-y-5">
-            {/* Info */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
                 { label: 'Client', value: `${viewOrder.client?.first_name} ${viewOrder.client?.last_name}` },
@@ -431,9 +732,8 @@ export const OrdersPage: React.FC = () => {
               ))}
             </div>
 
-            {/* Status change */}
             <div>
-              <p className="text-sm font-bold text-gray-700 mb-2">Changer le statut de la commande :</p>
+              <p className="text-sm font-bold text-gray-700 mb-2">Changer le statut :</p>
               <div className="flex flex-wrap gap-2">
                 {['en_attente', 'en_cours', 'pret', 'livre', 'annule'].map(s => (
                   <button key={s} onClick={() => {
@@ -448,9 +748,8 @@ export const OrdersPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Clothes tracking */}
             <div>
-              <p className="text-sm font-bold text-gray-700 mb-3">Suivi des {viewOrder.clothes.length} vêtement(s) — 14 étapes :</p>
+              <p className="text-sm font-bold text-gray-700 mb-3">Suivi des {viewOrder.clothes.length} vêtement(s) :</p>
               <div className="space-y-4">
                 {viewOrder.clothes.map((cloth) => {
                   const currentIdx = STATUS_STEPS.findIndex(s => s.key === cloth.status)
@@ -466,6 +765,14 @@ export const OrdersPage: React.FC = () => {
                           <Badge label={cloth.status} color={getClothStatusColor(cloth.status)} />
                         </div>
                       </div>
+                      {/* Photos dans le détail */}
+                      {(cloth.photos || []).length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {(cloth.photos || []).map((photo, pi) => (
+                            <img key={pi} src={photo} alt={`Photo ${pi + 1}`} className="w-14 h-14 object-cover rounded-lg border border-gray-200" />
+                          ))}
+                        </div>
+                      )}
                       <div className="overflow-x-auto pb-2">
                         <div className="flex items-center gap-0.5 min-w-max">
                           {STATUS_STEPS.map((step, idx) => (
@@ -491,7 +798,6 @@ export const OrdersPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Totals */}
             <div className="bg-purple-50 rounded-xl p-4 space-y-2">
               <div className="flex justify-between text-sm"><span>Sous-total</span><span>{viewOrder.subtotal.toLocaleString('fr-FR')} XOF</span></div>
               {viewOrder.discount > 0 && <div className="flex justify-between text-sm text-green-600"><span>Remise</span><span>-{viewOrder.discount.toLocaleString('fr-FR')} XOF</span></div>}
@@ -501,6 +807,12 @@ export const OrdersPage: React.FC = () => {
 
             <div className="flex gap-3">
               <Button icon={<Printer size={16} />} variant="ghost" className="flex-1" onClick={() => printTicket(viewOrder)}>Réimprimer ticket</Button>
+              {viewOrder.remaining > 0 && (
+                <Button icon={<CreditCard size={16} />} variant="warning" className="flex-1"
+                  onClick={() => { setShowPaymentModal(viewOrder); setPaymentAmount(viewOrder.remaining); setViewOrder(null) }}>
+                  Encaisser paiement
+                </Button>
+              )}
               {viewOrder.status === 'pret' && <Button icon={<Bell size={16} />} variant="success" className="flex-1" onClick={() => sendReadyNotification(viewOrder)}>Notifier client</Button>}
             </div>
           </div>
