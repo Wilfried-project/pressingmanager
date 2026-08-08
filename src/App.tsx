@@ -1,3 +1,4 @@
+import { ScanPage } from './pages/scan/ScanPage'
 import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
@@ -60,6 +61,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+<Route path="/scan/:ticket" element={<ScanPage />} />
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
         <Route path="/" element={<Protected><DashboardPage /></Protected>} />
         <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />

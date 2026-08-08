@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react'
+import QRCode from 'qrcode'
 import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig } from '../../lib/store'
 import { PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Table, Card, getOrderStatusColor, getPriorityColor, getClothStatusColor } from '../../components/ui'
 import { Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard } from 'lucide-react'
@@ -270,7 +271,9 @@ export const OrdersPage: React.FC = () => {
     setPaymentAmount(0)
   }
 
-  const printTicket = (order: Order) => {
+  const printTicket = async (order: Order) => {
+    const scanUrl = `${window.location.origin}/scan/${order.ticket_number}`
+    const qrDataUrl = await QRCode.toDataURL(scanUrl, { width: 120, margin: 1, color: { dark: '#000000', light: '#ffffff' } })
     const win = window.open('', '_blank')
     if (!win) return
     win.document.write(`<!DOCTYPE html><html><head><title>Ticket ${order.ticket_number}</title>
@@ -311,6 +314,10 @@ export const OrdersPage: React.FC = () => {
         <div class="subtitle">${config.slogan || 'Reçu de dépôt — Ticket client'}</div>
       </div>
       <div class="ticket-num">#${order.ticket_number}</div>
+      <div style="text-align:center;padding:10px;border:1px solid #e5e7eb;border-top:none">
+        <img src="${qrDataUrl}" alt="QR Code" style="width:100px;height:100px" />
+        <p style="font-size:9px;color:#6b7280;margin-top:4px">Scannez pour voir le détail</p>
+      </div>
       <div class="section">
         <div class="section-title">👤 Informations client</div>
         <div class="row"><span class="label">Client</span><span class="value">${order.client?.first_name} ${order.client?.last_name}</span></div>
