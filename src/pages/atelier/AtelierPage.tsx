@@ -39,25 +39,26 @@ export const AtelierPage: React.FC = () => {
     try {
       const scanner = new Html5Qrcode('qr-reader')
       scannerRef.current = scanner
-      await scanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-          // Le QR code contient l'URL — extraire le numéro de ticket
-          const ticketNum = decodedText.split('/').pop() || decodedText
-          stopScan()
-          setTicket(ticketNum)
-          const found = orders.find(o =>
-            o.ticket_number.toLowerCase() === ticketNum.toLowerCase() &&
-            o.status !== 'livre' && o.status !== 'annule'
-          )
-          if (found) { setOrder(found); setError(''); setSuccess(false) }
-          else { setError('Ticket introuvable : ' + ticketNum) }
-        },
-        () => {}
-      )
+      const onSuccess = (decodedText: string) => {
+        const ticketNum = decodedText.split('/').pop() || decodedText
+        stopScan()
+        setTicket(ticketNum)
+        const found = orders.find(o =>
+          o.ticket_number.toLowerCase() === ticketNum.toLowerCase() &&
+          o.status !== 'livre' && o.status !== 'annule'
+        )
+        if (found) { setOrder(found); setError(''); setSuccess(false) }
+        else { setError('Ticket introuvable : ' + ticketNum) }
+      }
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } }
+      // Essayer d'abord la caméra disponible
+      try {
+        await scanner.start({ facingMode: 'environment' }, config, onSuccess, () => {})
+      } catch {
+        await scanner.start({ facingMode: 'user' }, config, onSuccess, () => {})
+      }
     } catch (err) {
-      setError('Caméra non disponible')
+      setError('Caméra non disponible — autorisez l\'accès dans le navigateur')
       setScanning(false)
     }
   }
