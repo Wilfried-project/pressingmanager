@@ -1,5 +1,3 @@
-import { ScanPage }
-import { ScanPage } from './pages/scan/ScanPage'
 import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
@@ -11,6 +9,7 @@ import { ClientsPage } from './pages/clients/ClientsPage'
 import { OrdersPage } from './pages/orders/OrdersPage'
 import { CashierPage } from './pages/cashier/CashierPage'
 import { UsersPage } from './pages/users/UsersPage'
+import { ScanPage } from './pages/scan/ScanPage'
 import {
   StockPage, HRPage, NotificationsPage, LoyaltyPage,
   AgendaPage, MultiAgencyPage, AccountingPage, ReportsPage,
@@ -62,8 +61,11 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-<Route path="/scan/:ticket" element={<ScanPage />} />
+        {/* Routes publiques — sans connexion */}
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+        <Route path="/scan/:ticket" element={<ScanPage />} />
+
+        {/* Routes protégées */}
         <Route path="/" element={<Protected><DashboardPage /></Protected>} />
         <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
         <Route path="/clients" element={<Protected><ClientsPage /></Protected>} />
@@ -81,7 +83,6 @@ function App() {
         <Route path="/delivery" element={<Protected><DeliveryPage /></Protected>} />
         <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
         <Route path="/users" element={<Protected><UsersPage /></Protected>} />
-<Route path="/scan/:ticket" element={<ScanPage />} />
         <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
       </Routes>
     </BrowserRouter>
