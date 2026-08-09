@@ -220,7 +220,7 @@ export const useShopConfig = create<ShopConfigStore>()(persist((set) => ({
     logo: '', primaryColor: '#7c3aed', phone: '', email: '',
     address: '', currency: 'XOF', footer: 'Merci pour votre confiance !',
 msgReception: '👋 Bonjour {prenom},\n\nNous avons bien réceptionné vos *{nb} article(s)* déposés dans notre pressing.\n\n📋 *Récapitulatif*\n• N° Ticket : *#{ticket}*\n• Date de livraison : *{date}*\n• Montant total : *{total} XOF*\n\nVous serez notifié(e) dès que vos articles seront prêts.\n\nMerci de votre confiance ! 🙏\n_{nom}_',
-msgPret: '🎉 Bonjour {prenom},\n\nBonne nouvelle ! Vos *{nb} article(s)* sont prêts et vous attendent.\n\n📋 *Récapitulatif*\n• N° Ticket : *#{ticket}*\n• Montant restant : *{reste} XOF*\n\n⏰ Nos horaires : Lun–Sam, 8h–19h\n📍 {adresse}\n\nÀ très bientôt ! 😊\n_{nom}_'
+msgPret: '🎉 Bonjour {prenom},\n\nBonne nouvelle ! Vos *{nb} article(s)* sont prêts et vous attendent.\n\n📋 *Récapitulatif*\n• N° Ticket : *#{ticket}*\n• Montant restant : *{reste} XOF*\n\n⏰ Nos horaires : Lun–Sam, 8h–18h\n📍 {adresse}\n\nÀ très bientôt ! 😊\n_{nom}_'
   },
   setConfig: (c) => set(s => ({ config: { ...s.config, ...c } }))
 }), { name: 'pm-shop-config' }))
