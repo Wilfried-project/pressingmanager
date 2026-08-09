@@ -1,3 +1,4 @@
+import { AtelierPage } from './pages/atelier/AtelierPage'
 import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
@@ -84,6 +85,7 @@ function App() {
         <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
         <Route path="/users" element={<Protected><UsersPage /></Protected>} />
         <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
+	<Route path="/atelier" element={<Protected><AtelierPage /></Protected>} />
       </Routes>
     </BrowserRouter>
   )
