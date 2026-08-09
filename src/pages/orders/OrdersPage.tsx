@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react'
 import QRCode from 'qrcode'
-import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig } from '../../lib/store'
+import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig, useAgendaStore } from '../../lib/store'
 import { PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Table, Card, getOrderStatusColor, getPriorityColor, getClothStatusColor } from '../../components/ui'
 import { Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
@@ -46,6 +46,7 @@ export const OrdersPage: React.FC = () => {
   const { user } = useAuthStore()
   const { addTransaction } = useTransactionStore()
   const { config } = useShopConfig()
+  const { addEvent, events } = useAgendaStore()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -85,6 +86,28 @@ export const OrdersPage: React.FC = () => {
 
   const selectedClient = clients.find(c => c.id === form.client_id)
   const subtotal = clothes.reduce((s, c) => s + ((c.price || 0) * (c.quantity || 1)), 0)
+
+  // Suggestion date intelligente — trouve le jour le moins chargé dans les 7 prochains jours
+  const getSuggestedDate = () => {
+    const MAX_PER_DAY = 10 // max commandes par jour
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() + i)
+      if (d.getDay() === 0) continue // skip dimanche
+      const ds = d.toISOString().split('T')[0]
+      const ordersThisDay = orders.filter(o => o.expected_at?.startsWith(ds)).length
+      const eventsThisDay = events.filter(e => e.date === ds).length
+      if (ordersThisDay + eventsThisDay < MAX_PER_DAY) {
+        return `${ds}T09:00`
+      }
+    }
+    // Si tout est plein, retourner dans 8 jours
+    const d = new Date()
+    d.setDate(d.getDate() + 8)
+    return `${d.toISOString().split('T')[0]}T09:00`
+  }
+
+  const suggestedDate = getSuggestedDate()
   const discount = selectedClient?.discount_rate ? subtotal * selectedClient.discount_rate / 100 : 0
   const totalAfterDiscount = subtotal - discount
   const expressMultiplier = form.priority === 'express' ? 1.2 : form.priority === 'vip' ? 1.5 : 1
@@ -204,6 +227,19 @@ export const OrdersPage: React.FC = () => {
         description: `Acompte commande #${ticket} — ${client.first_name} ${client.last_name}`,
         date: new Date().toISOString().split('T')[0],
         created_by: user?.full_name || 'Admin'
+      })
+    }
+
+    // Ajout automatique dans l'agenda
+    if (order.expected_at) {
+      addEvent({
+        id: crypto.randomUUID(),
+        title: `Livraison #${ticket} — ${client.first_name} ${client.last_name} (${clothesFull.length} article(s))`,
+        type: 'livraison',
+        date: order.expected_at.split('T')[0],
+        time: order.expected_at.includes('T') ? order.expected_at.split('T')[1].slice(0, 5) : '09:00',
+        description: `${clothesFull.length} article(s) • ${total.toLocaleString('fr-FR')} XOF • ${client.phone}`,
+        created_at: new Date().toISOString()
       })
     }
 
@@ -639,6 +675,10 @@ export const OrdersPage: React.FC = () => {
               </Field>
               <Field label="Date limite" required>
                 <Input required type="datetime-local" value={form.expected_at} onChange={e => setForm({ ...form, expected_at: e.target.value })} />
+                <button type="button" onClick={() => setForm({ ...form, expected_at: suggestedDate })}
+                  className="mt-1.5 text-xs text-purple-600 hover:underline font-semibold flex items-center gap-1">
+                  💡 Date suggérée : {new Date(suggestedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à 9h00
+                </button>
               </Field>
               <Field label="Mode de paiement">
                 <Select value={form.payment_method} onChange={e => setForm({ ...form, payment_method: e.target.value as PaymentMethod })}>
