@@ -22,6 +22,7 @@ export const ALL_MODULES = [
   { path: '/multiagency', label: 'Multi-agences', icon: '🏢', group: 'Administration' },
   { path: '/settings', label: 'Paramètres', icon: '⚙️', group: 'Administration' },
   { path: '/users', label: 'Utilisateurs', icon: '👤', group: 'Administration' },
+  { path: '/atelier', label: 'Atelier', icon: '👔', group: 'Opérations' },
 ]
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
