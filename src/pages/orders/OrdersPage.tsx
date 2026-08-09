@@ -210,7 +210,7 @@ export const OrdersPage: React.FC = () => {
     const pts = Math.floor(total / 1000)
     if (pts > 0) addLoyaltyPoints(client.id, pts)
     resetForm()
-    printTicket(order)
+    printTicket(order).catch(console.error)
     alert(`✅ Commande créée ! Ticket: ${ticket}\n+${pts} points fidélité`)
   }
 
@@ -458,7 +458,7 @@ export const OrdersPage: React.FC = () => {
               <td className="px-5 py-4">
                 <div className="flex gap-1">
                   <button onClick={() => setViewOrder(order)} className="p-1.5 hover:bg-purple-100 text-purple-600 rounded-lg" title="Voir détails"><Eye size={15} /></button>
-                  <button onClick={() => printTicket(order)} className="p-1.5 hover:bg-green-100 text-green-600 rounded-lg" title="Imprimer ticket"><Printer size={15} /></button>
+                  <button onClick={() => printTicket(order).catch(console.error)} className="p-1.5 hover:bg-green-100 text-green-600 rounded-lg" title="Imprimer ticket"><Printer size={15} /></button>
                   {order.status === 'pret' && (
                     <button onClick={() => sendReadyNotification(order)} className="p-1.5 hover:bg-blue-100 text-blue-600 rounded-lg" title="Notifier client"><Bell size={15} /></button>
                   )}
@@ -875,7 +875,7 @@ export const OrdersPage: React.FC = () => {
             </div>
 
             <div className="flex gap-3">
-              <Button icon={<Printer size={16} />} variant="ghost" className="flex-1" onClick={() => printTicket(viewOrder)}>Réimprimer ticket</Button>
+              <Button icon={<Printer size={16} />} variant="ghost" className="flex-1" onClick={() => printTicket(viewOrder).catch(console.error)}>Réimprimer ticket</Button>
               {viewOrder.remaining > 0 && (
                 <Button icon={<CreditCard size={16} />} variant="warning" className="flex-1"
                   onClick={() => { setShowPaymentModal(viewOrder); setPaymentAmount(viewOrder.remaining); setViewOrder(null) }}>
