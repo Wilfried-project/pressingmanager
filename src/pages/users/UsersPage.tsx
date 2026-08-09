@@ -10,6 +10,7 @@ interface AppUser {
   role: string
   permissions: string[]
   is_active: boolean
+  password: string
   created_at: string
 }
 
@@ -35,7 +36,7 @@ export const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<AppUser[]>(INITIAL_USERS)
   const [showForm, setShowForm] = useState(false)
   const [editUser, setEditUser] = useState<AppUser | null>(null)
-  const [form, setForm] = useState({ full_name: '', email: '', phone: '', role: 'employe', permissions: [] as string[], is_active: true })
+  const [form, setForm] = useState({ full_name: '', email: '', phone: '', role: 'employe', permissions: [] as string[], is_active: true, password: '' })
 
   const getEffectivePermissions = (role: string, customPerms: string[]) => {
     if (role === 'custom') return customPerms
@@ -64,14 +65,14 @@ export const UsersPage: React.FC = () => {
       const newUser: AppUser = { id: crypto.randomUUID(), ...form, permissions: effectivePerms, created_at: new Date().toISOString() }
       setUsers([...users, newUser])
     }
-    setForm({ full_name: '', email: '', phone: '', role: 'employe', permissions: [], is_active: true })
+    setForm({ full_name: '', email: '', phone: '', role: 'employe', permissions: [], is_active: true, password: '' })
     setShowForm(false)
   }
 
   const startEdit = (user: AppUser) => {
     setEditUser(user)
     const isCustom = !ROLE_PERMISSIONS[user.role] || user.role === 'custom'
-    setForm({ full_name: user.full_name, email: user.email, phone: user.phone, role: user.role, permissions: user.permissions, is_active: user.is_active })
+    setForm({ full_name: user.full_name, email: user.email, phone: user.phone, role: user.role, permissions: user.permissions, is_active: user.is_active, password: '' })
     setShowForm(true)
   }
 
@@ -94,7 +95,7 @@ export const UsersPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">👤 Gestion des utilisateurs</h1>
           <p className="text-gray-500 text-sm mt-1">Créez des comptes et définissez leurs accès</p>
         </div>
-        <button onClick={() => { setShowForm(true); setEditUser(null); setForm({ full_name: '', email: '', phone: '', role: 'employe', permissions: [], is_active: true }) }}
+        <button onClick={() => { setShowForm(true); setEditUser(null); setForm({ full_name: '', email: '', phone: '', role: 'employe', permissions: [], is_active: true, password: '' }) }}
           className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-purple-700 transition">
           <Plus size={18} /> Nouvel utilisateur
         </button>
@@ -137,11 +138,24 @@ export const UsersPage: React.FC = () => {
                 </div>
                 <div className="hidden sm:flex flex-col items-end gap-1">
                   <span className="text-sm font-semibold text-purple-700">{roleInfo?.label || user.role}</span>
-                  <span className="text-xs text-gray-400">{permsCount} modules accessibles</span>
+                  <span className="text-xs text-gray-400">{permsCount} modules — MDP: {user.password ? '••••••' : '⚠️ Non défini'}</span>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => startEdit(user)} className="p-2 hover:bg-purple-100 text-purple-600 rounded-lg" title="Modifier">
                     <Edit2 size={15} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newPass = prompt(`Nouveau mot de passe pour ${user.full_name} :`)
+                      if (newPass && newPass.length >= 4) {
+                        setUsers(users.map(u => u.id === user.id ? { ...u, password: newPass } : u))
+                        alert(`✅ Mot de passe réinitialisé pour ${user.full_name}`)
+                      } else if (newPass) {
+                        alert('❌ Mot de passe trop court (minimum 4 caractères)')
+                      }
+                    }}
+                    className="p-2 hover:bg-yellow-100 text-yellow-600 rounded-lg" title="Réinitialiser mot de passe">
+                    🔑
                   </button>
                   <button onClick={() => setUsers(users.map(u => u.id === user.id ? { ...u, is_active: !u.is_active } : u))}
                     className={`p-2 rounded-lg text-xs font-semibold ${user.is_active ? 'hover:bg-red-100 text-red-500' : 'hover:bg-green-100 text-green-600'}`}
@@ -186,6 +200,12 @@ export const UsersPage: React.FC = () => {
                   <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="+225 07..." />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mot de passe {editUser ? '(laisser vide = inchangé)' : '*'}</label>
+                  <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder={editUser ? 'Laisser vide pour ne pas changer' : 'Mot de passe...'} />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Statut</label>

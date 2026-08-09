@@ -67,7 +67,7 @@ export const OrdersPage: React.FC = () => {
   })
   const [clothes, setClothes] = useState<Partial<Cloth>[]>([{
     type: 'chemise', color: '', brand: '', size: '', material: '',
-    quantity: 1, service: 'lavage_simple', price: 1500,
+    quantity: '' as any, service: 'lavage_simple', price: '' as any,
     special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: []
   }])
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetail[]>([])
@@ -118,7 +118,7 @@ export const OrdersPage: React.FC = () => {
 
   const addCloth = () => setClothes([...clothes, {
     type: 'chemise', color: '', brand: '', size: '', material: '',
-    quantity: 1, service: 'lavage_simple', price: 1500,
+    quantity: '' as any, service: 'lavage_simple', price: '' as any,
     special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: []
   }])
   const updateCloth = (i: number, d: Partial<Cloth>) => { const n = [...clothes]; n[i] = { ...n[i], ...d }; setClothes(n) }
@@ -268,7 +268,7 @@ export const OrdersPage: React.FC = () => {
 
   const resetForm = () => {
     setForm({ client_id: '', priority: 'normal', expected_at: '', payment_method: 'especes', payment_status: 'non_paye', deposit: 0, notes: '' })
-    setClothes([{ type: 'chemise', color: '', brand: '', size: '', material: '', quantity: 1, service: 'lavage_simple', price: 1500, special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: [] }])
+    setClothes([{ type: 'chemise', color: '', brand: '', size: '', material: '', quantity: '' as any, service: 'lavage_simple', price: '' as any, special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: [] }])
     setPaymentDetails([])
     setClientSearch('')
     setShowNewClientForm(false)
@@ -577,12 +577,11 @@ export const OrdersPage: React.FC = () => {
             </Field>
             <Field label="Mode de paiement">
               <Select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}>
-                <option value="especes">💵 Espèces</option>
                 <option value="wave">🌊 Wave</option>
                 <option value="orange_money">🍊 Orange Money</option>
                 <option value="mtn">📱 MTN Money</option>
-                <option value="moov">📞 Moov Money</option>
-                <option value="carte">💳 Carte bancaire</option>
+                <option value="especes">💵 Espèces</option>
+                <option value="mixte">🔀 Paiement mixte</option>
               </Select>
             </Field>
             {paymentAmount > 0 && (
@@ -681,17 +680,49 @@ export const OrdersPage: React.FC = () => {
               </Field>
               <Field label="Mode de paiement">
                 <Select value={form.payment_method} onChange={e => setForm({ ...form, payment_method: e.target.value as PaymentMethod })}>
-                  <option value="especes">💵 Espèces</option>
                   <option value="wave">🌊 Wave</option>
                   <option value="orange_money">🍊 Orange Money</option>
                   <option value="mtn">📱 MTN Money</option>
-                  <option value="moov">📞 Moov Money</option>
-                  <option value="carte">💳 Carte bancaire</option>
-                  <option value="virement">🏦 Virement</option>
+                  <option value="especes">💵 Espèces</option>
                   <option value="mixte">🔀 Paiement mixte</option>
-                  <option value="a_la_livraison">🚚 Paiement à la livraison</option>
                 </Select>
               </Field>
+
+              {/* Détail paiement mixte */}
+              {form.payment_method === 'mixte' && (
+                <div className="col-span-2 bg-purple-50 border border-purple-200 rounded-xl p-4">
+                  <p className="text-sm font-bold text-purple-800 mb-3">🔀 Détail du paiement mixte</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { id: 'wave', label: 'Wave 🌊' },
+                      { id: 'orange', label: 'Orange Money 🍊' },
+                      { id: 'mtn', label: 'MTN Money 📱' },
+                      { id: 'especes', label: 'Espèces 💵' },
+                    ].map(m => (
+                      <Field key={m.id} label={m.label}>
+                        <Input
+                          type="number"
+                          placeholder="0 XOF"
+                          value={(paymentDetails.find(p => p.method === m.id)?.amount || '') as any}
+                          onChange={e => {
+                            const val = parseFloat(e.target.value) || 0
+                            setPaymentDetails(prev => {
+                              const existing = prev.filter(p => p.method !== m.id)
+                              return val > 0 ? [...existing, { method: m.id as any, amount: val }] : existing
+                            })
+                          }}
+                        />
+                      </Field>
+                    ))}
+                  </div>
+                  {paymentDetails.length > 0 && (
+                    <div className="mt-3 p-3 bg-white rounded-xl border border-purple-200">
+                      <p className="text-xs text-gray-500 mb-1">Total renseigné</p>
+                      <p className="font-bold text-purple-700">{paymentDetails.reduce((s, p) => s + p.amount, 0).toLocaleString('fr-FR')} XOF</p>
+                    </div>
+                  )}
+                </div>
+              )}
               <Field label="Statut paiement">
                 <Select value={form.payment_status} onChange={e => {
                   const ps = e.target.value as PaymentStatus
