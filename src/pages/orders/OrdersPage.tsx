@@ -211,6 +211,23 @@ export const OrdersPage: React.FC = () => {
     if (pts > 0) addLoyaltyPoints(client.id, pts)
     resetForm()
     printTicket(order).catch(console.error)
+
+    // Envoi automatique WhatsApp — message de réception
+    const msgReception = (config.msgReception || '')
+      .replace('{prenom}', client.first_name)
+      .replace('{nb}', String(clothesFull.length))
+      .replace('{ticket}', ticket)
+      .replace('{date}', order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'À définir')
+      .replace('{total}', total.toLocaleString('fr-FR'))
+      .replace('{adresse}', config.address || '')
+      .replace('{nom}', config.name || 'PressingManager')
+
+    const phoneClean = (client.phone || '').replace(/\s/g, '').replace(/^00/, '+')
+    if (phoneClean && msgReception) {
+      const waUrl = `https://wa.me/${phoneClean}?text=${encodeURIComponent(msgReception)}`
+      setTimeout(() => window.open(waUrl, '_blank'), 1500)
+    }
+
     alert(`✅ Commande créée ! Ticket: ${ticket}\n+${pts} points fidélité`)
   }
 
@@ -364,16 +381,33 @@ export const OrdersPage: React.FC = () => {
   }
 
   const sendReadyNotification = (order: Order) => {
+    // Message prêt personnalisé
+    const msgPret = (config.msgPret || '')
+      .replace('{prenom}', order.client?.first_name || '')
+      .replace('{nb}', String(order.clothes.length))
+      .replace('{ticket}', order.ticket_number)
+      .replace('{reste}', order.remaining.toLocaleString('fr-FR'))
+      .replace('{adresse}', config.address || '')
+      .replace('{nom}', config.name || 'PressingManager')
+
     const notif = {
       id: crypto.randomUUID(), client_id: order.client_id,
       client_name: `${order.client?.first_name} ${order.client?.last_name}`,
       client_phone: order.client?.phone || '',
       type: 'whatsapp' as const,
-      message: `Bonjour ${order.client?.first_name} ! 🧺 Votre commande #${order.ticket_number} est prête. Vous pouvez venir la récupérer. Merci de votre confiance ! — PressingManager`,
+      message: msgPret || `Bonjour ${order.client?.first_name} ! 🎉 Vos vêtements sont prêts. Ticket: #${order.ticket_number}. — ${config.name || 'PressingManager'}`,
       status: 'pending' as const, created_at: new Date().toISOString()
     }
     addNotification(notif)
-    alert(`✅ Notification préparée pour ${order.client?.first_name} ${order.client?.last_name}`)
+
+    // Ouvrir WhatsApp automatiquement
+    const phoneClean = (order.client?.phone || '').replace(/\s/g, '').replace(/^00/, '+')
+    if (phoneClean && msgPret) {
+      const waUrl = `https://wa.me/${phoneClean}?text=${encodeURIComponent(msgPret)}`
+      window.open(waUrl, '_blank')
+    } else {
+      alert(`✅ Notification préparée pour ${order.client?.first_name} ${order.client?.last_name}`)
+    }
   }
 
   const updateClothStatus = (orderId: string, clothId: string, newStatus: Cloth['status']) => {

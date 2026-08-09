@@ -24,6 +24,8 @@ export const SettingsPage: React.FC = () => {
     address: config.address,
     currency: config.currency,
     footer: config.footer,
+    msgReception: config.msgReception || '',
+    msgPret: config.msgPret || '',
   })
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,6 +56,7 @@ export const SettingsPage: React.FC = () => {
       <Tabs
         tabs={[
           { key: 'boutique', label: 'Mon Pressing', icon: '🏪' },
+          { key: 'messages', label: 'Messages', icon: '💬' },
           { key: 'apparence', label: 'Apparence', icon: '🎨' },
           { key: 'account', label: 'Compte', icon: '👤' },
           { key: 'system', label: 'Système', icon: '⚙️' },
@@ -63,6 +66,33 @@ export const SettingsPage: React.FC = () => {
       />
 
       {saved && <Alert type="success" message="✅ Paramètres sauvegardés avec succès !" />}
+
+      {/* ONGLET MESSAGES */}
+      {activeTab === 'messages' && (
+        <Card>
+          <h2 className="text-base font-bold mb-2">Messages WhatsApp automatiques</h2>
+          <p className="text-sm text-gray-500 mb-5">Ces messages sont envoyés automatiquement via WhatsApp. Utilisez les variables : <span className="font-mono bg-gray-100 px-1 rounded">{'{prenom}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{ticket}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{nb}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{date}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{total}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{reste}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{adresse}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{nom}'}</span></p>
+          <div className="space-y-5">
+            <Field label="📥 Message de réception (envoyé à la création de commande)">
+              <Textarea value={form.msgReception} onChange={e => setForm(f => ({ ...f, msgReception: e.target.value }))} rows={6} placeholder="Message envoyé quand le client dépose ses vêtements..." />
+            </Field>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-xs font-bold text-gray-500 mb-2">APERÇU</p>
+              <p className="text-sm text-gray-700 whitespace-pre-line">{form.msgReception.replace('{prenom}', 'Kouassi').replace('{nb}', '3').replace('{ticket}', 'PM-123456').replace('{date}', '15/08/2026').replace('{total}', '7 500').replace('{adresse}', form.address || 'Abidjan').replace('{nom}', form.name || 'Mon Pressing')}</p>
+            </div>
+            <Field label="🎉 Message vêtements prêts (envoyé quand statut = Prêt)">
+              <Textarea value={form.msgPret} onChange={e => setForm(f => ({ ...f, msgPret: e.target.value }))} rows={6} placeholder="Message envoyé quand les vêtements sont prêts..." />
+            </Field>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-xs font-bold text-gray-500 mb-2">APERÇU</p>
+              <p className="text-sm text-gray-700 whitespace-pre-line">{form.msgPret.replace('{prenom}', 'Kouassi').replace('{nb}', '3').replace('{ticket}', 'PM-123456').replace('{reste}', '5 000').replace('{adresse}', form.address || 'Abidjan').replace('{nom}', form.name || 'Mon Pressing')}</p>
+            </div>
+            <Button className="w-full" icon={<Save size={16} />} onClick={handleSave}>
+              Sauvegarder les messages
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* ONGLET MON PRESSING */}
       {activeTab === 'boutique' && (
