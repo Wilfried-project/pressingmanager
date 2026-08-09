@@ -4,12 +4,11 @@ import { PageHeader, Button, Field, Input, Select, Card, Table, Badge, Modal, Al
 import { DollarSign, TrendingUp, TrendingDown, Lock, Unlock, Plus } from 'lucide-react'
 
 export const CashierPage: React.FC = () => {
-  const { sessions, cashTransactions: transactions, openSession: openCashSession, closeSession: closeCashSession, addCashTransaction, getCurrentSession } = useCashStore()
+  const { sessions, addSession, updateSession, addCashTransaction, getCurrentSession } = useCashStore()
   const { user } = useAuthStore()
   const [showOpen, setShowOpen] = useState(false)
   const [showClose, setShowClose] = useState(false)
   const [showTx, setShowTx] = useState(false)
-  const [showConfirmSolde, setShowConfirmSolde] = useState(false)
   const [showReminder, setShowReminder] = useState(false)
   const [showUnclosedAlert, setShowUnclosedAlert] = useState(false)
   const [openAmount, setOpenAmount] = useState('')
@@ -18,12 +17,12 @@ export const CashierPage: React.FC = () => {
   const [txForm, setTxForm] = useState({ type: 'entree' as 'entree' | 'sortie', amount: '', reason: '', method: 'especes' })
 
   const currentSession = getCurrentSession()
-  const sessionTx = currentSession ? transactions.filter(t => t.session_id === currentSession.id) : []
-  const totalEntrees = sessionTx.filter(t => t.type === 'entree').reduce((s, t) => s + t.amount, 0)
-  const totalSorties = sessionTx.filter(t => t.type === 'sortie').reduce((s, t) => s + t.amount, 0)
+  const sessionTx = currentSession ? (currentSession.transactions || []) : []
+  const totalEntrees = sessionTx.filter((t: any) => t.type === 'entree').reduce((s: number, t: any) => s + t.amount, 0)
+  const totalSorties = sessionTx.filter((t: any) => t.type === 'sortie').reduce((s: number, t: any) => s + t.amount, 0)
   const soldeAttendu = (currentSession?.opening_amount || 0) + totalEntrees - totalSorties
 
-  // Alerte fermeture caisse à 18h00
+  // Rappel fermeture à 18h00
   useEffect(() => {
     const checkReminder = () => {
       const now = new Date()
@@ -35,35 +34,31 @@ export const CashierPage: React.FC = () => {
     return () => clearInterval(interval)
   }, [currentSession])
 
-  // Vérifier si la caisse de la veille n'a pas été fermée
+  // Vérifier si caisse non fermée la veille
   useEffect(() => {
     if (currentSession) {
-      const openedDate = new Date(currentSession.opened_at).toLocaleDateString('fr-FR')
-      const today = new Date().toLocaleDateString('fr-FR')
-      if (openedDate !== today) {
-        setShowUnclosedAlert(true)
-      }
+      const openedDate = new Date(currentSession.opened_at).toDateString()
+      const today = new Date().toDateString()
+      if (openedDate !== today) setShowUnclosedAlert(true)
     }
   }, [currentSession])
 
-  // Vérifier si la dernière session était hier et proposer confirmation du solde
-  const lastClosedSession = sessions.filter(s => s.status === 'closed').sort((a, b) => new Date(b.closed_at || 0).getTime() - new Date(a.closed_at || 0).getTime())[0]
-  const showSoldeConfirmation = !currentSession && lastClosedSession && !showOpen
+  const lastClosedSession = sessions.filter((s: any) => s.status === 'closed').sort((a: any, b: any) => new Date(b.closed_at || 0).getTime() - new Date(a.closed_at || 0).getTime())[0]
 
   const handleOpenSession = () => {
     const amount = parseFloat(openAmount) || 0
-    openCashSession({ id: crypto.randomUUID(), opening_amount: amount, opened_by: user?.full_name || 'Admin', opened_at: new Date().toISOString(), status: 'open' })
+    addSession({ id: crypto.randomUUID(), opening_amount: amount, opened_by: user?.full_name || 'Admin', opened_at: new Date().toISOString(), status: 'open', transactions: [] })
     setOpenAmount('')
     setShowOpen(false)
-    setShowConfirmSolde(false)
   }
 
   const handleCloseSession = () => {
     if (!currentSession) return
     const amount = parseFloat(closeAmount) || soldeAttendu
-    closeCashSession(currentSession.id, amount)
+    updateSession(currentSession.id, { status: 'closed', closed_at: new Date().toISOString(), closing_amount: amount })
     setCloseAmount('')
     setShowClose(false)
+    setShowUnclosedAlert(false)
   }
 
   const handleAddTx = () => {
@@ -90,62 +85,46 @@ export const CashierPage: React.FC = () => {
       {showUnclosedAlert && currentSession && (
         <div className="bg-red-50 border-2 border-red-300 rounded-xl p-5">
           <h3 className="font-bold text-red-800 text-base mb-2">⚠️ Caisse non fermée !</h3>
-          <p className="text-sm text-red-700 mb-4">
-            La caisse ouverte le <strong>{new Date(currentSession.opened_at).toLocaleDateString('fr-FR')}</strong> n'a jamais été fermée. 
-            Vous devez la clôturer avant de continuer.
-          </p>
-          <div className="flex gap-3">
-            <Button onClick={() => { setShowUnclosedAlert(false); setShowClose(true) }} variant="danger" icon={<Lock size={16} />}>
-              Clôturer maintenant
-            </Button>
-          </div>
+          <p className="text-sm text-red-700 mb-4">La caisse ouverte le <strong>{new Date(currentSession.opened_at).toLocaleDateString('fr-FR')}</strong> n\'a jamais été fermée. Clôturez-la avant de continuer.</p>
+          <Button onClick={() => { setShowUnclosedAlert(false); setShowClose(true) }} variant="danger" icon={<Lock size={16} />}>Clôturer maintenant</Button>
         </div>
       )}
 
-      {/* Rappel fermeture 18h */}
+      {/* Rappel 18h */}
       {showReminder && currentSession && (
         <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-5">
-          <h3 className="font-bold text-yellow-800 text-base mb-2">🔔 Il est 18h00 — N'oubliez pas de fermer la caisse !</h3>
-          <p className="text-sm text-yellow-700 mb-4">
-            Solde attendu : <strong>{soldeAttendu.toLocaleString('fr-FR')} XOF</strong>
-          </p>
+          <h3 className="font-bold text-yellow-800 text-base mb-2">🔔 Il est 18h00 — N\'oubliez pas de fermer la caisse !</h3>
+          <p className="text-sm text-yellow-700 mb-4">Solde attendu : <strong>{soldeAttendu.toLocaleString('fr-FR')} XOF</strong></p>
           <div className="flex gap-3">
-            <Button onClick={() => { setShowReminder(false); setShowClose(true) }} variant="danger" icon={<Lock size={16} />}>
-              Fermer la caisse
-            </Button>
-            <Button onClick={() => setShowReminder(false)} variant="secondary">
-              Me rappeler plus tard
-            </Button>
+            <Button onClick={() => { setShowReminder(false); setShowClose(true) }} variant="danger" icon={<Lock size={16} />}>Fermer la caisse</Button>
+            <Button onClick={() => setShowReminder(false)} variant="secondary">Me rappeler plus tard</Button>
           </div>
         </div>
       )}
 
       {/* Alerte caisse fermée */}
-      {!currentSession && (
-        <Alert type="warning" message="⚠️ La caisse est fermée. Vous devez l'ouvrir avant d'enregistrer des paiements." />
-      )}
+      {!currentSession && <Alert type="warning" message="⚠️ La caisse est fermée. Ouvrez-la avant d\'enregistrer des paiements." />}
 
-      {/* Confirmation solde du matin */}
-      {showSoldeConfirmation && lastClosedSession && (
+      {/* Confirmation solde matin */}
+      {!currentSession && lastClosedSession && (
         <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5">
-          <h3 className="font-bold text-blue-800 text-base mb-2">☀️ Ouverture de caisse — Vérification du solde</h3>
-          <p className="text-sm text-blue-700 mb-4">La dernière caisse a été clôturée avec un solde de <strong>{(lastClosedSession.closing_amount || 0).toLocaleString('fr-FR')} XOF</strong>. Confirmez le solde en caisse avant d'ouvrir.</p>
-          <Field label="Solde physique en caisse (XOF)">
-            <Input type="number" value={confirmedSolde} onChange={e => setConfirmedSolde(e.target.value)} placeholder="Comptez votre caisse et entrez le montant..." />
+          <h3 className="font-bold text-blue-800 text-base mb-2">☀️ Vérification du solde avant ouverture</h3>
+          <p className="text-sm text-blue-700 mb-4">Dernière clôture : <strong>{(lastClosedSession.closing_amount || 0).toLocaleString('fr-FR')} XOF</strong>. Comptez votre caisse physique.</p>
+          <Field label="Solde physique compté (XOF)">
+            <Input type="number" value={confirmedSolde} onChange={e => setConfirmedSolde(e.target.value)} placeholder="Entrez le montant compté..." />
           </Field>
           {confirmedSolde && parseFloat(confirmedSolde) !== (lastClosedSession.closing_amount || 0) && (
             <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-sm font-bold text-red-700">⚠️ Écart détecté !</p>
-              <p className="text-sm text-red-600">Solde attendu : {(lastClosedSession.closing_amount || 0).toLocaleString('fr-FR')} XOF — Solde compté : {parseFloat(confirmedSolde).toLocaleString('fr-FR')} XOF — Écart : {(parseFloat(confirmedSolde) - (lastClosedSession.closing_amount || 0)).toLocaleString('fr-FR')} XOF</p>
+              <p className="text-sm font-bold text-red-700">⚠️ Écart : {(parseFloat(confirmedSolde) - (lastClosedSession.closing_amount || 0)).toLocaleString('fr-FR')} XOF</p>
             </div>
           )}
           {confirmedSolde && parseFloat(confirmedSolde) === (lastClosedSession.closing_amount || 0) && (
             <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl">
-              <p className="text-sm font-bold text-green-700">✅ Solde conforme — Vous pouvez ouvrir la caisse</p>
+              <p className="text-sm font-bold text-green-700">✅ Solde conforme</p>
             </div>
           )}
-          <div className="flex gap-3 mt-4">
-            <Button onClick={() => { setOpenAmount(confirmedSolde || String(lastClosedSession.closing_amount || 0)); handleOpenSession() }} disabled={!confirmedSolde} className="flex-1">
+          <div className="mt-4">
+            <Button onClick={() => { setOpenAmount(confirmedSolde || String(lastClosedSession.closing_amount || 0)); handleOpenSession() }} disabled={!confirmedSolde} className="w-full">
               Confirmer et ouvrir la caisse
             </Button>
           </div>
@@ -154,62 +133,38 @@ export const CashierPage: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
-            <div><p className="text-xs text-gray-500 font-medium">Fond de caisse</p><p className="text-2xl font-bold text-gray-900 mt-1">{(currentSession?.opening_amount || 0).toLocaleString('fr-FR')} XOF</p></div>
-            <div className="bg-purple-100 text-purple-600 p-3 rounded-full"><DollarSign size={20} /></div>
-          </div>
-        </Card>
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
-            <div><p className="text-xs text-gray-500 font-medium">Ventes du jour</p><p className="text-2xl font-bold text-gray-900 mt-1">{totalEntrees.toLocaleString('fr-FR')} XOF</p><p className="text-xs text-gray-400 mt-0.5">{sessionTx.filter(t => t.type === 'entree').length} entrée(s)</p></div>
-            <div className="bg-green-100 text-green-600 p-3 rounded-full"><TrendingUp size={20} /></div>
-          </div>
-        </Card>
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
-            <div><p className="text-xs text-gray-500 font-medium">Sorties caisse</p><p className="text-2xl font-bold text-gray-900 mt-1">{totalSorties.toLocaleString('fr-FR')} XOF</p></div>
-            <div className="bg-red-100 text-red-600 p-3 rounded-full"><TrendingDown size={20} /></div>
-          </div>
-        </Card>
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
-            <div><p className="text-xs text-gray-500 font-medium">Solde attendu</p><p className="text-2xl font-bold text-purple-700 mt-1">{soldeAttendu.toLocaleString('fr-FR')} XOF</p></div>
-            <div className="bg-blue-100 text-blue-600 p-3 rounded-full"><DollarSign size={20} /></div>
-          </div>
-        </Card>
+        <Card className="p-5"><div className="flex items-center justify-between"><div><p className="text-xs text-gray-500 font-medium">Fond de caisse</p><p className="text-2xl font-bold text-gray-900 mt-1">{(currentSession?.opening_amount || 0).toLocaleString('fr-FR')} XOF</p></div><div className="bg-purple-100 text-purple-600 p-3 rounded-full"><DollarSign size={20} /></div></div></Card>
+        <Card className="p-5"><div className="flex items-center justify-between"><div><p className="text-xs text-gray-500 font-medium">Entrées du jour</p><p className="text-2xl font-bold text-gray-900 mt-1">{totalEntrees.toLocaleString('fr-FR')} XOF</p><p className="text-xs text-gray-400 mt-0.5">{sessionTx.filter((t: any) => t.type === 'entree').length} entrée(s)</p></div><div className="bg-green-100 text-green-600 p-3 rounded-full"><TrendingUp size={20} /></div></div></Card>
+        <Card className="p-5"><div className="flex items-center justify-between"><div><p className="text-xs text-gray-500 font-medium">Sorties caisse</p><p className="text-2xl font-bold text-gray-900 mt-1">{totalSorties.toLocaleString('fr-FR')} XOF</p></div><div className="bg-red-100 text-red-600 p-3 rounded-full"><TrendingDown size={20} /></div></div></Card>
+        <Card className="p-5"><div className="flex items-center justify-between"><div><p className="text-xs text-gray-500 font-medium">Solde attendu</p><p className="text-2xl font-bold text-purple-700 mt-1">{soldeAttendu.toLocaleString('fr-FR')} XOF</p></div><div className="bg-blue-100 text-blue-600 p-3 rounded-full"><DollarSign size={20} /></div></div></Card>
       </div>
 
       {/* Transactions */}
       <Card>
         <h2 className="font-bold text-gray-900 mb-4">Mouvements de caisse ({sessionTx.length})</h2>
         {sessionTx.length > 0 ? (
-          <Table headers={['Heure', 'Type', 'Raison', 'Mode', 'Montant', 'Par']}>
-            {sessionTx.slice().reverse().map(tx => (
+          <Table headers={['Heure', 'Type', 'Raison', 'Montant', 'Par']}>
+            {[...sessionTx].reverse().map((tx: any) => (
               <tr key={tx.id} className="hover:bg-gray-50">
                 <td className="px-5 py-4 text-sm text-gray-500">{new Date(tx.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</td>
                 <td className="px-5 py-4"><Badge label={tx.type === 'entree' ? '↑ Entrée' : '↓ Sortie'} color={tx.type === 'entree' ? 'green' : 'red'} /></td>
                 <td className="px-5 py-4 text-sm max-w-xs truncate">{tx.reason}</td>
-                <td className="px-5 py-4 text-sm capitalize">{tx.method || 'especes'}</td>
                 <td className={`px-5 py-4 font-bold text-sm ${tx.type === 'entree' ? 'text-green-600' : 'text-red-600'}`}>{tx.type === 'entree' ? '+' : '-'}{tx.amount.toLocaleString('fr-FR')} XOF</td>
                 <td className="px-5 py-4 text-xs text-gray-400">{tx.created_by}</td>
               </tr>
             ))}
           </Table>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-4xl mb-3">💰</p>
-            <p className="text-gray-400">Aucune vente aujourd'hui</p>
-          </div>
+          <div className="text-center py-12"><p className="text-4xl mb-3">💰</p><p className="text-gray-400">Aucune vente aujourd\'hui</p></div>
         )}
       </Card>
 
       {/* Historique sessions */}
-      {sessions.filter(s => s.status === 'closed').length > 0 && (
+      {sessions.filter((s: any) => s.status === 'closed').length > 0 && (
         <Card>
           <h2 className="font-bold text-gray-900 mb-4">Historique des caisses</h2>
           <Table headers={['Date ouverture', 'Fond initial', 'Clôture', 'Solde final', 'Par']}>
-            {sessions.filter(s => s.status === 'closed').slice().reverse().slice(0, 10).map(s => (
+            {sessions.filter((s: any) => s.status === 'closed').slice().reverse().slice(0, 10).map((s: any) => (
               <tr key={s.id} className="hover:bg-gray-50">
                 <td className="px-5 py-4 text-sm">{new Date(s.opened_at).toLocaleDateString('fr-FR')}</td>
                 <td className="px-5 py-4 text-sm">{s.opening_amount.toLocaleString('fr-FR')} XOF</td>
@@ -222,22 +177,21 @@ export const CashierPage: React.FC = () => {
         </Card>
       )}
 
-      {/* Modal ouverture caisse */}
+      {/* Modal ouverture */}
       <Modal open={showOpen} onClose={() => setShowOpen(false)} title="Ouvrir la caisse" size="sm">
         <div className="space-y-4">
           <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-            <p className="text-sm font-bold text-green-800">☀️ Début de journée — {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            <p className="text-sm font-bold text-green-800">☀️ {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
             <p className="text-xs text-green-600 mt-1">Comptez votre fond de caisse et entrez le montant.</p>
           </div>
           <Field label="Fond de caisse initial (XOF)">
             <Input type="number" value={openAmount} onChange={e => setOpenAmount(e.target.value)} placeholder="Ex: 50 000" />
           </Field>
-          <p className="text-xs text-gray-400">⏰ La caisse se fermera automatiquement à 23h59 si vous oubliez.</p>
           <Button className="w-full" onClick={handleOpenSession} icon={<Unlock size={16} />}>Ouvrir la caisse</Button>
         </div>
       </Modal>
 
-      {/* Modal fermeture caisse */}
+      {/* Modal fermeture */}
       <Modal open={showClose} onClose={() => setShowClose(false)} title="Fermer la caisse" size="sm">
         <div className="space-y-4">
           <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2">
@@ -262,16 +216,10 @@ export const CashierPage: React.FC = () => {
       <Modal open={showTx} onClose={() => setShowTx(false)} title="Mouvement de caisse" size="sm">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => setTxForm(f => ({ ...f, type: 'entree' }))} className={`p-3 rounded-xl border-2 text-center font-semibold transition ${txForm.type === 'entree' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200'}`}>
-              ↑ Entrée
-            </button>
-            <button onClick={() => setTxForm(f => ({ ...f, type: 'sortie' }))} className={`p-3 rounded-xl border-2 text-center font-semibold transition ${txForm.type === 'sortie' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200'}`}>
-              ↓ Sortie
-            </button>
+            <button onClick={() => setTxForm(f => ({ ...f, type: 'entree' }))} className={`p-3 rounded-xl border-2 text-center font-semibold transition ${txForm.type === 'entree' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200'}`}>↑ Entrée</button>
+            <button onClick={() => setTxForm(f => ({ ...f, type: 'sortie' }))} className={`p-3 rounded-xl border-2 text-center font-semibold transition ${txForm.type === 'sortie' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200'}`}>↓ Sortie</button>
           </div>
-          <Field label="Montant (XOF)">
-            <Input type="number" value={txForm.amount} onChange={e => setTxForm(f => ({ ...f, amount: e.target.value }))} placeholder="Montant..." />
-          </Field>
+          <Field label="Montant (XOF)"><Input type="number" value={txForm.amount} onChange={e => setTxForm(f => ({ ...f, amount: e.target.value }))} placeholder="Montant..." /></Field>
           <Field label="Mode de paiement">
             <Select value={txForm.method} onChange={e => setTxForm(f => ({ ...f, method: e.target.value }))}>
               <option value="especes">💵 Espèces</option>
@@ -280,9 +228,7 @@ export const CashierPage: React.FC = () => {
               <option value="mtn">📱 MTN Money</option>
             </Select>
           </Field>
-          <Field label="Raison">
-            <Input value={txForm.reason} onChange={e => setTxForm(f => ({ ...f, reason: e.target.value }))} placeholder="Ex: Paiement client, Achat fournitures..." />
-          </Field>
+          <Field label="Raison"><Input value={txForm.reason} onChange={e => setTxForm(f => ({ ...f, reason: e.target.value }))} placeholder="Ex: Paiement client, Achat fournitures..." /></Field>
           <Button className="w-full" onClick={handleAddTx}>Enregistrer</Button>
         </div>
       </Modal>

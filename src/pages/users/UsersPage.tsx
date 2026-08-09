@@ -28,7 +28,7 @@ const INITIAL_USERS: AppUser[] = [
   {
     id: '1', full_name: 'Administrateur', email: 'admin@pressing.ci',
     phone: '+225 07 00 00 00 00', role: 'admin', permissions: [],
-    is_active: true, created_at: new Date().toISOString()
+    is_active: true, password: 'admin123', created_at: new Date().toISOString()
   }
 ]
 
