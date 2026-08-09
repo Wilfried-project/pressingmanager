@@ -47,7 +47,7 @@ export const CashierPage: React.FC = () => {
 
   const handleOpenSession = () => {
     const amount = parseFloat(openAmount) || 0
-    addSession({ id: crypto.randomUUID(), opening_amount: amount, opened_by: user?.full_name || 'Admin', opened_at: new Date().toISOString(), status: 'open' })
+    addSession({ id: crypto.randomUUID(), agency_id: 'default', opening_amount: amount, opened_by: user?.full_name || 'Admin', opened_at: new Date().toISOString(), status: 'open', notes: '' })
     setOpenAmount('')
     setShowOpen(false)
   }
