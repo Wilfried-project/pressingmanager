@@ -4,7 +4,7 @@ import { PageHeader, Button, Field, Input, Select, Card, Table, Badge, Modal, Al
 import { DollarSign, TrendingUp, TrendingDown, Lock, Unlock, Plus } from 'lucide-react'
 
 export const CashierPage: React.FC = () => {
-  const { sessions, addSession, updateSession, addCashTransaction, getCurrentSession } = useCashStore()
+  const { sessions, addSession, updateSession, addCashTransaction, getCurrentSession, cashTransactions } = useCashStore()
   const { user } = useAuthStore()
   const [showOpen, setShowOpen] = useState(false)
   const [showClose, setShowClose] = useState(false)
@@ -17,7 +17,7 @@ export const CashierPage: React.FC = () => {
   const [txForm, setTxForm] = useState({ type: 'entree' as 'entree' | 'sortie', amount: '', reason: '', method: 'especes' })
 
   const currentSession = getCurrentSession()
-  const sessionTx = currentSession ? (currentSession.transactions || []) : []
+  const sessionTx = currentSession ? cashTransactions.filter((t: any) => t.session_id === currentSession.id) : []
   const totalEntrees = sessionTx.filter((t: any) => t.type === 'entree').reduce((s: number, t: any) => s + t.amount, 0)
   const totalSorties = sessionTx.filter((t: any) => t.type === 'sortie').reduce((s: number, t: any) => s + t.amount, 0)
   const soldeAttendu = (currentSession?.opening_amount || 0) + totalEntrees - totalSorties
@@ -47,7 +47,7 @@ export const CashierPage: React.FC = () => {
 
   const handleOpenSession = () => {
     const amount = parseFloat(openAmount) || 0
-    addSession({ id: crypto.randomUUID(), opening_amount: amount, opened_by: user?.full_name || 'Admin', opened_at: new Date().toISOString(), status: 'open', transactions: [] })
+    addSession({ id: crypto.randomUUID(), opening_amount: amount, opened_by: user?.full_name || 'Admin', opened_at: new Date().toISOString(), status: 'open' })
     setOpenAmount('')
     setShowOpen(false)
   }
