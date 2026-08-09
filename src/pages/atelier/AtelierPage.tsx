@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useOrderStore, useShopConfig } from '../../lib/store'
 import type { Order } from '../../types'
-import { Html5Qrcode } from 'html5-qrcode'
+
 
 const ETAPES = [
   { key: 'recu',      label: 'Reçu',      emoji: '📥', color: '#6b7280', next: 'tri' },
@@ -31,7 +31,9 @@ export const AtelierPage: React.FC = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [scanning, setScanning] = useState(false)
-  const scannerRef = useRef<Html5Qrcode | null>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const detectorRef = useRef<any>(null)
 
   const startScan = async () => {
     setScanning(true)
@@ -123,9 +125,10 @@ export const AtelierPage: React.FC = () => {
           {/* Scanner QR */}
           {scanning ? (
             <div style={{ marginBottom: 20 }}>
-              <div id="qr-reader" style={{ width: '100%', borderRadius: 16, overflow: 'hidden', border: '3px solid #7c3aed' }} />
+              <video ref={videoRef} style={{ width: '100%', borderRadius: 16, border: '3px solid #7c3aed', maxHeight: 300, objectFit: 'cover' }} playsInline muted />
+              <p style={{ fontSize: 14, color: '#64748b', margin: '8px 0', textAlign: 'center' }}>Pointez la caméra vers le QR code du ticket</p>
               <button onClick={stopScan}
-                style={{ marginTop: 12, width: '100%', padding: '14px', fontSize: 16, fontWeight: 700, background: '#fef2f2', color: '#dc2626', border: '2px solid #fecaca', borderRadius: 12, cursor: 'pointer' }}>
+                style={{ marginTop: 4, width: '100%', padding: '14px', fontSize: 16, fontWeight: 700, background: '#fef2f2', color: '#dc2626', border: '2px solid #fecaca', borderRadius: 12, cursor: 'pointer' }}>
                 ✕ Arrêter le scan
               </button>
             </div>
