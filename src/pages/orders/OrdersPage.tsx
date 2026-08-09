@@ -708,7 +708,7 @@ export const OrdersPage: React.FC = () => {
                             const val = parseFloat(e.target.value) || 0
                             setPaymentDetails(prev => {
                               const existing = prev.filter(p => p.method !== m.id)
-                              return val > 0 ? [...existing, { method: m.id as any, amount: val }] : existing
+                              return val > 0 ? [...existing, { method: m.id as any, amount: val, paid_at: new Date().toISOString() }] : existing
                             })
                           }}
                         />

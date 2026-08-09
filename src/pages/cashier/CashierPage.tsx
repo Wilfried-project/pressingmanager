@@ -4,7 +4,7 @@ import { PageHeader, Button, Field, Input, Select, Card, Table, Badge, Modal, Al
 import { DollarSign, TrendingUp, TrendingDown, Lock, Unlock, Plus } from 'lucide-react'
 
 export const CashierPage: React.FC = () => {
-  const { sessions, transactions, openSession, closeSession, addCashTransaction, getCurrentSession } = useCashStore()
+  const { sessions, cashTransactions: transactions, openSession: openCashSession, closeSession: closeCashSession, addCashTransaction, getCurrentSession } = useCashStore()
   const { user } = useAuthStore()
   const [showOpen, setShowOpen] = useState(false)
   const [showClose, setShowClose] = useState(false)
@@ -52,7 +52,7 @@ export const CashierPage: React.FC = () => {
 
   const handleOpenSession = () => {
     const amount = parseFloat(openAmount) || 0
-    openSession({ id: crypto.randomUUID(), opening_amount: amount, opened_by: user?.full_name || 'Admin', opened_at: new Date().toISOString(), status: 'open' })
+    openCashSession({ id: crypto.randomUUID(), opening_amount: amount, opened_by: user?.full_name || 'Admin', opened_at: new Date().toISOString(), status: 'open' })
     setOpenAmount('')
     setShowOpen(false)
     setShowConfirmSolde(false)
@@ -61,7 +61,7 @@ export const CashierPage: React.FC = () => {
   const handleCloseSession = () => {
     if (!currentSession) return
     const amount = parseFloat(closeAmount) || soldeAttendu
-    closeSession(currentSession.id, amount)
+    closeCashSession(currentSession.id, amount)
     setCloseAmount('')
     setShowClose(false)
   }
@@ -70,7 +70,7 @@ export const CashierPage: React.FC = () => {
     if (!currentSession) { alert('⚠️ Vous devez ouvrir la caisse avant d\'enregistrer un mouvement.'); setShowOpen(true); return }
     const amount = parseFloat(txForm.amount) || 0
     if (!amount || !txForm.reason) { alert('Montant et raison requis'); return }
-    addCashTransaction({ id: crypto.randomUUID(), session_id: currentSession.id, type: txForm.type, amount, reason: txForm.reason, method: txForm.method, created_by: user?.full_name || 'Admin', created_at: new Date().toISOString() })
+    addCashTransaction({ id: crypto.randomUUID(), session_id: currentSession.id, type: txForm.type, amount, reason: `[${txForm.method.toUpperCase()}] ${txForm.reason}`, created_by: user?.full_name || 'Admin', created_at: new Date().toISOString() })
     setTxForm({ type: 'entree', amount: '', reason: '', method: 'especes' })
     setShowTx(false)
   }
