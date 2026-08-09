@@ -1,296 +1,185 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { useOrderStore, useShopConfig } from '../../lib/store'
-import type { Order, Cloth } from '../../types'
+import type { Order } from '../../types'
 
-const STATUS_STEPS = [
-  { key: 'recu', label: 'Reçu', color: '#6b7280', bg: '#f3f4f6' },
-  { key: 'tri', label: 'Tri', color: '#6366f1', bg: '#eef2ff' },
-  { key: 'pretraitement', label: 'Prétraitement', color: '#8b5cf6', bg: '#f5f3ff' },
-  { key: 'detachage', label: 'Détachage', color: '#f59e0b', bg: '#fffbeb' },
-  { key: 'lavage', label: 'Lavage', color: '#06b6d4', bg: '#ecfeff' },
-  { key: 'essorage', label: 'Essorage', color: '#3b82f6', bg: '#eff6ff' },
-  { key: 'sechage', label: 'Séchage', color: '#f97316', bg: '#fff7ed' },
-  { key: 'repassage', label: 'Repassage', color: '#ef4444', bg: '#fef2f2' },
-  { key: 'controle', label: 'Contrôle', color: '#10b981', bg: '#f0fdf4' },
-  { key: 'retouche', label: 'Retouche', color: '#f97316', bg: '#fff7ed' },
-  { key: 'emballage', label: 'Emballage', color: '#6366f1', bg: '#eef2ff' },
-  { key: 'stock', label: 'Stock', color: '#6b7280', bg: '#f3f4f6' },
-  { key: 'pret', label: 'Prêt', color: '#059669', bg: '#f0fdf4' },
+const ETAPES = [
+  { key: 'recu',      label: 'Reçu',      emoji: '📥', color: '#6b7280', next: 'tri' },
+  { key: 'tri',       label: 'Tri',        emoji: '🗂️', color: '#6366f1', next: 'lavage' },
+  { key: 'lavage',    label: 'Lavage',     emoji: '🫧', color: '#06b6d4', next: 'sechage' },
+  { key: 'sechage',   label: 'Séchage',    emoji: '💨', color: '#f97316', next: 'repassage' },
+  { key: 'repassage', label: 'Repassage',  emoji: '♨️', color: '#ef4444', next: 'emballage' },
+  { key: 'emballage', label: 'Emballage',  emoji: '📦', color: '#8b5cf6', next: 'pret' },
+  { key: 'pret',      label: 'PRÊT !',     emoji: '✅', color: '#059669', next: null },
 ]
 
-const PRIORITY_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  vip: { bg: '#fef3c7', text: '#92400e', label: '⭐ VIP' },
-  express: { bg: '#fee2e2', text: '#991b1b', label: '⚡ Express' },
-  normal: { bg: '#f3f4f6', text: '#374151', label: 'Normal' },
-  economique: { bg: '#f0fdf4', text: '#166534', label: 'Économique' },
+const getEtape = (key: string) => ETAPES.find(e => e.key === key) || ETAPES[0]
+
+const getEtapeCommande = (order: Order) => {
+  const statuts = order.clothes.map(c => c.status)
+  for (const etape of ETAPES) {
+    if (statuts.some(s => s === etape.key)) return etape
+  }
+  return ETAPES[0]
 }
 
 export const AtelierPage: React.FC = () => {
   const { orders, updateOrder } = useOrderStore()
   const { config } = useShopConfig()
-  const [search, setSearch] = useState('')
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
-  const [filter, setFilter] = useState<'all' | 'en_attente' | 'en_cours'>('all')
-  const [updated, setUpdated] = useState<string | null>(null)
+  const [ticket, setTicket] = useState('')
+  const [order, setOrder] = useState<Order | null>(null)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
 
-  // Commandes actives (pas livrées, pas annulées)
-  const activeOrders = useMemo(() => orders.filter(o =>
-    o.status !== 'livre' && o.status !== 'annule' && o.status !== 'pret'
-  ).sort((a, b) => {
-    const prio: Record<string, number> = { vip: 0, express: 1, normal: 2, economique: 3 }
-    return (prio[a.priority] || 2) - (prio[b.priority] || 2)
-  }), [orders])
-
-  const filtered = useMemo(() => activeOrders.filter(o => {
-    const matchSearch = !search || o.ticket_number.toLowerCase().includes(search.toLowerCase()) ||
-      `${o.client?.first_name} ${o.client?.last_name}`.toLowerCase().includes(search.toLowerCase())
-    const matchFilter = filter === 'all' || o.status === filter
-    return matchSearch && matchFilter
-  }), [activeOrders, search, filter])
-
-  const updateClothStatus = (clothId: string, newStatus: string) => {
-    if (!selectedOrder) return
-    const updatedClothes = selectedOrder.clothes.map(c => {
-      if (c.id !== clothId) return c
-      return {
-        ...c,
-        status: newStatus as Cloth['status'],
-        status_history: [...(c.status_history || []), {
-          status: newStatus as Cloth['status'],
-          changed_at: new Date().toISOString(),
-          changed_by: 'atelier',
-          notes: ''
-        }]
-      }
-    })
-    const allReady = updatedClothes.every(c => c.status === 'pret' || c.status === 'livre')
-    const newOrderStatus = allReady ? 'pret' : 'en_cours'
-    updateOrder(selectedOrder.id, { clothes: updatedClothes, status: newOrderStatus as any })
-    setSelectedOrder({ ...selectedOrder, clothes: updatedClothes, status: newOrderStatus as any })
-    setUpdated(clothId)
-    setTimeout(() => setUpdated(null), 2000)
+  const chercher = () => {
+    const found = orders.find(o =>
+      o.ticket_number.toLowerCase() === ticket.trim().toLowerCase() &&
+      o.status !== 'livre' && o.status !== 'annule'
+    )
+    if (found) { setOrder(found); setError(''); setSuccess(false) }
+    else { setError('Ticket introuvable'); setOrder(null) }
   }
 
-  const getOrderProgress = (order: Order) => {
-    const total = order.clothes.length
-    const done = order.clothes.filter(c => ['controle', 'retouche', 'emballage', 'stock', 'pret'].includes(c.status)).length
-    return { total, done, pct: total > 0 ? Math.round((done / total) * 100) : 0 }
+  const avancer = () => {
+    if (!order) return
+    const etapeActuelle = getEtapeCommande(order)
+    if (!etapeActuelle.next) return
+    const updatedClothes = order.clothes.map(c => ({
+      ...c,
+      status: etapeActuelle.next as any,
+      status_history: [...(c.status_history || []), { status: etapeActuelle.next as any, changed_at: new Date().toISOString(), changed_by: 'atelier', notes: '' }]
+    }))
+    const newStatus = etapeActuelle.next === 'pret' ? 'pret' : 'en_cours'
+    updateOrder(order.id, { clothes: updatedClothes, status: newStatus as any })
+    const updated = { ...order, clothes: updatedClothes, status: newStatus as any }
+    setOrder(updated)
+    if (etapeActuelle.next === 'pret') {
+      setSuccess(true)
+      setTimeout(() => { setOrder(null); setTicket(''); setSuccess(false) }, 3000)
+    }
   }
+
+  const etape = order ? getEtapeCommande(order) : null
+  const prochaine = etape?.next ? getEtape(etape.next) : null
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <div style={{ background: '#1e293b', color: '#fff', padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 16, borderBottom: '3px solid #7c3aed' }}>
-        {config.logo
-          ? <img src={config.logo} alt="logo" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
-          : <div style={{ width: 40, height: 40, background: '#7c3aed', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🧺</div>
-        }
-        <div style={{ flex: 1 }}>
-          <p style={{ fontWeight: 900, fontSize: 20, margin: 0 }}>{config.name || 'PressingManager'} — Atelier</p>
-          <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>Interface laveur / repasseur</p>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: 13, color: '#94a3b8', margin: 0 }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-          <p style={{ fontSize: 20, fontWeight: 900, color: '#7c3aed', margin: 0 }}>{activeOrders.length} commande(s) en cours</p>
-        </div>
+    <div style={{ minHeight: '100vh', background: order ? etape?.color + '12' : '#f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, transition: 'background 0.5s' }}>
+
+      {/* Logo */}
+      <div style={{ position: 'absolute', top: 20, left: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
+        {config.logo ? <img src={config.logo} alt="logo" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover' }} /> : <div style={{ width: 44, height: 44, background: '#7c3aed', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🧺</div>}
+        <div><p style={{ fontWeight: 900, fontSize: 16, margin: 0, color: '#1e293b' }}>{config.name || 'PressingManager'}</p><p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>Atelier</p></div>
       </div>
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Sidebar — liste commandes */}
-        <div style={{ width: 380, background: '#fff', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {/* Recherche + filtres */}
-          <div style={{ padding: 16, borderBottom: '1px solid #e2e8f0' }}>
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Ticket ou nom client..."
-              style={{ width: '100%', padding: '10px 14px', border: '2px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }}
-              onFocus={e => (e.target.style.borderColor = '#7c3aed')}
-              onBlur={e => (e.target.style.borderColor = '#e2e8f0')}
-            />
-            <div style={{ display: 'flex', gap: 8 }}>
-              {[{ key: 'all', label: 'Toutes' }, { key: 'en_attente', label: 'En attente' }, { key: 'en_cours', label: 'En cours' }].map(f => (
-                <button key={f.key} onClick={() => setFilter(f.key as any)}
-                  style={{ flex: 1, padding: '6px 0', borderRadius: 8, border: '2px solid', borderColor: filter === f.key ? '#7c3aed' : '#e2e8f0', background: filter === f.key ? '#ede9fe' : '#f8fafc', color: filter === f.key ? '#7c3aed' : '#6b7280', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* ECRAN 1 — Saisie ticket */}
+      {!order && !success && (
+        <div style={{ textAlign: 'center', maxWidth: 500, width: '100%' }}>
+          <p style={{ fontSize: 80, margin: '0 0 16px' }}>🎫</p>
+          <p style={{ fontSize: 28, fontWeight: 900, color: '#1e293b', margin: '0 0 8px' }}>Numéro du ticket</p>
+          <p style={{ fontSize: 16, color: '#64748b', margin: '0 0 32px' }}>Tapez ou scannez le code du client</p>
+          <input type="text" value={ticket} onChange={e => setTicket(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && chercher()} placeholder="PM-123456" autoFocus
+            style={{ width: '100%', padding: '20px 24px', fontSize: 30, fontWeight: 900, textAlign: 'center', border: '3px solid #e2e8f0', borderRadius: 16, outline: 'none', letterSpacing: 4, boxSizing: 'border-box', marginBottom: 16, color: '#1e293b' }} />
+          {error && <div style={{ background: '#fef2f2', border: '2px solid #fecaca', borderRadius: 12, padding: 16, marginBottom: 16 }}><p style={{ fontSize: 18, fontWeight: 700, color: '#dc2626', margin: 0 }}>❌ {error}</p></div>}
+          <button onClick={chercher} disabled={!ticket.trim()}
+            style={{ width: '100%', padding: '20px', fontSize: 22, fontWeight: 900, background: ticket.trim() ? '#7c3aed' : '#e2e8f0', color: ticket.trim() ? '#fff' : '#94a3b8', border: 'none', borderRadius: 16, cursor: ticket.trim() ? 'pointer' : 'not-allowed', marginBottom: 32 }}>
+            🔍 Chercher
+          </button>
 
-          {/* Liste */}
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>
-                <p style={{ fontSize: 40 }}>✅</p>
-                <p style={{ fontWeight: 700 }}>Aucune commande en cours</p>
-              </div>
-            ) : filtered.map(order => {
-              const progress = getOrderProgress(order)
-              const prio = PRIORITY_COLORS[order.priority] || PRIORITY_COLORS.normal
-              const isSelected = selectedOrder?.id === order.id
-              return (
-                <div key={order.id} onClick={() => setSelectedOrder(order)}
-                  style={{ padding: 16, borderBottom: '1px solid #f1f5f9', cursor: 'pointer', background: isSelected ? '#ede9fe' : '#fff', borderLeft: isSelected ? '4px solid #7c3aed' : '4px solid transparent', transition: 'all 0.15s' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                    <div>
-                      <p style={{ fontWeight: 900, fontSize: 15, margin: '0 0 2px', color: '#1e293b' }}>#{order.ticket_number}</p>
-                      <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{order.client?.first_name} {order.client?.last_name}</p>
-                    </div>
-                    <span style={{ background: prio.bg, color: prio.text, padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700 }}>{prio.label}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>{order.clothes.length} article(s) • {order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'Sans date'}</p>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: progress.pct === 100 ? '#059669' : '#7c3aed', margin: 0 }}>{progress.done}/{progress.total}</p>
-                  </div>
-                  <div style={{ background: '#e2e8f0', borderRadius: 99, height: 6, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', background: progress.pct === 100 ? '#059669' : '#7c3aed', width: `${progress.pct}%`, borderRadius: 99, transition: 'width 0.3s' }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Zone principale — détail commande */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-          {!selectedOrder ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', color: '#94a3b8' }}>
-              <p style={{ fontSize: 64, margin: 0 }}>👈</p>
-              <p style={{ fontSize: 20, fontWeight: 700, marginTop: 16 }}>Sélectionnez une commande</p>
-              <p style={{ fontSize: 14, marginTop: 8 }}>Cliquez sur une commande à gauche pour voir les vêtements</p>
-            </div>
-          ) : (
-            <div>
-              {/* Header commande */}
-              <div style={{ background: '#fff', borderRadius: 16, padding: 20, marginBottom: 20, border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-                    <p style={{ fontSize: 24, fontWeight: 900, color: '#7c3aed', margin: 0 }}>#{selectedOrder.ticket_number}</p>
-                    <span style={{ background: PRIORITY_COLORS[selectedOrder.priority]?.bg, color: PRIORITY_COLORS[selectedOrder.priority]?.text, padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 700 }}>{PRIORITY_COLORS[selectedOrder.priority]?.label}</span>
-                  </div>
-                  <p style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', margin: '0 0 4px' }}>{selectedOrder.client?.first_name} {selectedOrder.client?.last_name}</p>
-                  <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>
-                    {selectedOrder.clothes.length} article(s) •
-                    Date prévue : {selectedOrder.expected_at ? new Date(selectedOrder.expected_at).toLocaleDateString('fr-FR') : 'Non définie'}
-                  </p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 4px' }}>Progression</p>
-                  <p style={{ fontSize: 28, fontWeight: 900, color: '#7c3aed', margin: 0 }}>{getOrderProgress(selectedOrder).pct}%</p>
-                  <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>{getOrderProgress(selectedOrder).done}/{getOrderProgress(selectedOrder).total} traité(s)</p>
-                </div>
-              </div>
-
-              {/* Instructions générales */}
-              {selectedOrder.notes && (
-                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12, padding: 16, marginBottom: 20 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: '#92400e', margin: '0 0 4px' }}>📝 Notes générales</p>
-                  <p style={{ fontSize: 14, color: '#78350f', margin: 0 }}>{selectedOrder.notes}</p>
-                </div>
-              )}
-
-              {/* Vêtements */}
-              <div style={{ display: 'grid', gap: 16 }}>
-                {selectedOrder.clothes.map((cloth, i) => {
-                  const currentStep = STATUS_STEPS.find(s => s.key === cloth.status) || STATUS_STEPS[0]
-                  const currentIdx = STATUS_STEPS.findIndex(s => s.key === cloth.status)
-                  const isDone = ['controle', 'retouche', 'emballage', 'stock', 'pret'].includes(cloth.status)
-
+          {/* Liste commandes rapide */}
+          {orders.filter(o => o.status === 'en_cours' || o.status === 'en_attente').length > 0 && (
+            <div style={{ textAlign: 'left' }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#64748b', marginBottom: 10, textTransform: 'uppercase' }}>Commandes à traiter</p>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {orders.filter(o => o.status === 'en_cours' || o.status === 'en_attente').sort((a, b) => { const p: Record<string,number> = { vip: 0, express: 1, normal: 2, economique: 3 }; return (p[a.priority]||2)-(p[b.priority]||2) }).map(o => {
+                  const etapeO = getEtapeCommande(o)
                   return (
-                    <div key={cloth.id} style={{ background: '#fff', borderRadius: 16, border: `2px solid ${isDone ? '#10b981' : '#e2e8f0'}`, overflow: 'hidden' }}>
-                      {/* Header vêtement */}
-                      <div style={{ background: isDone ? '#f0fdf4' : '#f8fafc', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <div style={{ width: 36, height: 36, background: '#7c3aed', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: 16 }}>{i + 1}</div>
-                          <div>
-                            <p style={{ fontWeight: 900, fontSize: 16, margin: '0 0 2px', textTransform: 'capitalize', color: '#1e293b' }}>
-                              {cloth.type} {cloth.color ? `— ${cloth.color}` : ''} {cloth.brand ? `(${cloth.brand})` : ''}
-                            </p>
-                            <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>
-                              {cloth.service?.replace(/_/g, ' ')} • Qté: {cloth.quantity}
-                              {cloth.material ? ` • ${cloth.material}` : ''}
-                              {cloth.size ? ` • Taille: ${cloth.size}` : ''}
-                            </p>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          {updated === cloth.id && (
-                            <span style={{ background: '#f0fdf4', color: '#059669', padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 700 }}>✅ Mis à jour !</span>
-                          )}
-                          <span style={{ background: currentStep.bg, color: currentStep.color, padding: '6px 14px', borderRadius: 99, fontSize: 13, fontWeight: 700, border: `1px solid ${currentStep.color}20` }}>
-                            {currentStep.label}
-                          </span>
-                        </div>
+                    <button key={o.id} onClick={() => { setTicket(o.ticket_number); setOrder(o); setError('') }}
+                      style={{ background: '#fff', border: `2px solid ${o.priority === 'vip' || o.priority === 'express' ? etapeO.color : '#e2e8f0'}`, borderRadius: 12, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', width: '100%' }}>
+                      <span style={{ fontSize: 32 }}>{etapeO.emoji}</span>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontWeight: 900, fontSize: 16, margin: '0 0 2px', color: '#1e293b' }}>#{o.ticket_number} {(o.priority === 'vip' || o.priority === 'express') && <span style={{ marginLeft: 8, background: o.priority === 'vip' ? '#fef3c7' : '#fee2e2', color: o.priority === 'vip' ? '#92400e' : '#991b1b', padding: '2px 8px', borderRadius: 99, fontSize: 11 }}>{o.priority === 'vip' ? '⭐ VIP' : '⚡ Express'}</span>}</p>
+                        <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{o.client?.first_name} {o.client?.last_name} • {o.clothes.length} article(s)</p>
                       </div>
-
-                      <div style={{ padding: 20 }}>
-                        {/* Instructions spéciales */}
-                        {cloth.special_instructions && (
-                          <div style={{ background: '#fff7ed', border: '2px solid #fed7aa', borderRadius: 10, padding: 12, marginBottom: 16 }}>
-                            <p style={{ fontSize: 13, fontWeight: 800, color: '#c2410c', margin: '0 0 4px' }}>⚠️ INSTRUCTIONS SPÉCIALES — À lire avant de traiter</p>
-                            <p style={{ fontSize: 14, color: '#9a3412', margin: 0, fontWeight: 600 }}>{cloth.special_instructions}</p>
-                          </div>
-                        )}
-
-                        {/* Photos */}
-                        {(cloth.photos || []).length > 0 && (
-                          <div style={{ marginBottom: 16 }}>
-                            <p style={{ fontSize: 12, fontWeight: 700, color: '#64748b', margin: '0 0 8px', textTransform: 'uppercase' }}>Photos à la réception</p>
-                            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                              {(cloth.photos || []).map((photo, pi) => (
-                                <img key={pi} src={photo} alt={`Photo ${pi + 1}`}
-                                  style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 10, border: '2px solid #e2e8f0', cursor: 'pointer' }}
-                                  onClick={() => window.open(photo, '_blank')}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* État réception */}
-                        <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          <span style={{ background: '#f1f5f9', padding: '4px 10px', borderRadius: 8, fontSize: 12, color: '#475569' }}>
-                            État réception : <strong>{cloth.condition_on_arrival || 'bon'}</strong>
-                          </span>
-                        </div>
-
-                        {/* Boutons statut */}
-                        <div>
-                          <p style={{ fontSize: 12, fontWeight: 700, color: '#64748b', margin: '0 0 10px', textTransform: 'uppercase' }}>Mettre à jour le statut</p>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
-                            {STATUS_STEPS.map((step, idx) => {
-                              const isCurrent = idx === currentIdx
-                              const isDoneStep = idx < currentIdx
-                              return (
-                                <button key={step.key} onClick={() => updateClothStatus(cloth.id, step.key)}
-                                  style={{
-                                    padding: '12px 8px', borderRadius: 10, border: '2px solid',
-                                    borderColor: isCurrent ? step.color : isDoneStep ? '#10b981' : '#e2e8f0',
-                                    background: isCurrent ? step.bg : isDoneStep ? '#f0fdf4' : '#f8fafc',
-                                    color: isCurrent ? step.color : isDoneStep ? '#059669' : '#94a3b8',
-                                    fontSize: 13, fontWeight: isCurrent ? 800 : 600,
-                                    cursor: 'pointer', textAlign: 'center',
-                                    transform: isCurrent ? 'scale(1.05)' : 'scale(1)',
-                                    transition: 'all 0.15s',
-                                    boxShadow: isCurrent ? `0 4px 12px ${step.color}30` : 'none'
-                                  }}>
-                                  {isDoneStep ? '✓ ' : ''}{step.label}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                      <span style={{ background: etapeO.color + '20', color: etapeO.color, padding: '4px 10px', borderRadius: 8, fontSize: 13, fontWeight: 700 }}>{etapeO.label}</span>
+                    </button>
                   )
                 })}
               </div>
             </div>
           )}
         </div>
-      </div>
+      )}
+
+      {/* ECRAN 2 — Commande active */}
+      {order && !success && etape && (
+        <div style={{ textAlign: 'center', maxWidth: 560, width: '100%' }}>
+          {/* Client */}
+          <div style={{ background: '#fff', borderRadius: 20, padding: 24, marginBottom: 20, border: '2px solid #e2e8f0' }}>
+            <p style={{ fontSize: 15, color: '#64748b', margin: '0 0 4px' }}>Client</p>
+            <p style={{ fontSize: 30, fontWeight: 900, color: '#1e293b', margin: '0 0 4px' }}>{order.client?.first_name} {order.client?.last_name}</p>
+            <p style={{ fontSize: 20, color: '#7c3aed', fontWeight: 700, margin: '0 0 10px' }}>#{order.ticket_number}</p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span style={{ background: '#f1f5f9', padding: '6px 16px', borderRadius: 99, fontSize: 15, fontWeight: 700, color: '#475569' }}>{order.clothes.length} vêtement(s)</span>
+              {order.priority !== 'normal' && <span style={{ background: order.priority === 'vip' ? '#fef3c7' : '#fee2e2', color: order.priority === 'vip' ? '#92400e' : '#991b1b', padding: '6px 16px', borderRadius: 99, fontSize: 15, fontWeight: 700 }}>{order.priority === 'vip' ? '⭐ VIP' : '⚡ Express'}</span>}
+            </div>
+          </div>
+
+          {/* Étape actuelle */}
+          <div style={{ background: etape.color, borderRadius: 24, padding: '32px 24px', marginBottom: 20, boxShadow: `0 8px 32px ${etape.color}40` }}>
+            <p style={{ fontSize: 80, margin: '0 0 8px' }}>{etape.emoji}</p>
+            <p style={{ fontSize: 34, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>{etape.label}</p>
+            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', margin: 0 }}>En cours pour toute la commande</p>
+          </div>
+
+          {/* Instructions spéciales */}
+          {order.clothes.some(c => c.special_instructions) && (
+            <div style={{ background: '#fff7ed', border: '3px solid #f97316', borderRadius: 16, padding: 20, marginBottom: 20 }}>
+              <p style={{ fontSize: 20, fontWeight: 900, color: '#c2410c', margin: '0 0 10px' }}>⚠️ ATTENTION !</p>
+              {order.clothes.filter(c => c.special_instructions).map((c, i) => (
+                <p key={i} style={{ fontSize: 16, color: '#9a3412', margin: '0 0 6px', fontWeight: 600, textTransform: 'capitalize' }}>• {c.type} : {c.special_instructions}</p>
+              ))}
+            </div>
+          )}
+
+          {/* Résumé vêtements */}
+          <div style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 20, border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+              {order.clothes.map((c, i) => (
+                <span key={i} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '8px 14px', borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#475569', textTransform: 'capitalize' }}>
+                  {c.quantity}x {c.type} {c.color ? `(${c.color})` : ''}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Bouton principal ENORME */}
+          {etape.next ? (
+            <button onClick={avancer}
+              style={{ width: '100%', padding: '28px', fontSize: 26, fontWeight: 900, background: prochaine?.color || '#059669', color: '#fff', border: 'none', borderRadius: 20, cursor: 'pointer', boxShadow: `0 8px 24px ${prochaine?.color || '#059669'}50`, marginBottom: 14 }}
+              onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
+              onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}>
+              {prochaine?.emoji} Passer à : {prochaine?.label}
+            </button>
+          ) : (
+            <div style={{ background: '#059669', borderRadius: 20, padding: 28, marginBottom: 14 }}>
+              <p style={{ fontSize: 28, fontWeight: 900, color: '#fff', margin: 0 }}>✅ Commande terminée !</p>
+            </div>
+          )}
+
+          <button onClick={() => { setOrder(null); setTicket(''); setError('') }}
+            style={{ background: 'transparent', border: '2px solid #e2e8f0', borderRadius: 14, padding: '14px 24px', fontSize: 16, fontWeight: 700, color: '#64748b', cursor: 'pointer', width: '100%' }}>
+            ← Retour
+          </button>
+        </div>
+      )}
+
+      {/* ECRAN 3 — Succès */}
+      {success && (
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: 120, margin: '0 0 24px' }}>🎉</p>
+          <p style={{ fontSize: 36, fontWeight: 900, color: '#059669', margin: '0 0 8px' }}>Commande prête !</p>
+          <p style={{ fontSize: 18, color: '#64748b' }}>Le client peut venir récupérer ses vêtements</p>
+        </div>
+      )}
     </div>
   )
 }
