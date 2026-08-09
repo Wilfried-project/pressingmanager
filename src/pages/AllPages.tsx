@@ -341,10 +341,10 @@ export const LoyaltyPage: React.FC = () => {
 // ============================================================
 export const AgendaPage: React.FC = () => {
   const { events, addEvent, deleteEvent, getEventsByDate } = useAgendaStore()
+  const orders = useOrderStore(s => s.orders)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ title: '', type: 'rappel' as AgendaEvent['type'], date: selectedDate, time: '09:00', description: '' })
-  const dayEvents = getEventsByDate(selectedDate)
   const typeColors: Record<string,string> = { livraison: 'blue', rappel: 'yellow', conge: 'green', autre: 'gray' }
   const typeIcons: Record<string,string> = { livraison: '🚚', rappel: '🔔', conge: '🏖️', autre: '📋' }
   const today = new Date()
@@ -353,22 +353,97 @@ export const AgendaPage: React.FC = () => {
   const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const days = Array.from({ length: 42 }, (_, i) => { const day = i - firstDay + 1; return day > 0 && day <= daysInMonth ? day : null })
+  const dayOrders = orders.filter(o => o.expected_at && o.expected_at.startsWith(selectedDate) && o.status !== 'annule' && o.status !== 'livre')
+  const dayEvents = getEventsByDate(selectedDate)
+  const daysWithOrders = new Set(orders.filter(o => o.expected_at && o.status !== 'annule' && o.status !== 'livre').map(o => o.expected_at.split('T')[0]))
+  const daysWithEvents = new Set(events.map(e => e.date))
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Agenda & Planning" subtitle={`${events.length} événement(s)`} action={<Button icon={<Plus size={18} />} onClick={() => { setForm({ ...form, date: selectedDate }); setShowForm(true) }}>Nouvel événement</Button>} />
+      <PageHeader title="Agenda & Planning" subtitle={`${events.length} événement(s) — ${orders.filter(o => o.expected_at && o.status !== 'annule').length} livraison(s) planifiée(s)`} action={<Button icon={<Plus size={18} />} onClick={() => { setForm({ ...form, date: selectedDate }); setShowForm(true) }}>Nouvel événement</Button>} />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <h2 className="font-bold text-center mb-4">{today.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</h2>
           <div className="grid grid-cols-7 gap-1 mb-2">{['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'].map(d => <p key={d} className="text-center text-xs font-semibold text-gray-400">{d}</p>)}</div>
           <div className="grid grid-cols-7 gap-1">
-            {days.map((day, i) => { if (!day) return <div key={i} />; const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`; const isSelected = selectedDate === dateStr; const isToday = dateStr === new Date().toISOString().split('T')[0]; return <button key={i} onClick={() => setSelectedDate(dateStr)} className={`aspect-square flex items-center justify-center rounded-xl text-sm font-medium transition ${isSelected ? 'bg-purple-600 text-white' : isToday ? 'bg-purple-50 text-purple-700 font-bold' : 'hover:bg-gray-100'}`}>{day}</button> })}
+            {days.map((day, i) => {
+              if (!day) return <div key={i} />
+              const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
+              const isSelected = selectedDate === dateStr
+              const isToday = dateStr === new Date().toISOString().split('T')[0]
+              const hasOrders = daysWithOrders.has(dateStr)
+              const hasEvents = daysWithEvents.has(dateStr)
+              return (
+                <button key={i} onClick={() => setSelectedDate(dateStr)} className={`aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium transition ${isSelected ? 'bg-purple-600 text-white' : isToday ? 'bg-purple-50 text-purple-700 font-bold' : 'hover:bg-gray-100'}`}>
+                  {day}
+                  <div className="flex gap-0.5 mt-0.5">
+                    {hasOrders && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-blue-500'}`} />}
+                    {hasEvents && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-yellow-500'}`} />}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-1.5">
+            <div className="flex items-center gap-2 text-xs text-gray-500"><div className="w-2 h-2 rounded-full bg-blue-500" /> Livraisons</div>
+            <div className="flex items-center gap-2 text-xs text-gray-500"><div className="w-2 h-2 rounded-full bg-yellow-500" /> Événements</div>
           </div>
         </Card>
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4">
           <Card>
             <h2 className="font-bold mb-4">{new Date(selectedDate+'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
-            {dayEvents.length > 0 ? <div className="space-y-3">{dayEvents.sort((a,b) => a.time.localeCompare(b.time)).map(event => <div key={event.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl"><div className="text-center flex-shrink-0"><p className="text-xl">{typeIcons[event.type]}</p><p className="text-xs font-bold text-gray-600">{event.time}</p></div><div className="flex-1"><div className="flex justify-between"><p className="font-semibold">{event.title}</p><button onClick={() => deleteEvent(event.id)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button></div><Badge label={event.type} color={typeColors[event.type]} />{event.description && <p className="text-xs text-gray-500 mt-1">{event.description}</p>}</div></div>)}</div> : <EmptyState icon="📅" message="Aucun événement ce jour" action={<Button size="sm" icon={<Plus size={14} />} onClick={() => setShowForm(true)}>Ajouter</Button>} />}
+            {dayOrders.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-bold text-blue-600 uppercase mb-2">Livraisons prévues ({dayOrders.length})</p>
+                <div className="space-y-2">
+                  {dayOrders.map(order => (
+                    <div key={order.id} className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-blue-900 truncate">#{order.ticket_number} — {order.client?.first_name} {order.client?.last_name}</p>
+                        <p className="text-xs text-blue-600">{order.clothes.length} article(s) • {order.total.toLocaleString('fr-FR')} XOF {order.remaining > 0 ? `• Reste: ${order.remaining.toLocaleString('fr-FR')} XOF` : '✅ Soldé'}</p>
+                      </div>
+                      <span className={`px-2 py-1 rounded-lg text-xs font-semibold flex-shrink-0 ${order.status === 'pret' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{order.status.replace('_',' ')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {dayEvents.length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-gray-500 uppercase mb-2">Événements ({dayEvents.length})</p>
+                <div className="space-y-2">
+                  {dayEvents.sort((a,b) => a.time.localeCompare(b.time)).map(event => (
+                    <div key={event.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                      <div className="text-center flex-shrink-0"><p className="text-xl">{typeIcons[event.type]}</p><p className="text-xs font-bold text-gray-600">{event.time}</p></div>
+                      <div className="flex-1"><div className="flex justify-between"><p className="font-semibold">{event.title}</p><button onClick={() => deleteEvent(event.id)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button></div><Badge label={event.type} color={typeColors[event.type]} />{event.description && <p className="text-xs text-gray-500 mt-1">{event.description}</p>}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {dayOrders.length === 0 && dayEvents.length === 0 && <EmptyState icon="📅" message="Aucune livraison ni événement ce jour" action={<Button size="sm" icon={<Plus size={14} />} onClick={() => setShowForm(true)}>Ajouter</Button>} />}
+          </Card>
+          <Card>
+            <h2 className="font-bold mb-4">Charge de travail — 7 prochains jours</h2>
+            <div className="grid grid-cols-7 gap-2">
+              {Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(); d.setDate(d.getDate() + i)
+                const ds = d.toISOString().split('T')[0]
+                const count = orders.filter(o => o.expected_at?.startsWith(ds) && o.status !== 'annule' && o.status !== 'livre').length
+                const isSelected = ds === selectedDate
+                const isSunday = d.getDay() === 0
+                const level = isSunday ? 'ferme' : count === 0 ? 'libre' : count <= 3 ? 'calme' : count <= 7 ? 'charge' : 'plein'
+                const colors: Record<string,string> = { ferme: 'bg-gray-200 text-gray-400', libre: 'bg-gray-100 text-gray-500', calme: 'bg-green-100 text-green-700', charge: 'bg-yellow-100 text-yellow-700', plein: 'bg-red-100 text-red-700' }
+                return (
+                  <button key={i} onClick={() => setSelectedDate(ds)} className={`p-2 rounded-xl text-center transition ${colors[level]} ${isSelected ? 'ring-2 ring-purple-500' : ''}`}>
+                    <p className="text-xs font-semibold">{d.toLocaleDateString('fr-FR', { weekday: 'short' })}</p>
+                    <p className="text-xs">{d.getDate()}</p>
+                    <p className="text-lg font-bold">{count}</p>
+                    <p className="text-xs">{level}</p>
+                  </button>
+                )
+              })}
+            </div>
           </Card>
         </div>
       </div>

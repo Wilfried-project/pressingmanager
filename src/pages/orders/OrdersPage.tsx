@@ -87,10 +87,10 @@ export const OrdersPage: React.FC = () => {
   const selectedClient = clients.find(c => c.id === form.client_id)
   const subtotal = clothes.reduce((s, c) => s + ((c.price || 0) * (c.quantity || 1)), 0)
 
-  // Suggestion date intelligente — trouve le jour le moins chargé dans les 7 prochains jours
+  // Suggestion date intelligente — Lun-Sam 8h-18h, max 10 commandes/jour
   const getSuggestedDate = () => {
-    const MAX_PER_DAY = 10 // max commandes par jour
-    for (let i = 1; i <= 7; i++) {
+    const MAX_PER_DAY = 10
+    for (let i = 1; i <= 14; i++) {
       const d = new Date()
       d.setDate(d.getDate() + i)
       if (d.getDay() === 0) continue // skip dimanche
@@ -101,9 +101,8 @@ export const OrdersPage: React.FC = () => {
         return `${ds}T09:00`
       }
     }
-    // Si tout est plein, retourner dans 8 jours
     const d = new Date()
-    d.setDate(d.getDate() + 8)
+    d.setDate(d.getDate() + 15)
     return `${d.toISOString().split('T')[0]}T09:00`
   }
 
