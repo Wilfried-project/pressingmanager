@@ -1,3 +1,4 @@
+import { ScanPage }
 import { ScanPage } from './pages/scan/ScanPage'
 import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
@@ -80,6 +81,7 @@ function App() {
         <Route path="/delivery" element={<Protected><DeliveryPage /></Protected>} />
         <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
         <Route path="/users" element={<Protected><UsersPage /></Protected>} />
+<Route path="/scan/:ticket" element={<ScanPage />} />
         <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
       </Routes>
     </BrowserRouter>
