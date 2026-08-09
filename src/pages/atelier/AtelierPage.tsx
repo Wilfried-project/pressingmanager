@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useOrderStore, useShopConfig } from '../../lib/store'
 import type { Order } from '../../types'
+import { Html5Qrcode } from 'html5-qrcode'
 
 const ETAPES = [
   { key: 'recu',      label: 'Reçu',      emoji: '📥', color: '#6b7280', next: 'tri' },
@@ -29,6 +30,47 @@ export const AtelierPage: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [scanning, setScanning] = useState(false)
+  const scannerRef = useRef<Html5Qrcode | null>(null)
+
+  const startScan = async () => {
+    setScanning(true)
+    setError('')
+    try {
+      const scanner = new Html5Qrcode('qr-reader')
+      scannerRef.current = scanner
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          // Le QR code contient l'URL — extraire le numéro de ticket
+          const ticketNum = decodedText.split('/').pop() || decodedText
+          stopScan()
+          setTicket(ticketNum)
+          const found = orders.find(o =>
+            o.ticket_number.toLowerCase() === ticketNum.toLowerCase() &&
+            o.status !== 'livre' && o.status !== 'annule'
+          )
+          if (found) { setOrder(found); setError(''); setSuccess(false) }
+          else { setError('Ticket introuvable : ' + ticketNum) }
+        },
+        () => {}
+      )
+    } catch (err) {
+      setError('Caméra non disponible')
+      setScanning(false)
+    }
+  }
+
+  const stopScan = async () => {
+    if (scannerRef.current) {
+      try { await scannerRef.current.stop() } catch {}
+      scannerRef.current = null
+    }
+    setScanning(false)
+  }
+
+  useEffect(() => { return () => { stopScan() } }, [])
 
   const chercher = () => {
     const found = orders.find(o =>
@@ -72,19 +114,45 @@ export const AtelierPage: React.FC = () => {
 
       {/* ECRAN 1 — Saisie ticket */}
       {!order && !success && (
-        <div style={{ textAlign: 'center', maxWidth: 500, width: '100%' }}>
+        <div style={{ textAlign: 'center', maxWidth: 520, width: '100%' }}>
           <p style={{ fontSize: 80, margin: '0 0 16px' }}>🎫</p>
           <p style={{ fontSize: 28, fontWeight: 900, color: '#1e293b', margin: '0 0 8px' }}>Numéro du ticket</p>
-          <p style={{ fontSize: 16, color: '#64748b', margin: '0 0 32px' }}>Tapez ou scannez le code du client</p>
+          <p style={{ fontSize: 16, color: '#64748b', margin: '0 0 24px' }}>Tapez le numéro ou scannez le QR code</p>
+
+          {/* Scanner QR */}
+          {scanning ? (
+            <div style={{ marginBottom: 20 }}>
+              <div id="qr-reader" style={{ width: '100%', borderRadius: 16, overflow: 'hidden', border: '3px solid #7c3aed' }} />
+              <button onClick={stopScan}
+                style={{ marginTop: 12, width: '100%', padding: '14px', fontSize: 16, fontWeight: 700, background: '#fef2f2', color: '#dc2626', border: '2px solid #fecaca', borderRadius: 12, cursor: 'pointer' }}>
+                ✕ Arrêter le scan
+              </button>
+            </div>
+          ) : (
+            <button onClick={startScan}
+              style={{ width: '100%', padding: '18px', fontSize: 20, fontWeight: 900, background: '#1e293b', color: '#fff', border: 'none', borderRadius: 16, cursor: 'pointer', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+              📷 Scanner le QR code
+            </button>
+          )}
+
+          {/* OU */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+            <span style={{ fontSize: 14, color: '#94a3b8', fontWeight: 600 }}>OU</span>
+            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+          </div>
+
           <input type="text" value={ticket} onChange={e => setTicket(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && chercher()} placeholder="PM-123456" autoFocus
-            style={{ width: '100%', padding: '20px 24px', fontSize: 30, fontWeight: 900, textAlign: 'center', border: '3px solid #e2e8f0', borderRadius: 16, outline: 'none', letterSpacing: 4, boxSizing: 'border-box', marginBottom: 16, color: '#1e293b' }} />
-          {error && <div style={{ background: '#fef2f2', border: '2px solid #fecaca', borderRadius: 12, padding: 16, marginBottom: 16 }}><p style={{ fontSize: 18, fontWeight: 700, color: '#dc2626', margin: 0 }}>❌ {error}</p></div>}
+            style={{ width: '100%', padding: '20px 24px', fontSize: 28, fontWeight: 900, textAlign: 'center', border: '3px solid #e2e8f0', borderRadius: 16, outline: 'none', letterSpacing: 4, boxSizing: 'border-box', marginBottom: 12, color: '#1e293b' }} />
+
+          {error && <div style={{ background: '#fef2f2', border: '2px solid #fecaca', borderRadius: 12, padding: 14, marginBottom: 12 }}><p style={{ fontSize: 17, fontWeight: 700, color: '#dc2626', margin: 0 }}>❌ {error}</p></div>}
+
           <button onClick={chercher} disabled={!ticket.trim()}
-            style={{ width: '100%', padding: '20px', fontSize: 22, fontWeight: 900, background: ticket.trim() ? '#7c3aed' : '#e2e8f0', color: ticket.trim() ? '#fff' : '#94a3b8', border: 'none', borderRadius: 16, cursor: ticket.trim() ? 'pointer' : 'not-allowed', marginBottom: 32 }}>
+            style={{ width: '100%', padding: '18px', fontSize: 20, fontWeight: 900, background: ticket.trim() ? '#7c3aed' : '#e2e8f0', color: ticket.trim() ? '#fff' : '#94a3b8', border: 'none', borderRadius: 16, cursor: ticket.trim() ? 'pointer' : 'not-allowed', marginBottom: 28 }}>
             🔍 Chercher
           </button>
 
-          {/* Liste commandes rapide */}
+          {/* Liste commandes */}
           {orders.filter(o => o.status === 'en_cours' || o.status === 'en_attente').length > 0 && (
             <div style={{ textAlign: 'left' }}>
               <p style={{ fontSize: 13, fontWeight: 700, color: '#64748b', marginBottom: 10, textTransform: 'uppercase' }}>Commandes à traiter</p>
@@ -96,7 +164,10 @@ export const AtelierPage: React.FC = () => {
                       style={{ background: '#fff', border: `2px solid ${o.priority === 'vip' || o.priority === 'express' ? etapeO.color : '#e2e8f0'}`, borderRadius: 12, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', width: '100%' }}>
                       <span style={{ fontSize: 32 }}>{etapeO.emoji}</span>
                       <div style={{ flex: 1 }}>
-                        <p style={{ fontWeight: 900, fontSize: 16, margin: '0 0 2px', color: '#1e293b' }}>#{o.ticket_number} {(o.priority === 'vip' || o.priority === 'express') && <span style={{ marginLeft: 8, background: o.priority === 'vip' ? '#fef3c7' : '#fee2e2', color: o.priority === 'vip' ? '#92400e' : '#991b1b', padding: '2px 8px', borderRadius: 99, fontSize: 11 }}>{o.priority === 'vip' ? '⭐ VIP' : '⚡ Express'}</span>}</p>
+                        <p style={{ fontWeight: 900, fontSize: 16, margin: '0 0 2px', color: '#1e293b' }}>
+                          #{o.ticket_number}
+                          {(o.priority === 'vip' || o.priority === 'express') && <span style={{ marginLeft: 8, background: o.priority === 'vip' ? '#fef3c7' : '#fee2e2', color: o.priority === 'vip' ? '#92400e' : '#991b1b', padding: '2px 8px', borderRadius: 99, fontSize: 11 }}>{o.priority === 'vip' ? '⭐ VIP' : '⚡ Express'}</span>}
+                        </p>
                         <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{o.client?.first_name} {o.client?.last_name} • {o.clothes.length} article(s)</p>
                       </div>
                       <span style={{ background: etapeO.color + '20', color: etapeO.color, padding: '4px 10px', borderRadius: 8, fontSize: 13, fontWeight: 700 }}>{etapeO.label}</span>
@@ -112,7 +183,6 @@ export const AtelierPage: React.FC = () => {
       {/* ECRAN 2 — Commande active */}
       {order && !success && etape && (
         <div style={{ textAlign: 'center', maxWidth: 560, width: '100%' }}>
-          {/* Client */}
           <div style={{ background: '#fff', borderRadius: 20, padding: 24, marginBottom: 20, border: '2px solid #e2e8f0' }}>
             <p style={{ fontSize: 15, color: '#64748b', margin: '0 0 4px' }}>Client</p>
             <p style={{ fontSize: 30, fontWeight: 900, color: '#1e293b', margin: '0 0 4px' }}>{order.client?.first_name} {order.client?.last_name}</p>
@@ -123,14 +193,12 @@ export const AtelierPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Étape actuelle */}
           <div style={{ background: etape.color, borderRadius: 24, padding: '32px 24px', marginBottom: 20, boxShadow: `0 8px 32px ${etape.color}40` }}>
             <p style={{ fontSize: 80, margin: '0 0 8px' }}>{etape.emoji}</p>
             <p style={{ fontSize: 34, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>{etape.label}</p>
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', margin: 0 }}>En cours pour toute la commande</p>
           </div>
 
-          {/* Instructions spéciales */}
           {order.clothes.some(c => c.special_instructions) && (
             <div style={{ background: '#fff7ed', border: '3px solid #f97316', borderRadius: 16, padding: 20, marginBottom: 20 }}>
               <p style={{ fontSize: 20, fontWeight: 900, color: '#c2410c', margin: '0 0 10px' }}>⚠️ ATTENTION !</p>
@@ -140,7 +208,6 @@ export const AtelierPage: React.FC = () => {
             </div>
           )}
 
-          {/* Résumé vêtements */}
           <div style={{ background: '#fff', borderRadius: 14, padding: 16, marginBottom: 20, border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
               {order.clothes.map((c, i) => (
@@ -151,7 +218,6 @@ export const AtelierPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Bouton principal ENORME */}
           {etape.next ? (
             <button onClick={avancer}
               style={{ width: '100%', padding: '28px', fontSize: 26, fontWeight: 900, background: prochaine?.color || '#059669', color: '#fff', border: 'none', borderRadius: 20, cursor: 'pointer', boxShadow: `0 8px 24px ${prochaine?.color || '#059669'}50`, marginBottom: 14 }}
