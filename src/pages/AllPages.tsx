@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useStockStore, useHRStore, useNotificationStore, useLoyaltyStore, useAgendaStore, useAgencyStore, useTransactionStore, useOrderStore, useClientStore, useDeliveryStore, useAuthStore, useShopConfig } from '../lib/store'
+import { stockService, transactionService, notificationService, agendaService } from '../lib/db'
 import { PageHeader, Button, Table, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Card, StatCard, SearchInput, Tabs, Alert } from '../components/ui'
 import { Plus, Trash2, Edit2, Bell, Calendar, Building, DollarSign, TrendingUp, TrendingDown, Package, Users, CheckCircle } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
@@ -14,26 +15,39 @@ const COLORS = ['#7c3aed', '#06b6d4', '#10b981', '#f97316', '#ef4444', '#8b5cf6'
 // STOCK PAGE
 // ============================================================
 export const StockPage: React.FC = () => {
-  const { items, addItem, deleteItem, addMovement, getLowStockItems } = useStockStore()
+  const { items: localItems, addItem, deleteItem, addMovement, getLowStockItems } = useStockStore()
+  const [items, setItems] = useState<StockItem[]>([])
   const [showForm, setShowForm] = useState(false)
   const [showMovement, setShowMovement] = useState<StockItem | null>(null)
   const [search, setSearch] = useState('')
   const [form, setForm] = useState({ name: '', category: 'lessive' as StockItem['category'], quantity: 0, unit: 'L', min_threshold: 5, purchase_price: 0, supplier: '' })
   const [mvt, setMvt] = useState({ type: 'entree' as 'entree' | 'sortie', quantity: 0, reason: '' })
-  const lowStock = getLowStockItems()
+
+  useEffect(() => {
+    stockService.getAll().then(data => setItems(data as StockItem[])).catch(() => setItems(localItems))
+  }, [])
+
+  const lowStock = items.filter(i => i.quantity <= i.min_threshold)
   const filtered = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()))
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    addItem({ id: crypto.randomUUID(), agency_id: 'default', ...form, quantity: Number(form.quantity), min_threshold: Number(form.min_threshold), purchase_price: Number(form.purchase_price), created_at: new Date().toISOString() })
+    try {
+      const item = await stockService.create({ id: crypto.randomUUID(), agency_id: 'default', ...form, quantity: Number(form.quantity), min_threshold: Number(form.min_threshold), purchase_price: Number(form.purchase_price), created_at: new Date().toISOString() })
+      setItems([...items, item as StockItem])
+    } catch { addItem({ id: crypto.randomUUID(), agency_id: 'default', ...form, quantity: Number(form.quantity), min_threshold: Number(form.min_threshold), purchase_price: Number(form.purchase_price), created_at: new Date().toISOString() }) }
     setShowForm(false)
     setForm({ name: '', category: 'lessive', quantity: 0, unit: 'L', min_threshold: 5, purchase_price: 0, supplier: '' })
   }
 
-  const handleMovement = (e: React.FormEvent) => {
+  const handleMovement = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!showMovement) return
-    addMovement({ id: crypto.randomUUID(), stock_item_id: showMovement.id, type: mvt.type, quantity: Number(mvt.quantity), reason: mvt.reason, created_by: 'system', created_at: new Date().toISOString() })
+    const newQty = mvt.type === 'entree' ? showMovement.quantity + Number(mvt.quantity) : showMovement.quantity - Number(mvt.quantity)
+    try {
+      await stockService.update(showMovement.id, { quantity: newQty })
+      setItems(items.map(i => i.id === showMovement.id ? { ...i, quantity: newQty } : i))
+    } catch { addMovement({ id: crypto.randomUUID(), stock_item_id: showMovement.id, type: mvt.type, quantity: Number(mvt.quantity), reason: mvt.reason, created_by: 'system', created_at: new Date().toISOString() }) }
     setShowMovement(null)
     setMvt({ type: 'entree', quantity: 0, reason: '' })
   }
@@ -56,7 +70,7 @@ export const StockPage: React.FC = () => {
               <td className="px-5 py-4">
                 <div className="flex gap-1">
                   <button onClick={() => setShowMovement(item)} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold">Mouvement</button>
-                  <button onClick={() => { if (confirm('Supprimer ?')) deleteItem(item.id) }} className="p-1.5 hover:bg-red-100 text-red-500 rounded-lg"><Trash2 size={14} /></button>
+                  <button onClick={async () => { if (confirm('Supprimer ?')) { try { await stockService.delete(item.id); setItems(items.filter(i => i.id !== item.id)) } catch { deleteItem(item.id) } } }} className="p-1.5 hover:bg-red-100 text-red-500 rounded-lg"><Trash2 size={14} /></button>
                 </div>
               </td>
             </tr>
@@ -219,9 +233,14 @@ export const HRPage: React.FC = () => {
 // NOTIFICATIONS PAGE
 // ============================================================
 export const NotificationsPage: React.FC = () => {
-  const { notifications, addNotification, updateNotification } = useNotificationStore()
+  const { notifications: localNotifs, addNotification, updateNotification } = useNotificationStore()
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const orders = useOrderStore(s => s.orders)
   const clients = useClientStore(s => s.clients)
+
+  useEffect(() => {
+    notificationService.getAll().then(data => setNotifications(data as any[])).catch(() => setNotifications(localNotifs as any[]))
+  }, [])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ client_id: '', type: 'whatsapp' as Notification['type'], message: '' })
   const readyOrders = orders.filter(o => o.status === 'pret')
@@ -340,8 +359,19 @@ export const LoyaltyPage: React.FC = () => {
 // AGENDA PAGE
 // ============================================================
 export const AgendaPage: React.FC = () => {
-  const { events, addEvent, deleteEvent, getEventsByDate } = useAgendaStore()
+  const { events: localEvents, addEvent, deleteEvent, getEventsByDate } = useAgendaStore()
+  const [dbEvents, setDbEvents] = useState<AgendaEvent[]>([])
   const orders = useOrderStore(s => s.orders)
+
+  useEffect(() => {
+    agendaService.getAll().then(data => setDbEvents(data as AgendaEvent[])).catch(() => setDbEvents(localEvents))
+  }, [])
+
+  const events = useMemo(() => {
+    const all = [...dbEvents]
+    localEvents.forEach(le => { if (!all.find(e => e.id === le.id)) all.push(le) })
+    return all
+  }, [dbEvents, localEvents])
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ title: '', type: 'rappel' as AgendaEvent['type'], date: selectedDate, time: '09:00', description: '' })
@@ -354,7 +384,7 @@ export const AgendaPage: React.FC = () => {
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const days = Array.from({ length: 42 }, (_, i) => { const day = i - firstDay + 1; return day > 0 && day <= daysInMonth ? day : null })
   const dayOrders = orders.filter(o => o.expected_at && o.expected_at.startsWith(selectedDate) && o.status !== 'annule' && o.status !== 'livre')
-  const dayEvents = getEventsByDate(selectedDate)
+  const dayEvents = events.filter(e => e.date === selectedDate)
   const daysWithOrders = new Set(orders.filter(o => o.expected_at && o.status !== 'annule' && o.status !== 'livre').map(o => o.expected_at.split('T')[0]))
   const daysWithEvents = new Set(events.map(e => e.date))
 
@@ -515,7 +545,16 @@ export const MultiAgencyPage: React.FC = () => {
 // ACCOUNTING PAGE
 // ============================================================
 export const AccountingPage: React.FC = () => {
-  const { transactions, addTransaction, getTotalRecettes, getTotalDepenses, getBenefice } = useTransactionStore()
+  const { transactions: localTx, addTransaction, getTotalRecettes, getTotalDepenses, getBenefice } = useTransactionStore()
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+
+  useEffect(() => {
+    transactionService.getAll().then(data => setTransactions(data as Transaction[])).catch(() => setTransactions(localTx))
+  }, [])
+
+  const totalRecettes = transactions.filter(t => t.type === 'recette').reduce((s, t) => s + t.amount, 0)
+  const totalDepenses = transactions.filter(t => t.type === 'depense').reduce((s, t) => s + t.amount, 0)
+  const benefice = totalRecettes - totalDepenses
   const [showForm, setShowForm] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
   const [form, setForm] = useState({ type: 'recette' as 'recette' | 'depense', category: '', amount: 0, description: '', date: new Date().toISOString().split('T')[0] })
@@ -528,7 +567,7 @@ export const AccountingPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white"><TrendingUp size={28} className="mb-3 opacity-80" /><p className="text-sm opacity-80">Total Recettes</p><p className="text-2xl font-bold mt-1">{getTotalRecettes().toLocaleString('fr-FR')} XOF</p></div>
         <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-6 text-white"><TrendingDown size={28} className="mb-3 opacity-80" /><p className="text-sm opacity-80">Total Dépenses</p><p className="text-2xl font-bold mt-1">{getTotalDepenses().toLocaleString('fr-FR')} XOF</p></div>
-        <div className={`bg-gradient-to-br ${getBenefice() >= 0 ? 'from-purple-600 to-indigo-600' : 'from-red-600 to-rose-700'} rounded-2xl p-6 text-white`}><DollarSign size={28} className="mb-3 opacity-80" /><p className="text-sm opacity-80">Bénéfice Net</p><p className="text-2xl font-bold mt-1">{getBenefice() >= 0 ? '+' : ''}{getBenefice().toLocaleString('fr-FR')} XOF</p></div>
+        <div className={`bg-gradient-to-br ${benefice >= 0 ? 'from-purple-600 to-indigo-600' : 'from-red-600 to-rose-700'} rounded-2xl p-6 text-white`}><DollarSign size={28} className="mb-3 opacity-80" /><p className="text-sm opacity-80">Bénéfice Net</p><p className="text-2xl font-bold mt-1">{benefice >= 0 ? '+' : ''}{benefice.toLocaleString('fr-FR')} XOF</p></div>
       </div>
       <Tabs tabs={[{ key: 'overview', label: "Vue d'ensemble", icon: '📊' }, { key: 'journal', label: 'Journal', icon: '📒' }]} active={activeTab} onChange={setActiveTab} />
       {activeTab === 'overview' && (
@@ -539,7 +578,7 @@ export const AccountingPage: React.FC = () => {
       )}
       {activeTab === 'journal' && (transactions.length > 0 ? <Table headers={['Date','Type','Catégorie','Description','Montant','Par']}>{transactions.slice().reverse().map(t => <tr key={t.id} className="hover:bg-gray-50"><td className="px-5 py-4 text-sm">{new Date(t.date).toLocaleDateString('fr-FR')}</td><td className="px-5 py-4"><Badge label={t.type === 'recette' ? '📈 Recette' : '📉 Dépense'} color={t.type === 'recette' ? 'green' : 'red'} /></td><td className="px-5 py-4 text-sm capitalize">{t.category}</td><td className="px-5 py-4 text-sm">{t.description}</td><td className={`px-5 py-4 font-bold text-sm ${t.type === 'recette' ? 'text-green-600' : 'text-red-600'}`}>{t.type === 'depense' ? '-' : '+'}{t.amount.toLocaleString('fr-FR')} XOF</td><td className="px-5 py-4 text-xs text-gray-400">{t.created_by}</td></tr>)}</Table> : <Card><EmptyState icon="📒" message="Aucune transaction" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter</Button>} /></Card>)}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nouvelle transaction">
-        <form onSubmit={e => { e.preventDefault(); addTransaction({ id: crypto.randomUUID(), agency_id: 'default', ...form, amount: Number(form.amount), created_by: 'system' }); setShowForm(false); setForm({ type: 'recette', category: '', amount: 0, description: '', date: new Date().toISOString().split('T')[0] }) }} className="space-y-4">
+        <form onSubmit={e => { e.preventDefault(); transactionService.create({ id: crypto.randomUUID(), agency_id: 'default', ...form, amount: Number(form.amount), created_by: 'system' }).then(tx => setTransactions([tx as Transaction, ...transactions])).catch(() => addTransaction({ id: crypto.randomUUID(), agency_id: 'default', ...form, amount: Number(form.amount), created_by: 'system' })); setShowForm(false); setForm({ type: 'recette', category: '', amount: 0, description: '', date: new Date().toISOString().split('T')[0] }) }} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value as any })}><option value="recette">📈 Recette</option><option value="depense">📉 Dépense</option></Select></Field>
             <Field label="Date"><Input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></Field>
