@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useRef } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import QRCode from 'qrcode'
 import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig, useAgendaStore } from '../../lib/store'
+import { clientsService, ordersService } from '../../lib/db'
 import { PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Table, Card, getOrderStatusColor, getPriorityColor, getClothStatusColor } from '../../components/ui'
 import { Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
@@ -39,7 +40,34 @@ const STATUS_STEPS = [
 
 export const OrdersPage: React.FC = () => {
   const { orders, addOrder, updateOrder, deleteOrder } = useOrderStore()
-  const { clients, addClient } = useClientStore()
+  const { clients: localClients, addClient } = useClientStore()
+  const [dbClients, setDbClients] = useState<Client[]>([])
+  const [loadingClients, setLoadingClients] = useState(false)
+
+  // Charger les clients depuis Supabase
+  useEffect(() => {
+    const loadClients = async () => {
+      setLoadingClients(true)
+      try {
+        const data = await clientsService.getAll()
+        setDbClients(data as Client[])
+      } catch {
+        // Fallback sur les clients locaux
+      } finally {
+        setLoadingClients(false)
+      }
+    }
+    loadClients()
+  }, [])
+
+  // Combiner clients Supabase + locaux
+  const clients = useMemo(() => {
+    const allClients = [...dbClients]
+    localClients.forEach(lc => {
+      if (!allClients.find(c => c.id === lc.id)) allClients.push(lc)
+    })
+    return allClients
+  }, [dbClients, localClients])
   const { addNotification } = useNotificationStore()
   const { addLoyaltyPoints } = useCS()
   const { addCashTransaction, getCurrentSession } = useCashStore()
@@ -172,7 +200,7 @@ export const OrdersPage: React.FC = () => {
     setNewClient({ first_name: '', last_name: '', phone: '', email: '' })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const client = clients.find(c => c.id === form.client_id)
     if (!client) { alert('Veuillez sélectionner un client'); return }
@@ -200,6 +228,45 @@ export const OrdersPage: React.FC = () => {
       created_by: 'system', created_at: now
     }
     addOrder(order)
+
+    // Sauvegarder dans Supabase
+    try {
+      await ordersService.create({
+        id: order.id,
+        ticket_number: ticket,
+        client_id: client.id,
+        status: 'en_attente',
+        priority: form.priority,
+        received_at: now,
+        expected_at: form.expected_at,
+        subtotal,
+        discount,
+        total,
+        deposit: depositFinal,
+        remaining: remainingFinal,
+        payment_method: form.payment_method,
+        payment_status: form.payment_status,
+        notes: form.notes,
+        created_by: user?.full_name || 'Admin'
+      }, clothesFull.map(c => ({
+        id: c.id,
+        type: c.type,
+        color: c.color,
+        brand: c.brand,
+        size: c.size,
+        material: c.material,
+        quantity: c.quantity,
+        service: c.service,
+        price: c.price,
+        status: 'recu',
+        special_instructions: c.special_instructions,
+        condition_on_arrival: c.condition_on_arrival,
+        photos: c.photos,
+        qr_code: c.qr_code
+      })))
+    } catch (err) {
+      console.error('Erreur sauvegarde Supabase:', err)
+    }
 
     // Enregistrement automatique en caisse
     const session = getCurrentSession()
