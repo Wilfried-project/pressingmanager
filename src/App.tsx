@@ -1,8 +1,7 @@
-import { AtelierPage } from './pages/atelier/AtelierPage'
 import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
-import { useAuthStore } from './lib/store'
+import { useAuthStore, useShopConfig } from './lib/store'
 import { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/auth/LoginPage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
@@ -11,6 +10,7 @@ import { OrdersPage } from './pages/orders/OrdersPage'
 import { CashierPage } from './pages/cashier/CashierPage'
 import { UsersPage } from './pages/users/UsersPage'
 import { ScanPage } from './pages/scan/ScanPage'
+import { AtelierPage } from './pages/atelier/AtelierPage'
 import {
   StockPage, HRPage, NotificationsPage, LoyaltyPage,
   AgendaPage, MultiAgencyPage, AccountingPage, ReportsPage,
@@ -25,6 +25,52 @@ const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 function App() {
   const [loading, setLoading] = useState(true)
   const { user, setUser, setSession } = useAuthStore()
+  const { setConfig } = useShopConfig()
+
+  // Détecter le sous-domaine et charger la config du pressing
+  useEffect(() => {
+    const loadTenantConfig = async () => {
+      try {
+        const hostname = window.location.hostname
+        const parts = hostname.split('.')
+        // Ex: elegance.pressing-manager.com → slug = elegance
+        // app.pressing-manager.com → pas de slug spécifique
+        const isCustomSubdomain = parts.length >= 3 &&
+          parts[0] !== 'www' &&
+          parts[0] !== 'app' &&
+          parts[0] !== 'admin' &&
+          parts[0] !== 'localhost'
+
+        if (isCustomSubdomain) {
+          const slug = parts[0]
+          const { data: tenant } = await supabase
+            .from('tenants')
+            .select('*')
+            .eq('slug', slug)
+            .single()
+
+          if (tenant) {
+            setConfig({
+              name: tenant.name || 'Mon Pressing',
+              slogan: tenant.slogan || 'Logiciel de gestion professionnelle',
+              logo: tenant.logo || '',
+              primaryColor: tenant.primary_color || '#7c3aed',
+              phone: tenant.phone || '',
+              email: tenant.email || '',
+              address: tenant.address || '',
+              currency: tenant.currency || 'XOF',
+              footer: tenant.footer || 'Merci pour votre confiance !',
+              msgReception: tenant.msg_reception || '',
+              msgPret: tenant.msg_pret || '',
+            })
+          }
+        }
+      } catch (err) {
+        console.error('Erreur chargement tenant:', err)
+      }
+    }
+    loadTenantConfig()
+  }, [])
 
   useEffect(() => {
     const init = async () => {
@@ -32,18 +78,81 @@ function App() {
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
           setSession(session)
-          setUser({ id: session.user.id, email: session.user.email || '', full_name: session.user.email?.split('@')[0] || 'Admin', phone: '', role: 'admin', agency_id: 'default', is_active: true, permissions: [], created_at: new Date().toISOString() })
+          const { data: employee } = await supabase
+            .from('employees')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single()
+
+          if (employee) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              full_name: employee.full_name,
+              phone: employee.phone || '',
+              role: employee.role,
+              agency_id: employee.tenant_id || 'default',
+              is_active: employee.is_active,
+              permissions: employee.permissions || [],
+              created_at: new Date().toISOString()
+            })
+          } else {
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              full_name: session.user.email?.split('@')[0] || 'Admin',
+              phone: '',
+              role: 'admin',
+              agency_id: 'default',
+              is_active: true,
+              permissions: [],
+              created_at: new Date().toISOString()
+            })
+          }
         }
       } catch (err) { console.error(err) }
       finally { setLoading(false) }
     }
     init()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
       if (session) {
         setSession(session)
-        setUser({ id: session.user.id, email: session.user.email || '', full_name: session.user.email?.split('@')[0] || 'Admin', phone: '', role: 'admin', agency_id: 'default', is_active: true, permissions: [], created_at: new Date().toISOString() })
-      } else { setUser(null); setSession(null) }
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single()
+
+        if (employee) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            full_name: employee.full_name,
+            phone: employee.phone || '',
+            role: employee.role,
+            agency_id: employee.tenant_id || 'default',
+            is_active: employee.is_active,
+            permissions: employee.permissions || [],
+            created_at: new Date().toISOString()
+          })
+        } else {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            full_name: session.user.email?.split('@')[0] || 'Admin',
+            phone: '',
+            role: 'admin',
+            agency_id: 'default',
+            is_active: true,
+            permissions: [],
+            created_at: new Date().toISOString()
+          })
+        }
+      } else {
+        setUser(null)
+        setSession(null)
+      }
       setLoading(false)
     })
     return () => subscription?.unsubscribe()
@@ -62,7 +171,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Routes publiques — sans connexion */}
+        {/* Routes publiques */}
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
         <Route path="/scan/:ticket" element={<ScanPage />} />
 
@@ -84,8 +193,8 @@ function App() {
         <Route path="/delivery" element={<Protected><DeliveryPage /></Protected>} />
         <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
         <Route path="/users" element={<Protected><UsersPage /></Protected>} />
+        <Route path="/atelier" element={<Protected><AtelierPage /></Protected>} />
         <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
-	<Route path="/atelier" element={<Protected><AtelierPage /></Protected>} />
       </Routes>
     </BrowserRouter>
   )
