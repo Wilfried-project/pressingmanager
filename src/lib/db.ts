@@ -1,25 +1,43 @@
 import { supabase } from './supabase'
 
-const TENANT_ID = 'bc4ba4d5-b9b6-48d8-8344-84c2fc2c299f'
+// Récupère le tenant_id de l'utilisateur connecté
+async function getTenantId(): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Non connecté')
+
+  // Chercher le tenant_id dans la table employees
+  const { data: employee } = await supabase
+    .from('employees')
+    .select('tenant_id')
+    .eq('user_id', session.user.id)
+    .single()
+
+  if (employee?.tenant_id) return employee.tenant_id
+
+  // Fallback — tenant par défaut
+  return 'bc4ba4d5-b9b6-48d8-8344-84c2fc2c299f'
+}
 
 // ============================================================
 // CLIENTS
 // ============================================================
 export const clientsService = {
   async getAll() {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('clients')
       .select('*')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', tenant_id)
       .order('created_at', { ascending: false })
     if (error) throw error
     return data || []
   },
 
   async create(client: any) {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('clients')
-      .insert({ ...client, tenant_id: TENANT_ID })
+      .insert({ ...client, tenant_id })
       .select()
       .single()
     if (error) throw error
@@ -27,11 +45,12 @@ export const clientsService = {
   },
 
   async update(id: string, updates: any) {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('clients')
       .update(updates)
       .eq('id', id)
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', tenant_id)
       .select()
       .single()
     if (error) throw error
@@ -39,11 +58,12 @@ export const clientsService = {
   },
 
   async delete(id: string) {
+    const tenant_id = await getTenantId()
     const { error } = await supabase
       .from('clients')
       .delete()
       .eq('id', id)
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', tenant_id)
     if (error) throw error
   }
 }
@@ -53,74 +73,54 @@ export const clientsService = {
 // ============================================================
 export const ordersService = {
   async getAll() {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('orders')
-      .select(`
-        *,
-        client:clients(*),
-        clothes(*)
-      `)
-      .eq('tenant_id', TENANT_ID)
+      .select(`*, client:clients(*), clothes(*)`)
+      .eq('tenant_id', tenant_id)
       .order('created_at', { ascending: false })
     if (error) throw error
     return data || []
   },
 
   async create(order: any, clothes: any[]) {
-    // Créer la commande
+    const tenant_id = await getTenantId()
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
-      .insert({ ...order, tenant_id: TENANT_ID })
+      .insert({ ...order, tenant_id })
       .select()
       .single()
     if (orderError) throw orderError
 
-    // Créer les vêtements
     if (clothes.length > 0) {
-      const clothesWithIds = clothes.map(c => ({
-        ...c,
-        order_id: orderData.id,
-        tenant_id: TENANT_ID
-      }))
       const { error: clothesError } = await supabase
         .from('clothes')
-        .insert(clothesWithIds)
+        .insert(clothes.map(c => ({ ...c, order_id: orderData.id, tenant_id })))
       if (clothesError) throw clothesError
     }
-
     return orderData
   },
 
   async update(id: string, updates: any) {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('orders')
       .update(updates)
       .eq('id', id)
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', tenant_id)
       .select()
       .single()
     if (error) throw error
     return data
   },
 
-  async updateClothes(orderId: string, clothes: any[]) {
-    // Supprimer les anciens vêtements
-    await supabase.from('clothes').delete().eq('order_id', orderId)
-    // Insérer les nouveaux
-    if (clothes.length > 0) {
-      const { error } = await supabase.from('clothes').insert(
-        clothes.map(c => ({ ...c, order_id: orderId, tenant_id: TENANT_ID }))
-      )
-      if (error) throw error
-    }
-  },
-
   async delete(id: string) {
+    const tenant_id = await getTenantId()
     const { error } = await supabase
       .from('orders')
       .delete()
       .eq('id', id)
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', tenant_id)
     if (error) throw error
   }
 }
@@ -130,19 +130,21 @@ export const ordersService = {
 // ============================================================
 export const cashService = {
   async getSessions() {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('cash_sessions')
       .select('*')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', tenant_id)
       .order('opened_at', { ascending: false })
     if (error) throw error
     return data || []
   },
 
   async addSession(session: any) {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('cash_sessions')
-      .insert({ ...session, tenant_id: TENANT_ID })
+      .insert({ ...session, tenant_id })
       .select()
       .single()
     if (error) throw error
@@ -161,10 +163,11 @@ export const cashService = {
   },
 
   async getTransactions(sessionId?: string) {
+    const tenant_id = await getTenantId()
     let query = supabase
       .from('cash_transactions')
       .select('*')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', tenant_id)
     if (sessionId) query = query.eq('session_id', sessionId)
     const { data, error } = await query.order('created_at', { ascending: false })
     if (error) throw error
@@ -172,9 +175,10 @@ export const cashService = {
   },
 
   async addTransaction(tx: any) {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('cash_transactions')
-      .insert({ ...tx, tenant_id: TENANT_ID })
+      .insert({ ...tx, tenant_id })
       .select()
       .single()
     if (error) throw error
@@ -187,19 +191,21 @@ export const cashService = {
 // ============================================================
 export const stockService = {
   async getAll() {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('stock_items')
       .select('*')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', tenant_id)
       .order('name')
     if (error) throw error
     return data || []
   },
 
   async create(item: any) {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('stock_items')
-      .insert({ ...item, tenant_id: TENANT_ID })
+      .insert({ ...item, tenant_id })
       .select()
       .single()
     if (error) throw error
@@ -228,19 +234,21 @@ export const stockService = {
 // ============================================================
 export const transactionService = {
   async getAll() {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', tenant_id)
       .order('date', { ascending: false })
     if (error) throw error
     return data || []
   },
 
   async create(tx: any) {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('transactions')
-      .insert({ ...tx, tenant_id: TENANT_ID })
+      .insert({ ...tx, tenant_id })
       .select()
       .single()
     if (error) throw error
@@ -253,19 +261,21 @@ export const transactionService = {
 // ============================================================
 export const notificationService = {
   async getAll() {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', tenant_id)
       .order('created_at', { ascending: false })
     if (error) throw error
     return data || []
   },
 
   async create(notif: any) {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('notifications')
-      .insert({ ...notif, tenant_id: TENANT_ID })
+      .insert({ ...notif, tenant_id })
       .select()
       .single()
     if (error) throw error
@@ -289,19 +299,21 @@ export const notificationService = {
 // ============================================================
 export const agendaService = {
   async getAll() {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('agenda_events')
       .select('*')
-      .eq('tenant_id', TENANT_ID)
+      .eq('tenant_id', tenant_id)
       .order('date')
     if (error) throw error
     return data || []
   },
 
   async create(event: any) {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('agenda_events')
-      .insert({ ...event, tenant_id: TENANT_ID })
+      .insert({ ...event, tenant_id })
       .select()
       .single()
     if (error) throw error
@@ -319,20 +331,22 @@ export const agendaService = {
 // ============================================================
 export const tenantService = {
   async get() {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('tenants')
       .select('*')
-      .eq('id', TENANT_ID)
+      .eq('id', tenant_id)
       .single()
     if (error) throw error
     return data
   },
 
   async update(updates: any) {
+    const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('tenants')
       .update(updates)
-      .eq('id', TENANT_ID)
+      .eq('id', tenant_id)
       .select()
       .single()
     if (error) throw error
