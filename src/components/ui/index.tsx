@@ -84,7 +84,7 @@ export const Modal: React.FC<{ open: boolean; onClose: () => void; title: string
 // SEARCH
 export const SearchInput: React.FC<{ value: string; onChange: (v: string) => void; placeholder?: string; className?: string }> = ({ value, onChange, placeholder, className = '' }) => (
   <div className={`relative ${className}`}>
-    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></span>
     <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || 'Rechercher...'}
       className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
   </div>
@@ -180,7 +180,7 @@ export const Alert: React.FC<{ type: 'success' | 'error' | 'warning' | 'info'; m
     warning: 'bg-yellow-50 border-yellow-300 text-yellow-800',
     info: 'bg-blue-50 border-blue-300 text-blue-800',
   }
-  const icons: Record<string, string> = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' }
+  const icons: Record<string, string> = { success: '', error: '', warning: '', info: 'ℹ️' }
   return (
     <div className={`flex items-center gap-3 p-4 rounded-xl border ${styles[type]} ${className}`}>
       <span className="text-lg">{icons[type]}</span>

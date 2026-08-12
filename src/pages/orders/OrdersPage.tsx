@@ -7,15 +7,15 @@ import { Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard }
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
 
 const CLOTH_TYPES: { value: ClothType; label: string; icon: string }[] = [
-  { value: 'chemise', label: 'Chemise', icon: '👔' }, { value: 'pantalon', label: 'Pantalon', icon: '👖' },
-  { value: 'robe', label: 'Robe', icon: '👗' }, { value: 'costume', label: 'Costume', icon: '🤵' },
-  { value: 'veste', label: 'Veste', icon: '🧥' }, { value: 'manteau', label: 'Manteau', icon: '🧥' },
-  { value: 'jupe', label: 'Jupe', icon: '👗' }, { value: 'pull', label: 'Pull', icon: '🧶' },
-  { value: 'tshirt', label: 'T-Shirt', icon: '👕' }, { value: 'cravate', label: 'Cravate', icon: '👔' },
+  { value: 'chemise', label: 'Chemise', icon: '' }, { value: 'pantalon', label: 'Pantalon', icon: '' },
+  { value: 'robe', label: 'Robe', icon: '' }, { value: 'costume', label: 'Costume', icon: '🤵' },
+  { value: 'veste', label: 'Veste', icon: '' }, { value: 'manteau', label: 'Manteau', icon: '' },
+  { value: 'jupe', label: 'Jupe', icon: '' }, { value: 'pull', label: 'Pull', icon: '🧶' },
+  { value: 'tshirt', label: 'T-Shirt', icon: '' }, { value: 'cravate', label: 'Cravate', icon: '' },
   { value: 'couverture', label: 'Couverture', icon: '🛏️' }, { value: 'rideau', label: 'Rideau', icon: '🪟' },
   { value: 'nappe', label: 'Nappe', icon: '🍽️' }, { value: 'tapis', label: 'Tapis', icon: '🪸' },
   { value: 'couette', label: 'Couette', icon: '🛌' }, { value: 'chaussures', label: 'Chaussures', icon: '👟' },
-  { value: 'sac', label: 'Sac', icon: '👜' }, { value: 'autre', label: 'Autre', icon: '📦' },
+  { value: 'sac', label: 'Sac', icon: '' }, { value: 'autre', label: 'Autre', icon: '' },
 ]
 
 const SERVICES: { value: ServiceType; label: string; basePrice: number }[] = [
@@ -29,13 +29,13 @@ const SERVICES: { value: ServiceType; label: string; basePrice: number }[] = [
 ]
 
 const STATUS_STEPS = [
-  { key: 'recu', label: 'Reçu', icon: '📥' }, { key: 'tri', label: 'Tri', icon: '🗂️' },
-  { key: 'pretraitement', label: 'Prétraitement', icon: '🔬' }, { key: 'detachage', label: 'Détachage', icon: '🧪' },
-  { key: 'lavage', label: 'Lavage', icon: '🫧' }, { key: 'essorage', label: 'Essorage', icon: '💧' },
-  { key: 'sechage', label: 'Séchage', icon: '💨' }, { key: 'repassage', label: 'Repassage', icon: '♨️' },
-  { key: 'controle', label: 'Contrôle', icon: '✅' }, { key: 'retouche', label: 'Retouche', icon: '🪡' },
-  { key: 'emballage', label: 'Emballage', icon: '📦' }, { key: 'stock', label: 'Stock', icon: '🏪' },
-  { key: 'pret', label: 'Prêt', icon: '🎁' }, { key: 'livre', label: 'Livré', icon: '🚚' },
+  { key: 'recu', label: 'Reçu', icon: '' }, { key: 'tri', label: 'Tri', icon: '' },
+  { key: 'pretraitement', label: 'Prétraitement', icon: '' }, { key: 'detachage', label: 'Détachage', icon: '' },
+  { key: 'lavage', label: 'Lavage', icon: '' }, { key: 'essorage', label: 'Essorage', icon: '' },
+  { key: 'sechage', label: 'Séchage', icon: '' }, { key: 'repassage', label: 'Repassage', icon: '' },
+  { key: 'controle', label: 'Contrôle', icon: '' }, { key: 'retouche', label: 'Retouche', icon: '🪡' },
+  { key: 'emballage', label: 'Emballage', icon: '' }, { key: 'stock', label: 'Stock', icon: '' },
+  { key: 'pret', label: 'Prêt', icon: '' }, { key: 'livre', label: 'Livré', icon: '' },
 ]
 
 export const OrdersPage: React.FC = () => {
@@ -330,7 +330,7 @@ export const OrdersPage: React.FC = () => {
       setTimeout(() => window.open(waUrl, '_blank'), 1500)
     }
 
-    alert(`✅ Commande créée ! Ticket: ${ticket}\n+${pts} points fidélité`)
+    alert(` Commande créée ! Ticket: ${ticket}\n+${pts} points fidélité`)
   }
 
   const resetForm = () => {
@@ -385,7 +385,7 @@ export const OrdersPage: React.FC = () => {
       })
     }
 
-    alert(`✅ Paiement enregistré !\nMontant reçu: ${paymentAmount.toLocaleString('fr-FR')} XOF\n${newRemaining > 0 ? `Reste: ${newRemaining.toLocaleString('fr-FR')} XOF` : 'Commande entièrement payée ✅'}`)
+    alert(` Paiement enregistré !\nMontant reçu: ${paymentAmount.toLocaleString('fr-FR')} XOF\n${newRemaining > 0 ? `Reste: ${newRemaining.toLocaleString('fr-FR')} XOF` : 'Commande entièrement payée '}`)
     setShowPaymentModal(null)
     setPaymentAmount(0)
   }
@@ -428,7 +428,7 @@ export const OrdersPage: React.FC = () => {
     </style></head><body>
     <div class="ticket">
       <div class="header">
-        ${config.logo ? `<img src="${config.logo}" alt="logo" style="width:50px;height:50px;object-fit:cover;border-radius:8px;margin-bottom:6px" />` : '<div class="logo">🧺</div>'}
+        ${config.logo ? `<img src="${config.logo}" alt="logo" style="width:50px;height:50px;object-fit:cover;border-radius:8px;margin-bottom:6px" />` : '<div class="logo"></div>'}
         <div class="title">${config.name || 'PRESSINGMANAGER'}</div>
         <div class="subtitle">${config.slogan || 'Reçu de dépôt — Ticket client'}</div>
       </div>
@@ -438,7 +438,7 @@ export const OrdersPage: React.FC = () => {
         <p style="font-size:9px;color:#6b7280;margin-top:4px">Scannez pour voir le détail</p>
       </div>
       <div class="section">
-        <div class="section-title">👤 Informations client</div>
+        <div class="section-title"> Informations client</div>
         <div class="row"><span class="label">Client</span><span class="value">${order.client?.first_name} ${order.client?.last_name}</span></div>
         <div class="row"><span class="label">Téléphone</span><span class="value">${order.client?.phone}</span></div>
         <div class="row"><span class="label">Date dépôt</span><span class="value">${new Date(order.received_at).toLocaleDateString('fr-FR')} à ${new Date(order.received_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
@@ -446,7 +446,7 @@ export const OrdersPage: React.FC = () => {
         <div class="row"><span class="label">Priorité</span><span class="value"><span class="priority-badge">${order.priority.toUpperCase()}</span></span></div>
       </div>
       <div class="section articles">
-        <div class="section-title">👔 Articles (${order.clothes.length})</div>
+        <div class="section-title"> Articles (${order.clothes.length})</div>
         ${order.clothes.map((c, idx) => `
           <div class="article">
             <span class="article-price">${((c.price || 0) * (c.quantity || 1)).toLocaleString('fr-FR')} XOF</span>
@@ -457,23 +457,23 @@ export const OrdersPage: React.FC = () => {
         `).join('')}
       </div>
       <div class="totals">
-        <div class="section-title">💰 Récapitulatif paiement</div>
+        <div class="section-title"> Récapitulatif paiement</div>
         <div class="total-line"><span>Sous-total</span><span>${order.subtotal.toLocaleString('fr-FR')} XOF</span></div>
         ${order.discount > 0 ? `<div class="total-line" style="color:#16a34a"><span>Remise client</span><span>-${order.discount.toLocaleString('fr-FR')} XOF</span></div>` : ''}
         ${order.priority !== 'normal' ? `<div class="total-line" style="color:#f97316"><span>Supplément ${order.priority}</span><span>inclus</span></div>` : ''}
         <div class="total-main"><span>TOTAL</span><span>${order.total.toLocaleString('fr-FR')} XOF</span></div>
         ${order.deposit > 0 ? `<div class="total-line" style="color:#2563eb;margin-top:4px"><span>Acompte versé</span><span>${order.deposit.toLocaleString('fr-FR')} XOF</span></div>` : ''}
         ${order.remaining > 0
-          ? `<div class="remaining">⚠️ Reste à payer: ${order.remaining.toLocaleString('fr-FR')} XOF</div>`
-          : `<div class="paid">✅ Commande entièrement payée</div>`
+          ? `<div class="remaining"> Reste à payer: ${order.remaining.toLocaleString('fr-FR')} XOF</div>`
+          : `<div class="paid"> Commande entièrement payée</div>`
         }
         <div class="total-line" style="margin-top:4px;font-size:10px;color:#6b7280"><span>Mode de paiement</span><span>${order.payment_method?.replace('_', ' ')}</span></div>
       </div>
       <div class="footer">
-        <div class="footer-important">⚠️ Conservez ce ticket pour récupérer vos articles</div>
+        <div class="footer-important"> Conservez ce ticket pour récupérer vos articles</div>
         <div class="footer-note">${config.footer || 'Merci pour votre confiance !'}</div>
-        ${config.phone ? `<div class="footer-note">📞 ${config.phone}</div>` : ''}
-        ${config.address ? `<div class="footer-note">📍 ${config.address}</div>` : ''}
+        ${config.phone ? `<div class="footer-note"> ${config.phone}</div>` : ''}
+        ${config.address ? `<div class="footer-note"> ${config.address}</div>` : ''}
         <div class="footer-note" style="margin-top:6px">Imprimé le ${new Date().toLocaleString('fr-FR')}</div>
       </div>
     </div>
@@ -497,7 +497,7 @@ export const OrdersPage: React.FC = () => {
       client_name: `${order.client?.first_name} ${order.client?.last_name}`,
       client_phone: order.client?.phone || '',
       type: 'whatsapp' as const,
-      message: msgPret || `Bonjour ${order.client?.first_name} ! 🎉 Vos vêtements sont prêts. Ticket: #${order.ticket_number}. — ${config.name || 'PressingManager'}`,
+      message: msgPret || `Bonjour ${order.client?.first_name} !  Vos vêtements sont prêts. Ticket: #${order.ticket_number}. — ${config.name || 'PressingManager'}`,
       status: 'pending' as const, created_at: new Date().toISOString()
     }
     addNotification(notif)
@@ -510,7 +510,7 @@ export const OrdersPage: React.FC = () => {
       const waUrl = 'https://wa.me/' + phoneClean + '?text=' + encodeURIComponent(finalMsg)
       window.open(waUrl, '_blank')
     } else {
-      alert(`✅ Notification préparée pour ${order.client?.first_name} ${order.client?.last_name}`)
+      alert(` Notification préparée pour ${order.client?.first_name} ${order.client?.last_name}`)
     }
   }
 
@@ -587,7 +587,7 @@ export const OrdersPage: React.FC = () => {
                 {order.remaining > 0 && <p className="text-xs text-red-500">Reste: {order.remaining.toLocaleString('fr-FR')}</p>}
               </td>
               <td className="px-5 py-4">
-                <Badge label={order.payment_status === 'paye' ? '✅ Payé' : order.payment_status === 'acompte' ? '⚠️ Acompte' : '❌ Non payé'}
+                <Badge label={order.payment_status === 'paye' ? ' Payé' : order.payment_status === 'acompte' ? ' Acompte' : ' Non payé'}
                   color={order.payment_status === 'paye' ? 'green' : order.payment_status === 'acompte' ? 'yellow' : 'red'} />
               </td>
               <td className="px-5 py-4"><Badge label={order.status.replace('_', ' ')} color={getOrderStatusColor(order.status)} /></td>
@@ -614,12 +614,12 @@ export const OrdersPage: React.FC = () => {
           ))}
         </Table>
       ) : (
-        <Card><EmptyState icon="🧺" message="Aucune commande trouvée" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Créer une commande</Button>} /></Card>
+        <Card><EmptyState icon="" message="Aucune commande trouvée" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Créer une commande</Button>} /></Card>
       )}
 
       {/* MODAL PAIEMENT À LA LIVRAISON */}
       {showPaymentModal && (
-        <Modal open={!!showPaymentModal} onClose={() => setShowPaymentModal(null)} title="💳 Encaissement à la livraison" size="sm">
+        <Modal open={!!showPaymentModal} onClose={() => setShowPaymentModal(null)} title=" Encaissement à la livraison" size="sm">
           <div className="space-y-4">
             <div className="bg-purple-50 rounded-xl p-4">
               <p className="text-sm text-gray-600">Client</p>
@@ -646,18 +646,18 @@ export const OrdersPage: React.FC = () => {
             </Field>
             <Field label="Mode de paiement">
               <Select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}>
-                <option value="wave">🌊 Wave</option>
-                <option value="orange_money">🍊 Orange Money</option>
-                <option value="mtn">📱 MTN Money</option>
-                <option value="especes">💵 Espèces</option>
-                <option value="mixte">🔀 Paiement mixte</option>
+                <option value="wave"> Wave</option>
+                <option value="orange_money"> Orange Money</option>
+                <option value="mtn"> MTN Money</option>
+                <option value="especes"> Espèces</option>
+                <option value="mixte"> Paiement mixte</option>
               </Select>
             </Field>
             {paymentAmount > 0 && (
               <div className={`p-3 rounded-xl text-sm font-semibold ${showPaymentModal.remaining - paymentAmount <= 0 ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-yellow-50 text-yellow-700 border border-yellow-200'}`}>
                 {showPaymentModal.remaining - paymentAmount <= 0
-                  ? '✅ Commande entièrement soldée'
-                  : `⚠️ Reste après paiement: ${(showPaymentModal.remaining - paymentAmount).toLocaleString('fr-FR')} XOF`
+                  ? ' Commande entièrement soldée'
+                  : ` Reste après paiement: ${(showPaymentModal.remaining - paymentAmount).toLocaleString('fr-FR')} XOF`
                 }
               </div>
             )}
@@ -673,7 +673,7 @@ export const OrdersPage: React.FC = () => {
       <Modal open={showForm} onClose={resetForm} title="Nouvelle commande" size="full">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="bg-purple-50 rounded-xl p-4">
-            <h3 className="font-bold text-gray-900 mb-4">📋 Informations générales</h3>
+            <h3 className="font-bold text-gray-900 mb-4"> Informations générales</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
               {/* Recherche client avec création à la volée */}
@@ -725,7 +725,7 @@ export const OrdersPage: React.FC = () => {
                       </Field>
                     </div>
                     <div className="flex gap-2 mt-3">
-                      <Button type="button" onClick={handleCreateClient} size="sm">✅ Créer le client</Button>
+                      <Button type="button" onClick={handleCreateClient} size="sm"> Créer le client</Button>
                       <Button type="button" variant="ghost" size="sm" onClick={() => setShowNewClientForm(false)}>Annuler</Button>
                     </div>
                   </div>
@@ -736,37 +736,37 @@ export const OrdersPage: React.FC = () => {
                 <Select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as Priority })}>
                   <option value="economique">💚 Économique</option>
                   <option value="normal">⚪ Normal</option>
-                  <option value="express">⚡ Express (+20%)</option>
-                  <option value="vip">⭐ VIP (+50%)</option>
+                  <option value="express"> Express (+20%)</option>
+                  <option value="vip"> VIP (+50%)</option>
                 </Select>
               </Field>
               <Field label="Date limite" required>
                 <Input required type="datetime-local" value={form.expected_at} onChange={e => setForm({ ...form, expected_at: e.target.value })} />
                 <button type="button" onClick={() => setForm({ ...form, expected_at: suggestedDate })}
                   className="mt-1.5 text-xs text-purple-600 hover:underline font-semibold flex items-center gap-1">
-                  💡 Date suggérée : {new Date(suggestedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à 9h00
+                   Date suggérée : {new Date(suggestedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à 9h00
                 </button>
               </Field>
               <Field label="Mode de paiement">
                 <Select value={form.payment_method} onChange={e => setForm({ ...form, payment_method: e.target.value as PaymentMethod })}>
-                  <option value="wave">🌊 Wave</option>
-                  <option value="orange_money">🍊 Orange Money</option>
-                  <option value="mtn">📱 MTN Money</option>
-                  <option value="especes">💵 Espèces</option>
-                  <option value="mixte">🔀 Paiement mixte</option>
+                  <option value="wave"> Wave</option>
+                  <option value="orange_money"> Orange Money</option>
+                  <option value="mtn"> MTN Money</option>
+                  <option value="especes"> Espèces</option>
+                  <option value="mixte"> Paiement mixte</option>
                 </Select>
               </Field>
 
               {/* Détail paiement mixte */}
               {form.payment_method === 'mixte' && (
                 <div className="col-span-2 bg-purple-50 border border-purple-200 rounded-xl p-4">
-                  <p className="text-sm font-bold text-purple-800 mb-3">🔀 Détail du paiement mixte</p>
+                  <p className="text-sm font-bold text-purple-800 mb-3"> Détail du paiement mixte</p>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { id: 'wave', label: 'Wave 🌊' },
-                      { id: 'orange', label: 'Orange Money 🍊' },
-                      { id: 'mtn', label: 'MTN Money 📱' },
-                      { id: 'especes', label: 'Espèces 💵' },
+                      { id: 'wave', label: 'Wave ' },
+                      { id: 'orange', label: 'Orange Money ' },
+                      { id: 'mtn', label: 'MTN Money ' },
+                      { id: 'especes', label: 'Espèces ' },
                     ].map(m => (
                       <Field key={m.id} label={m.label}>
                         <Input
@@ -797,9 +797,9 @@ export const OrdersPage: React.FC = () => {
                   const ps = e.target.value as PaymentStatus
                   setForm({ ...form, payment_status: ps, deposit: ps === 'paye' ? total : ps === 'non_paye' ? 0 : form.deposit })
                 }}>
-                  <option value="non_paye">❌ Non payé</option>
-                  <option value="acompte">⚠️ Acompte versé</option>
-                  <option value="paye">✅ Payé en totalité</option>
+                  <option value="non_paye"> Non payé</option>
+                  <option value="acompte"> Acompte versé</option>
+                  <option value="paye"> Payé en totalité</option>
                 </Select>
               </Field>
               <Field label="Acompte reçu (XOF)">
@@ -812,7 +812,7 @@ export const OrdersPage: React.FC = () => {
                 />
                 {isDepositDisabled && (
                   <p className="text-xs text-gray-400 mt-1">
-                    {form.payment_status === 'paye' ? '✅ Payé en totalité — acompte automatique' : '❌ Non payé — aucun acompte'}
+                    {form.payment_status === 'paye' ? ' Payé en totalité — acompte automatique' : ' Non payé — aucun acompte'}
                   </p>
                 )}
               </Field>
@@ -831,7 +831,7 @@ export const OrdersPage: React.FC = () => {
           {/* Vêtements avec photos */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-gray-900">👔 Vêtements ({clothes.length})</h3>
+              <h3 className="font-bold text-gray-900"> Vêtements ({clothes.length})</h3>
               <Button type="button" variant="ghost" size="sm" icon={<Plus size={15} />} onClick={addCloth}>Ajouter</Button>
             </div>
             <div className="space-y-4">
@@ -871,11 +871,11 @@ export const OrdersPage: React.FC = () => {
                     </Field>
                     <Field label="État à réception">
                       <Select value={cloth.condition_on_arrival} onChange={e => updateCloth(i, { condition_on_arrival: e.target.value })}>
-                        <option value="bon">✅ Bon état</option>
+                        <option value="bon"> Bon état</option>
                         <option value="taches">🟡 Taches</option>
                         <option value="dechire">🔴 Déchiré</option>
                         <option value="use">⚪ Usé</option>
-                        <option value="abime">❌ Abîmé</option>
+                        <option value="abime"> Abîmé</option>
                       </Select>
                     </Field>
                     <Field label="Instructions spéciales">
@@ -893,7 +893,7 @@ export const OrdersPage: React.FC = () => {
                   {/* Section Photos */}
                   <div className="mt-3 border-t border-gray-200 pt-3">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-bold text-gray-600">📸 Photos du vêtement ({(cloth.photos || []).length})</p>
+                      <p className="text-xs font-bold text-gray-600"> Photos du vêtement ({(cloth.photos || []).length})</p>
                       <div className="flex gap-2">
                         <input
                           type="file"
@@ -936,7 +936,7 @@ export const OrdersPage: React.FC = () => {
           </Field>
 
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-5">
-            <h3 className="font-bold text-gray-900 mb-3">💰 Récapitulatif</h3>
+            <h3 className="font-bold text-gray-900 mb-3"> Récapitulatif</h3>
             <div className="space-y-2">
               <div className="flex justify-between text-sm"><span className="text-gray-600">Sous-total ({clothes.length} article(s))</span><span className="font-medium">{subtotal.toLocaleString('fr-FR')} XOF</span></div>
               {discount > 0 && <div className="flex justify-between text-sm text-green-600"><span>Remise client ({selectedClient?.discount_rate}%)</span><span>- {discount.toLocaleString('fr-FR')} XOF</span></div>}
@@ -1032,7 +1032,7 @@ export const OrdersPage: React.FC = () => {
                         </div>
                       </div>
                       {cloth.special_instructions && (
-                        <p className="text-xs text-orange-600 bg-orange-50 rounded p-2 mt-2">⚠️ {cloth.special_instructions}</p>
+                        <p className="text-xs text-orange-600 bg-orange-50 rounded p-2 mt-2"> {cloth.special_instructions}</p>
                       )}
                     </div>
                   )

@@ -16,14 +16,14 @@ interface AppUser {
 }
 
 const DEFAULT_ROLES = [
-  { value: 'admin', label: '👑 Administrateur', desc: 'Accès complet à tout' },
-  { value: 'responsable', label: '🏆 Responsable', desc: 'Gestion opérationnelle' },
-  { value: 'caissier', label: '💰 Caissier', desc: 'Caisse, facturation, clients' },
-  { value: 'employe', label: '👷 Employé', desc: 'Commandes uniquement' },
-  { value: 'livreur', label: '🚚 Livreur', desc: 'Livraisons uniquement' },
-  { value: 'comptable', label: '📒 Comptable', desc: 'Finance et rapports' },
-  { value: 'laveur', label: '🫧 Laveur/Repasseur', desc: 'Interface atelier' },
-  { value: 'custom', label: '⚙️ Personnalisé', desc: 'Permissions manuelles' },
+  { value: 'admin', label: ' Administrateur', desc: 'Accès complet à tout' },
+  { value: 'responsable', label: ' Responsable', desc: 'Gestion opérationnelle' },
+  { value: 'caissier', label: ' Caissier', desc: 'Caisse, facturation, clients' },
+  { value: 'employe', label: ' Employé', desc: 'Commandes uniquement' },
+  { value: 'livreur', label: ' Livreur', desc: 'Livraisons uniquement' },
+  { value: 'comptable', label: ' Comptable', desc: 'Finance et rapports' },
+  { value: 'laveur', label: ' Laveur/Repasseur', desc: 'Interface atelier' },
+  { value: 'custom', label: ' Personnalisé', desc: 'Permissions manuelles' },
 ]
 
 export const UsersPage: React.FC = () => {
@@ -111,7 +111,7 @@ export const UsersPage: React.FC = () => {
           if (pwError) console.warn('Impossible de changer le mdp:', pwError.message)
         }
 
-        setSuccess('✅ Utilisateur modifié avec succès')
+        setSuccess(' Utilisateur modifié avec succès')
       } else {
         // Créer le compte Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -136,7 +136,7 @@ export const UsersPage: React.FC = () => {
         }).select().single()
         if (empError) throw empError
 
-        setSuccess(`✅ Compte créé ! ${form.full_name} peut se connecter avec ${form.email}`)
+        setSuccess(` Compte créé ! ${form.full_name} peut se connecter avec ${form.email}`)
       }
 
       await loadUsers()
@@ -156,7 +156,7 @@ export const UsersPage: React.FC = () => {
     if (user.user_id) {
       try {
         await supabase.auth.admin.updateUserById(user.user_id, { password: newPass })
-        alert(`✅ Mot de passe réinitialisé pour ${user.full_name}`)
+        alert(` Mot de passe réinitialisé pour ${user.full_name}`)
       } catch {
         // Fallback: envoyer email de réinitialisation
         await supabase.auth.resetPasswordForEmail(user.email)
@@ -211,7 +211,7 @@ export const UsersPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">👤 Gestion des utilisateurs</h1>
+          <h1 className="text-2xl font-bold text-gray-900"> Gestion des utilisateurs</h1>
           <p className="text-gray-500 text-sm mt-1">Créez des comptes et définissez leurs accès</p>
         </div>
         <button onClick={() => { setShowForm(true); setEditUser(null); setError(''); setSuccess('') }}
@@ -262,7 +262,7 @@ export const UsersPage: React.FC = () => {
                 <div className="flex gap-2">
                   <button onClick={() => startEdit(user)} className="p-2 hover:bg-purple-100 text-purple-600 rounded-lg" title="Modifier"><Edit2 size={15} /></button>
                   <button onClick={() => handleResetPassword(user)} className="p-2 hover:bg-yellow-100 text-yellow-600 rounded-lg" title="Réinitialiser mot de passe"><Key size={15} /></button>
-                  <button onClick={() => handleToggleActive(user)} className={`p-2 rounded-lg text-xs font-semibold ${user.is_active ? 'hover:bg-red-100 text-red-500' : 'hover:bg-green-100 text-green-600'}`} title={user.is_active ? 'Désactiver' : 'Activer'}>{user.is_active ? '⏸' : '▶'}</button>
+                  <button onClick={() => handleToggleActive(user)} className={`p-2 rounded-lg text-xs font-semibold ${user.is_active ? 'hover:bg-red-100 text-red-500' : 'hover:bg-green-100 text-green-600'}`} title={user.is_active ? 'Désactiver' : 'Activer'}>{user.is_active ? '' : '▶'}</button>
                   <button onClick={() => handleDelete(user)} className="p-2 hover:bg-red-100 text-red-500 rounded-lg" title="Supprimer"><Trash2 size={15} /></button>
                 </div>
               </div>
@@ -270,7 +270,7 @@ export const UsersPage: React.FC = () => {
           })}
           {!loading && users.length === 0 && (
             <div className="text-center py-12 text-gray-400">
-              <p className="text-4xl mb-3">👤</p>
+              <p className="text-4xl mb-3"></p>
               <p>Aucun utilisateur — créez le premier compte</p>
             </div>
           )}
@@ -310,8 +310,8 @@ export const UsersPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Statut</label>
                   <select value={form.is_active ? 'active' : 'inactive'} onChange={e => setForm({ ...form, is_active: e.target.value === 'active' })} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                    <option value="active">✅ Actif</option>
-                    <option value="inactive">⏸ Inactif</option>
+                    <option value="active"> Actif</option>
+                    <option value="inactive"> Inactif</option>
                   </select>
                 </div>
               </div>

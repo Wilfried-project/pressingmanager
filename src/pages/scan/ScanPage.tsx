@@ -48,7 +48,7 @@ export const ScanPage: React.FC = () => {
   if (error || !order) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f7ff', padding: 24 }}>
       <div style={{ textAlign: 'center', background: 'white', borderRadius: 20, padding: 40, maxWidth: 400, width: '100%', boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}>
-        <p style={{ fontSize: 64, marginBottom: 16 }}>❌</p>
+        <p style={{ fontSize: 64, marginBottom: 16 }}></p>
         <h2 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, color: '#1e293b', marginBottom: 8 }}>Commande introuvable</h2>
         <p style={{ color: '#6b7280', fontFamily: 'Inter, sans-serif' }}>Le ticket #{ticket} n'existe pas ou a déjà été livré.</p>
       </div>
@@ -63,7 +63,7 @@ export const ScanPage: React.FC = () => {
 
         {/* Header */}
         <div style={{ background: '#6c47ff', borderRadius: 20, padding: 24, marginBottom: 20, textAlign: 'center', color: 'white' }}>
-          <p style={{ fontSize: 32, marginBottom: 8 }}>🧺</p>
+          <p style={{ fontSize: 32, marginBottom: 8 }}></p>
           <h1 style={{ fontSize: 22, fontWeight: 900, marginBottom: 4 }}>PressingManager</h1>
           <p style={{ fontSize: 14, opacity: 0.8 }}>Suivi de commande</p>
         </div>
@@ -126,7 +126,7 @@ export const ScanPage: React.FC = () => {
         {/* Message statut */}
         {order.status === 'pret' && (
           <div style={{ background: '#f0fdf4', border: '2px solid #86efac', borderRadius: 16, padding: 20, marginTop: 16, textAlign: 'center' }}>
-            <p style={{ fontSize: 40, marginBottom: 8 }}>✅</p>
+            <p style={{ fontSize: 40, marginBottom: 8 }}></p>
             <p style={{ fontSize: 18, fontWeight: 800, color: '#16a34a' }}>Vos vêtements sont prêts !</p>
             <p style={{ fontSize: 14, color: '#15803d', marginTop: 4 }}>Vous pouvez venir les récupérer.</p>
           </div>

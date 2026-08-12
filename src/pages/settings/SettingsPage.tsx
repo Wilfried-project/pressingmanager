@@ -55,17 +55,17 @@ export const SettingsPage: React.FC = () => {
 
       <Tabs
         tabs={[
-          { key: 'boutique', label: 'Mon Pressing', icon: '🏪' },
-          { key: 'messages', label: 'Messages', icon: '💬' },
-          { key: 'apparence', label: 'Apparence', icon: '🎨' },
-          { key: 'account', label: 'Compte', icon: '👤' },
-          { key: 'system', label: 'Système', icon: '⚙️' },
+          { key: 'boutique', label: 'Mon Pressing', icon: '' },
+          { key: 'messages', label: 'Messages', icon: '' },
+          { key: 'apparence', label: 'Apparence', icon: '' },
+          { key: 'account', label: 'Compte', icon: '' },
+          { key: 'system', label: 'Système', icon: '' },
         ]}
         active={activeTab}
         onChange={setActiveTab}
       />
 
-      {saved && <Alert type="success" message="✅ Paramètres sauvegardés avec succès !" />}
+      {saved && <Alert type="success" message=" Paramètres sauvegardés avec succès !" />}
 
       {/* ONGLET MESSAGES */}
       {activeTab === 'messages' && (
@@ -73,14 +73,14 @@ export const SettingsPage: React.FC = () => {
           <h2 className="text-base font-bold mb-2">Messages WhatsApp automatiques</h2>
           <p className="text-sm text-gray-500 mb-5">Ces messages sont envoyés automatiquement via WhatsApp. Utilisez les variables : <span className="font-mono bg-gray-100 px-1 rounded">{'{prenom}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{ticket}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{nb}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{date}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{total}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{reste}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{adresse}'}</span> <span className="font-mono bg-gray-100 px-1 rounded">{'{nom}'}</span></p>
           <div className="space-y-5">
-            <Field label="📥 Message de réception (envoyé à la création de commande)">
+            <Field label=" Message de réception (envoyé à la création de commande)">
               <Textarea value={form.msgReception} onChange={e => setForm(f => ({ ...f, msgReception: e.target.value }))} rows={6} placeholder="Message envoyé quand le client dépose ses vêtements..." />
             </Field>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-xs font-bold text-gray-500 mb-2">APERÇU</p>
               <p className="text-sm text-gray-700 whitespace-pre-line">{form.msgReception.replace('{prenom}', 'Kouassi').replace('{nb}', '3').replace('{ticket}', 'PM-123456').replace('{date}', '15/08/2026').replace('{total}', '7 500').replace('{adresse}', form.address || 'Abidjan').replace('{nom}', form.name || 'Mon Pressing')}</p>
             </div>
-            <Field label="🎉 Message vêtements prêts (envoyé quand statut = Prêt)">
+            <Field label=" Message vêtements prêts (envoyé quand statut = Prêt)">
               <Textarea value={form.msgPret} onChange={e => setForm(f => ({ ...f, msgPret: e.target.value }))} rows={6} placeholder="Message envoyé quand les vêtements sont prêts..." />
             </Field>
             <div className="bg-gray-50 rounded-xl p-4">
@@ -106,7 +106,7 @@ export const SettingsPage: React.FC = () => {
                 <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50">
                   {form.logo
                     ? <img src={form.logo} alt="logo" className="w-full h-full object-cover rounded-xl" />
-                    : <span className="text-3xl">🧺</span>
+                    : <span className="text-3xl"></span>
                   }
                 </div>
                 <div className="flex flex-col gap-2">
@@ -224,7 +224,7 @@ export const SettingsPage: React.FC = () => {
               <p className="text-xs text-gray-400 font-semibold uppercase mb-3">Aperçu</p>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg" style={{ backgroundColor: form.primaryColor }}>
-                  {form.logo ? <img src={form.logo} alt="logo" className="w-full h-full object-cover rounded-xl" /> : '🧺'}
+                  {form.logo ? <img src={form.logo} alt="logo" className="w-full h-full object-cover rounded-xl" /> : ''}
                 </div>
                 <div>
                   <p className="font-bold" style={{ color: form.primaryColor }}>{form.name || 'Mon Pressing'}</p>
@@ -265,7 +265,7 @@ export const SettingsPage: React.FC = () => {
               <Input value={user?.role || 'admin'} disabled className="bg-gray-50 capitalize" />
             </Field>
             <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-              <p className="text-sm font-bold text-yellow-800 mb-1">🔐 Mot de passe</p>
+              <p className="text-sm font-bold text-yellow-800 mb-1"> Mot de passe</p>
               <p className="text-xs text-yellow-600">Pour changer votre mot de passe, utilisez l'option "Mot de passe oublié" sur la page de connexion.</p>
             </div>
           </div>
@@ -276,7 +276,7 @@ export const SettingsPage: React.FC = () => {
       {activeTab === 'system' && (
         <div className="space-y-4">
           <Card>
-            <h2 className="text-base font-bold mb-4">🔒 Sécurité</h2>
+            <h2 className="text-base font-bold mb-4"> Sécurité</h2>
             <div className="space-y-3">
               {[
                 { label: 'Sauvegarde automatique', status: 'Activée', color: 'green' },
@@ -303,12 +303,12 @@ export const SettingsPage: React.FC = () => {
                   a.href = url; a.download = `backup_${new Date().toISOString().split('T')[0]}.json`; a.click()
                 }}
                 className="w-full py-2.5 bg-blue-50 text-blue-700 rounded-xl text-sm font-semibold hover:bg-blue-100 transition">
-                📥 Exporter les données (JSON)
+                 Exporter les données (JSON)
               </button>
               <button
-                onClick={() => { if (confirm('⚠️ Réinitialiser TOUTES les données ? Irréversible !')) { localStorage.clear(); window.location.reload() } }}
+                onClick={() => { if (confirm(' Réinitialiser TOUTES les données ? Irréversible !')) { localStorage.clear(); window.location.reload() } }}
                 className="w-full py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition">
-                🗑️ Réinitialiser toutes les données
+                 Réinitialiser toutes les données
               </button>
             </div>
           </Card>
@@ -316,7 +316,7 @@ export const SettingsPage: React.FC = () => {
       )}
 
       <button onClick={handleLogout} className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition">
-        🔓 Se déconnecter
+         Se déconnecter
       </button>
     </div>
   )

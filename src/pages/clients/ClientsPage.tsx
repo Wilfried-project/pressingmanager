@@ -159,9 +159,9 @@ export const ClientsPage: React.FC = () => {
               </td>
               <td className="px-5 py-4 text-sm">{client.phone}</td>
               <td className="px-5 py-4"><Badge label={(client as any).group_name || 'standard'} color={GROUP_COLORS[(client as any).group_name || 'standard']} /></td>
-              <td className="px-5 py-4"><span className="font-bold text-yellow-600">⭐ {client.loyalty_points || 0}</span></td>
+              <td className="px-5 py-4"><span className="font-bold text-yellow-600"> {client.loyalty_points || 0}</span></td>
               <td className="px-5 py-4 text-sm">{client.discount_rate || 0}%</td>
-              <td className="px-5 py-4"><Badge label={client.is_blacklisted ? '🚫 Blacklist' : '✅ Actif'} color={client.is_blacklisted ? 'red' : 'green'} /></td>
+              <td className="px-5 py-4"><Badge label={client.is_blacklisted ? '🚫 Blacklist' : ' Actif'} color={client.is_blacklisted ? 'red' : 'green'} /></td>
               <td className="px-5 py-4">
                 <div className="flex gap-1">
                   <button onClick={() => setViewClient(client)} className="p-1.5 hover:bg-purple-100 text-purple-600 rounded-lg" title="Voir"><Users size={14} /></button>
@@ -173,7 +173,7 @@ export const ClientsPage: React.FC = () => {
           ))}
         </Table>
       ) : (
-        <Card><EmptyState icon="👥" message="Aucun client trouvé" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter un client</Button>} /></Card>
+        <Card><EmptyState icon="" message="Aucun client trouvé" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter un client</Button>} /></Card>
       )}
 
       {/* FORMULAIRE */}
@@ -226,10 +226,10 @@ export const ClientsPage: React.FC = () => {
               {[
                 { l: 'Email', v: viewClient.email || '-' },
                 { l: 'WhatsApp', v: (viewClient as any).whatsapp || '-' },
-                { l: 'Points fidélité', v: `⭐ ${viewClient.loyalty_points || 0}` },
+                { l: 'Points fidélité', v: ` ${viewClient.loyalty_points || 0}` },
                 { l: 'Remise', v: `${viewClient.discount_rate || 0}%` },
                 { l: 'Adresse', v: (viewClient as any).address || '-' },
-                { l: 'Statut', v: viewClient.is_blacklisted ? '🚫 Liste noire' : '✅ Actif' },
+                { l: 'Statut', v: viewClient.is_blacklisted ? '🚫 Liste noire' : ' Actif' },
               ].map((item, i) => (
                 <div key={i} className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-400">{item.l}</p>

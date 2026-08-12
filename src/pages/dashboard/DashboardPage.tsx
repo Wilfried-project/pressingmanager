@@ -132,7 +132,7 @@ export const DashboardPage: React.FC = () => {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          ) : <div className="flex items-center justify-center h-48 text-gray-400 flex-col gap-2"><span className="text-4xl">🧺</span><p className="text-sm">Aucune commande</p></div>}
+          ) : <div className="flex items-center justify-center h-48 text-gray-400 flex-col gap-2"><span className="text-4xl"></span><p className="text-sm">Aucune commande</p></div>}
         </Card>
       </div>
 
@@ -170,7 +170,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
               ))}
             </div>
-          ) : <div className="flex items-center justify-center h-32 text-gray-400 flex-col gap-2"><span className="text-3xl">👥</span><p className="text-sm">Aucune vente</p></div>}
+          ) : <div className="flex items-center justify-center h-32 text-gray-400 flex-col gap-2"><span className="text-3xl"></span><p className="text-sm">Aucune vente</p></div>}
         </Card>
       </div>
 
@@ -180,12 +180,12 @@ export const DashboardPage: React.FC = () => {
           <h2 className="text-base font-bold text-gray-900 mb-4">Statistiques Rapides</h2>
           <div className="space-y-3">
             {[
-              { label: 'Total commandes', value: orders.length, icon: '🧺' },
-              { label: 'Total clients', value: clients.length, icon: '👥' },
-              { label: 'Employés actifs', value: employees.filter(e => e.is_active).length, icon: '👷' },
-              { label: 'Livraisons aujourd\'hui', value: todayDeliveries.length, icon: '🚚' },
-              { label: 'Commandes terminées', value: orders.filter(o => o.status === 'livre').length, icon: '✅' },
-              { label: 'Annulations', value: orders.filter(o => o.status === 'annule').length, icon: '❌' },
+              { label: 'Total commandes', value: orders.length, icon: '' },
+              { label: 'Total clients', value: clients.length, icon: '' },
+              { label: 'Employés actifs', value: employees.filter(e => e.is_active).length, icon: '' },
+              { label: 'Livraisons aujourd\'hui', value: todayDeliveries.length, icon: '' },
+              { label: 'Commandes terminées', value: orders.filter(o => o.status === 'livre').length, icon: '' },
+              { label: 'Annulations', value: orders.filter(o => o.status === 'annule').length, icon: '' },
             ].map((s, i) => (
               <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                 <div className="flex items-center gap-2">
@@ -226,7 +226,7 @@ export const DashboardPage: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-8 text-gray-400">
-                <p className="text-3xl mb-2">🧺</p>
+                <p className="text-3xl mb-2"></p>
                 <p className="text-sm">Aucune commande encore</p>
                 <Button className="mt-3" size="sm" onClick={() => navigate('/orders')}>Créer la première</Button>
               </div>

@@ -105,7 +105,7 @@ export const CashierPage: React.FC = () => {
 
       {showUnclosedAlert && currentSession && (
         <div className="bg-red-50 border-2 border-red-300 rounded-xl p-5">
-          <h3 className="font-bold text-red-800 mb-2">⚠️ Caisse non fermée !</h3>
+          <h3 className="font-bold text-red-800 mb-2"> Caisse non fermée !</h3>
           <p className="text-sm text-red-700 mb-4">La caisse du <strong>{new Date(currentSession.opened_at).toLocaleDateString('fr-FR')}</strong> n'a pas été fermée.</p>
           <Button onClick={() => { setShowUnclosedAlert(false); setShowClose(true) }} variant="danger" icon={<Lock size={16} />}>Clôturer maintenant</Button>
         </div>
@@ -113,7 +113,7 @@ export const CashierPage: React.FC = () => {
 
       {showReminder && currentSession && (
         <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-5">
-          <h3 className="font-bold text-yellow-800 mb-2">🔔 Il est 18h00 — N'oubliez pas de fermer la caisse !</h3>
+          <h3 className="font-bold text-yellow-800 mb-2"> Il est 18h00 — N'oubliez pas de fermer la caisse !</h3>
           <p className="text-sm text-yellow-700 mb-4">Solde attendu : <strong>{soldeAttendu.toLocaleString('fr-FR')} XOF</strong></p>
           <div className="flex gap-3">
             <Button onClick={() => { setShowReminder(false); setShowClose(true) }} variant="danger" icon={<Lock size={16} />}>Fermer la caisse</Button>
@@ -122,18 +122,18 @@ export const CashierPage: React.FC = () => {
         </div>
       )}
 
-      {!currentSession && <Alert type="warning" message="⚠️ La caisse est fermée. Ouvrez-la avant d'enregistrer des paiements." />}
+      {!currentSession && <Alert type="warning" message=" La caisse est fermée. Ouvrez-la avant d'enregistrer des paiements." />}
 
       {!currentSession && lastClosedSession && (
         <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5">
-          <h3 className="font-bold text-blue-800 mb-2">☀️ Vérification du solde avant ouverture</h3>
+          <h3 className="font-bold text-blue-800 mb-2"> Vérification du solde avant ouverture</h3>
           <p className="text-sm text-blue-700 mb-4">Dernière clôture : <strong>{(lastClosedSession.closing_amount || 0).toLocaleString('fr-FR')} XOF</strong></p>
           <Field label="Solde physique compté (XOF)">
             <Input type="number" value={confirmedSolde} onChange={e => setConfirmedSolde(e.target.value)} placeholder="Comptez votre caisse..." />
           </Field>
           {confirmedSolde && parseFloat(confirmedSolde) !== (lastClosedSession.closing_amount || 0) && (
             <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-sm font-bold text-red-700">⚠️ Écart : {(parseFloat(confirmedSolde) - (lastClosedSession.closing_amount || 0)).toLocaleString('fr-FR')} XOF</p>
+              <p className="text-sm font-bold text-red-700"> Écart : {(parseFloat(confirmedSolde) - (lastClosedSession.closing_amount || 0)).toLocaleString('fr-FR')} XOF</p>
             </div>
           )}
           <div className="mt-4">
@@ -166,7 +166,7 @@ export const CashierPage: React.FC = () => {
               </tr>
             ))}
           </Table>
-        ) : <div className="text-center py-12"><p className="text-4xl mb-3">💰</p><p className="text-gray-400">Aucune vente aujourd'hui</p></div>}
+        ) : <div className="text-center py-12"><p className="text-4xl mb-3"></p><p className="text-gray-400">Aucune vente aujourd'hui</p></div>}
       </Card>
 
       {sessions.filter(s => s.status === 'closed').length > 0 && (
@@ -189,7 +189,7 @@ export const CashierPage: React.FC = () => {
       <Modal open={showOpen} onClose={() => setShowOpen(false)} title="Ouvrir la caisse" size="sm">
         <div className="space-y-4">
           <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-            <p className="text-sm font-bold text-green-800">☀️ {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            <p className="text-sm font-bold text-green-800"> {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
             <p className="text-xs text-green-600 mt-1">Comptez votre fond de caisse.</p>
           </div>
           <Field label="Fond de caisse initial (XOF)"><Input type="number" value={openAmount} onChange={e => setOpenAmount(e.target.value)} onFocus={e => e.target.value === '0' && (e.target.value = '')} placeholder="Ex: 50 000" /></Field>
@@ -207,7 +207,7 @@ export const CashierPage: React.FC = () => {
           </div>
           <Field label="Solde physique compté (XOF)"><Input type="number" value={closeAmount} onChange={e => setCloseAmount(e.target.value)} onFocus={e => e.target.value === '0' && (e.target.value = '')} placeholder={String(soldeAttendu)} /></Field>
           {closeAmount && parseFloat(closeAmount) !== soldeAttendu && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl"><p className="text-sm font-bold text-red-700">⚠️ Écart : {(parseFloat(closeAmount) - soldeAttendu).toLocaleString('fr-FR')} XOF</p></div>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl"><p className="text-sm font-bold text-red-700"> Écart : {(parseFloat(closeAmount) - soldeAttendu).toLocaleString('fr-FR')} XOF</p></div>
           )}
           <Button className="w-full" onClick={handleCloseSession} icon={<Lock size={16} />} variant="danger">Clôturer la caisse</Button>
         </div>
@@ -222,10 +222,10 @@ export const CashierPage: React.FC = () => {
           <Field label="Montant (XOF)"><Input type="number" value={txForm.amount} onChange={e => setTxForm(f => ({ ...f, amount: e.target.value }))} placeholder="Montant..." /></Field>
           <Field label="Mode de paiement">
             <Select value={txForm.method} onChange={e => setTxForm(f => ({ ...f, method: e.target.value }))}>
-              <option value="especes">💵 Espèces</option>
-              <option value="wave">🌊 Wave</option>
-              <option value="orange">🍊 Orange Money</option>
-              <option value="mtn">📱 MTN Money</option>
+              <option value="especes"> Espèces</option>
+              <option value="wave"> Wave</option>
+              <option value="orange"> Orange Money</option>
+              <option value="mtn"> MTN Money</option>
             </Select>
           </Field>
           <Field label="Raison"><Input value={txForm.reason} onChange={e => setTxForm(f => ({ ...f, reason: e.target.value }))} placeholder="Ex: Paiement client..." /></Field>
