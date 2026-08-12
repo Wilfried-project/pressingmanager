@@ -28,6 +28,21 @@ const DEFAULT_ROLES = [
 
 export const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<AppUser[]>([])
+  const [currentTenantId, setCurrentTenantId] = useState('bc4ba4d5-b9b6-48d8-8344-84c2fc2c299f')
+
+  useEffect(() => {
+    const loadTenantId = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const { data: emp } = await supabase
+        .from('employees')
+        .select('tenant_id')
+        .eq('user_id', session.user.id)
+        .single()
+      if (emp?.tenant_id) setCurrentTenantId(emp.tenant_id)
+    }
+    loadTenantId()
+  }, [])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -110,7 +125,7 @@ export const UsersPage: React.FC = () => {
         const { data: empData, error: empError } = await supabase.from('employees').insert({
           id: crypto.randomUUID(),
           user_id: authData.user?.id,
-          tenant_id: 'bc4ba4d5-b9b6-48d8-8344-84c2fc2c299f',
+          tenant_id: currentTenantId,
           full_name: form.full_name,
           email: form.email,
           phone: form.phone,
