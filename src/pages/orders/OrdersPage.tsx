@@ -504,8 +504,10 @@ export const OrdersPage: React.FC = () => {
 
     // Ouvrir WhatsApp automatiquement
     const phoneClean = (order.client?.phone || '').replace(/\s/g, '').replace(/^00/, '+')
-    if (phoneClean && msgPret) {
-      const waUrl = `https://wa.me/${phoneClean}?text=${encodeURIComponent(msgPret)}`
+    if (phoneClean) {
+      const defaultMsg = 'Bonjour ' + (order.client?.first_name || '') + ' ! Vos vetements sont prets. Ticket: #' + order.ticket_number + '. Venez recuperer. - ' + (config.name || 'PressingManager')
+      const finalMsg = msgPret || defaultMsg
+      const waUrl = 'https://wa.me/' + phoneClean + '?text=' + encodeURIComponent(finalMsg)
       window.open(waUrl, '_blank')
     } else {
       alert(`✅ Notification préparée pour ${order.client?.first_name} ${order.client?.last_name}`)
