@@ -5,24 +5,24 @@ import { useAuthStore, useOrderStore, useStockStore, useNotificationStore, useSh
 import { supabase } from '../../lib/supabase'
 
 export const ALL_MODULES = [
-  { path: '/', label: 'Tableau de bord', icon: '📊', group: 'Principal' },
-  { path: '/orders', label: 'Commandes', icon: '🧺', group: 'Principal' },
-  { path: '/clients', label: 'Clients', icon: '👥', group: 'Clients & Ventes' },
-  { path: '/billing', label: 'Facturation', icon: '🧾', group: 'Clients & Ventes' },
-  { path: '/cashier', label: 'Caisse', icon: '💰', group: 'Clients & Ventes' },
-  { path: '/loyalty', label: 'Fidélité', icon: '⭐', group: 'Clients & Ventes' },
-  { path: '/stock', label: 'Stock', icon: '📦', group: 'Opérations' },
-  { path: '/delivery', label: 'Livraisons', icon: '🚚', group: 'Opérations' },
-  { path: '/notifications', label: 'Notifications', icon: '🔔', group: 'Opérations' },
-  { path: '/agenda', label: 'Agenda', icon: '📅', group: 'Opérations' },
-  { path: '/hr', label: 'Employés & RH', icon: '👷', group: 'Équipe' },
-  { path: '/accounting', label: 'Comptabilité', icon: '📒', group: 'Finance' },
-  { path: '/reports', label: 'Rapports', icon: '📈', group: 'Finance' },
-  { path: '/services', label: 'Services & Tarifs', icon: '💲', group: 'Administration' },
-  { path: '/multiagency', label: 'Multi-agences', icon: '🏢', group: 'Administration' },
-  { path: '/settings', label: 'Paramètres', icon: '⚙️', group: 'Administration' },
-  { path: '/users', label: 'Utilisateurs', icon: '👤', group: 'Administration' },
-  { path: '/atelier', label: 'Atelier', icon: '👔', group: 'Opérations' },
+  { path: '/', label: 'Tableau de bord', icon: '', group: 'Principal' },
+  { path: '/orders', label: 'Commandes', icon: '', group: 'Principal' },
+  { path: '/clients', label: 'Clients', icon: '', group: 'Clients & Ventes' },
+  { path: '/billing', label: 'Facturation', icon: '', group: 'Clients & Ventes' },
+  { path: '/cashier', label: 'Caisse', icon: '', group: 'Clients & Ventes' },
+  { path: '/loyalty', label: 'Fidélité', icon: '', group: 'Clients & Ventes' },
+  { path: '/stock', label: 'Stock', icon: '', group: 'Opérations' },
+  { path: '/delivery', label: 'Livraisons', icon: '', group: 'Opérations' },
+  { path: '/notifications', label: 'Notifications', icon: '', group: 'Opérations' },
+  { path: '/agenda', label: 'Agenda', icon: '', group: 'Opérations' },
+  { path: '/hr', label: 'Employés & RH', icon: '', group: 'Équipe' },
+  { path: '/accounting', label: 'Comptabilité', icon: '', group: 'Finance' },
+  { path: '/reports', label: 'Rapports', icon: '', group: 'Finance' },
+  { path: '/services', label: 'Services & Tarifs', icon: '', group: 'Administration' },
+  { path: '/multiagency', label: 'Multi-agences', icon: '', group: 'Administration' },
+  { path: '/settings', label: 'Paramètres', icon: '', group: 'Administration' },
+  { path: '/users', label: 'Utilisateurs', icon: '', group: 'Administration' },
+  { path: '/atelier', label: 'Atelier', icon: '', group: 'Opérations' },
 ]
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -136,7 +136,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     return (
                       <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm font-medium ${isActive ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'}`}>
-                        <span className="text-base">{item.icon}</span>
+                        <span className="text-base"></span>
                         <span className="flex-1">{item.label}</span>
                         {isActive && <ChevronRight size={14} />}
                       </Link>
@@ -163,3 +163,5 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     </div>
   )
 }
+
+
