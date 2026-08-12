@@ -37,7 +37,7 @@ export const SettingsPage: React.FC = () => {
     reader.readAsDataURL(file)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => { try { const { data: { session } } = await supabase.auth.getSession(); if (session) { const { data: emp } = await supabase.from("employees").select("tenant_id").eq("user_id", session.user.id).single(); if (emp?.tenant_id) { await supabase.from("tenants").update({ name: config.name, slogan: config.slogan, phone: config.phone, email: config.email, address: config.address, primary_color: config.primaryColor, currency: config.currency, footer: config.footer, msg_reception: config.msgReception, msg_pret: config.msgPret, logo: config.logo }).eq("id", emp.tenant_id) } } } catch(err) { console.error(err) }
     setConfig(form)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
@@ -321,3 +321,4 @@ export const SettingsPage: React.FC = () => {
     </div>
   )
 }
+
