@@ -642,7 +642,7 @@ export const OrdersPage: React.FC = () => {
               </div>
             </div>
             <Field label="Montant encaissé (XOF)">
-              <Input type="number" value={paymentAmount} onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)} min="0" max={showPaymentModal.remaining} />
+              <Input type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)} onFocus={e => e.target.value === '0' && (e.target.value = '')} min="0" max={showPaymentModal.remaining} />
             </Field>
             <Field label="Mode de paiement">
               <Select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}>
@@ -852,10 +852,10 @@ export const OrdersPage: React.FC = () => {
                       </Select>
                     </Field>
                     <Field label="Quantité">
-                      <Input type="number" min="1" value={cloth.quantity} onChange={e => updateCloth(i, { quantity: parseInt(e.target.value) || 1 })} />
+                      <Input type="number" min="1" value={cloth.quantity} onChange={e => updateCloth(i, { quantity: e.target.value === '' ? '' as any : parseInt(e.target.value) || 0 })} onFocus={e => e.target.value === '0' && (e.target.value = '')} />
                     </Field>
                     <Field label="Prix unitaire (XOF)">
-                      <Input type="number" value={cloth.price} onChange={e => updateCloth(i, { price: parseFloat(e.target.value) || 0 })} />
+                      <Input type="number" value={cloth.price} onChange={e => updateCloth(i, { price: e.target.value === '' ? '' as any : parseFloat(e.target.value) || 0 })} onFocus={e => e.target.value === '0' && (e.target.value = '')} />
                     </Field>
                     <Field label="Couleur">
                       <Input value={cloth.color || ''} onChange={e => updateCloth(i, { color: e.target.value })} placeholder="Ex: Bleu" />

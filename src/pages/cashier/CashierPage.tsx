@@ -192,7 +192,7 @@ export const CashierPage: React.FC = () => {
             <p className="text-sm font-bold text-green-800">☀️ {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
             <p className="text-xs text-green-600 mt-1">Comptez votre fond de caisse.</p>
           </div>
-          <Field label="Fond de caisse initial (XOF)"><Input type="number" value={openAmount} onChange={e => setOpenAmount(e.target.value)} placeholder="Ex: 50 000" /></Field>
+          <Field label="Fond de caisse initial (XOF)"><Input type="number" value={openAmount} onChange={e => setOpenAmount(e.target.value)} onFocus={e => e.target.value === '0' && (e.target.value = '')} placeholder="Ex: 50 000" /></Field>
           <Button className="w-full" onClick={handleOpenSession} icon={<Unlock size={16} />}>Ouvrir la caisse</Button>
         </div>
       </Modal>
@@ -205,7 +205,7 @@ export const CashierPage: React.FC = () => {
             <div className="flex justify-between text-sm"><span className="text-gray-500">Sorties</span><span className="font-semibold text-red-600">-{totalSorties.toLocaleString('fr-FR')} XOF</span></div>
             <div className="flex justify-between font-bold border-t pt-2"><span>Solde théorique</span><span className="text-purple-700">{soldeAttendu.toLocaleString('fr-FR')} XOF</span></div>
           </div>
-          <Field label="Solde physique compté (XOF)"><Input type="number" value={closeAmount} onChange={e => setCloseAmount(e.target.value)} placeholder={String(soldeAttendu)} /></Field>
+          <Field label="Solde physique compté (XOF)"><Input type="number" value={closeAmount} onChange={e => setCloseAmount(e.target.value)} onFocus={e => e.target.value === '0' && (e.target.value = '')} placeholder={String(soldeAttendu)} /></Field>
           {closeAmount && parseFloat(closeAmount) !== soldeAttendu && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl"><p className="text-sm font-bold text-red-700">⚠️ Écart : {(parseFloat(closeAmount) - soldeAttendu).toLocaleString('fr-FR')} XOF</p></div>
           )}
