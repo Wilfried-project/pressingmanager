@@ -19,7 +19,6 @@ export const ALL_MODULES = [
   { path: '/accounting', label: 'Comptabilité', icon: '', group: 'Finance' },
   { path: '/reports', label: 'Rapports', icon: '', group: 'Finance' },
   { path: '/services', label: 'Services & Tarifs', icon: '', group: 'Administration' },
-  { path: '/multiagency', label: 'Multi-agences', icon: '', group: 'Administration' },
   { path: '/settings', label: 'Paramètres', icon: '', group: 'Administration' },
   { path: '/users', label: 'Utilisateurs', icon: '', group: 'Administration' },
   { path: '/atelier', label: 'Atelier', icon: '', group: 'Opérations' },
