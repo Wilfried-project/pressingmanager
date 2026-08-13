@@ -136,6 +136,10 @@ export const UsersPage: React.FC = () => {
 
         setSuccess(' Utilisateur modifié avec succès')
       } else {
+        // Sauvegarder la session admin AVANT de créer le compte —
+        // signUp connecte automatiquement le nouvel utilisateur et remplacerait la session actuelle
+        const { data: { session: adminSession } } = await supabase.auth.getSession()
+
         // Créer le compte Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: form.email,
@@ -143,6 +147,11 @@ export const UsersPage: React.FC = () => {
           options: { data: { full_name: form.full_name } }
         })
         if (authError) throw authError
+
+        // Restaurer la session admin immédiatement pour ne pas rester connecté en tant que nouvel employé
+        if (adminSession) {
+          await supabase.auth.setSession({ access_token: adminSession.access_token, refresh_token: adminSession.refresh_token })
+        }
 
         // Lier le compte au profil employé déjà créé dans RH (pas de nouvelle ligne)
         const { error: empError } = await supabase.from('employees').update({
