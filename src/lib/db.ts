@@ -327,6 +327,62 @@ export const agendaService = {
 }
 
 // ============================================================
+// EMPLOYEES (RH)
+// ============================================================
+export const employeeService = {
+  async getAll() {
+    const tenant_id = await getTenantId()
+    const { data, error } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('tenant_id', tenant_id)
+      .order('full_name')
+    if (error) throw error
+    return data || []
+  },
+
+  // Employés créés dans RH qui n'ont pas encore de compte de connexion (user_id vide)
+  async getWithoutAccount() {
+    const tenant_id = await getTenantId()
+    const { data, error } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('tenant_id', tenant_id)
+      .is('user_id', null)
+      .order('full_name')
+    if (error) throw error
+    return data || []
+  },
+
+  async create(emp: any) {
+    const tenant_id = await getTenantId()
+    const { data, error } = await supabase
+      .from('employees')
+      .insert({ ...emp, tenant_id })
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+
+  async update(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('employees')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+
+  async delete(id: string) {
+    const { error } = await supabase.from('employees').delete().eq('id', id)
+    if (error) throw error
+  }
+}
+
+// ============================================================
 // TENANT CONFIG
 // ============================================================
 export const tenantService = {
@@ -353,4 +409,3 @@ export const tenantService = {
     return data
   }
 }
-
