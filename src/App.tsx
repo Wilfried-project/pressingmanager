@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { useAuthStore, useShopConfig } from './lib/store'
-import { BillingPage } from './pages/billing/BillingPage'
-\nimport { BillingPage } from './pages/billing/BillingPage'
-import { Layout } from './components/layout/Layout'
+import { BillingPage } from './pages/billing/BillingPage'\nimport { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/auth/LoginPage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { ClientsPage } from './pages/clients/ClientsPage'
@@ -203,6 +201,5 @@ function App() {
 }
 
 export default App
-
 
 
