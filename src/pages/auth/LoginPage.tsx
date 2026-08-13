@@ -22,7 +22,7 @@ export const LoginPage: React.FC = () => {
       if (isForgot) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password' })
         if (error) throw error
-        setError(' Email de réinitialisation envoyé !')
+        setError('✅ Email de réinitialisation envoyé !')
         setIsForgot(false)
         setLoading(false)
         return
@@ -54,15 +54,15 @@ export const LoginPage: React.FC = () => {
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-8 text-center">
             {config.logo
-              ? <img src={config.logo} alt="logo" className="w-20 h-20 object-cover rounded-2xl mx-auto mb-4" />
-              : <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-5xl"></div>
+              ? <img src={config.logo} alt="logo" className="w-40 h-40 object-contain mx-auto mb-4" />
+              : <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-5xl">🧺</div>
             }
             <h1 className="text-3xl font-bold text-white">{config.name || 'PressingManager'}</h1>
             <p className="text-purple-200 mt-1 text-sm">{config.slogan || 'Logiciel de gestion professionnel'}</p>
           </div>
           <div className="p-8">
             {error && (
-              <div className={`mb-4 p-3 rounded-xl text-sm font-medium border ${error.includes('') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>{error}</div>
+              <div className={`mb-4 p-3 rounded-xl text-sm font-medium border ${error.includes('✅') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>{error}</div>
             )}
             {isForgot ? (
               <>
