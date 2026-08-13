@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 import QRCode from 'qrcode'
 import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig, useAgendaStore } from '../../lib/store'
-import { clientsService, ordersService } from '../../lib/db'
+import { clientsService, ordersService, generateTicketNumber } from '../../lib/db'
 import { PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Table, Card, getOrderStatusColor, getPriorityColor, getClothStatusColor } from '../../components/ui'
 import { Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
@@ -204,7 +204,7 @@ export const OrdersPage: React.FC = () => {
     e.preventDefault()
     const client = clients.find(c => c.id === form.client_id)
     if (!client) { alert('Veuillez sélectionner un client'); return }
-    const ticket = `PM-${Date.now().toString().slice(-6)}`
+    const ticket = await generateTicketNumber()
     const now = new Date().toISOString()
     const clothesFull: Cloth[] = clothes.map(c => ({
       ...c, id: crypto.randomUUID(), order_id: ticket,
@@ -1063,4 +1063,6 @@ export const OrdersPage: React.FC = () => {
     </div>
   )
 }
+
+
 
