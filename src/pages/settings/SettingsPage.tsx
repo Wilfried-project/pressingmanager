@@ -53,8 +53,29 @@ export const SettingsPage: React.FC = () => {
     }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setConfig(form)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const { data: emp } = await supabase.from('employees').select('tenant_id').eq('user_id', session.user.id).single()
+        if (emp?.tenant_id) {
+          await supabase.from('tenants').update({
+            name: form.name,
+            slogan: form.slogan,
+            phone: form.phone,
+            email: form.email,
+            address: form.address,
+            primary_color: form.primaryColor,
+            currency: form.currency,
+            footer: form.footer,
+            msg_reception: form.msgReception,
+            msg_pret: form.msgPret,
+            logo: form.logo,
+          }).eq('id', emp.tenant_id)
+        }
+      }
+    } catch (err) { console.error('Erreur sauvegarde:', err) }
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }
