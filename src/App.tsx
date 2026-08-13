@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { useAuthStore, useShopConfig } from './lib/store'
 import { BillingPage } from './pages/billing/BillingPage'
+import { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/auth/LoginPage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { ClientsPage } from './pages/clients/ClientsPage'
@@ -27,14 +28,11 @@ function App() {
   const { user, setUser, setSession } = useAuthStore()
   const { setConfig } = useShopConfig()
 
-  // Détecter le sous-domaine et charger la config du pressing
   useEffect(() => {
     const loadTenantConfig = async () => {
       try {
         const hostname = window.location.hostname
         const parts = hostname.split('.')
-        // Ex: elegance.pressing-manager.com → slug = elegance
-        // app.pressing-manager.com → pas de slug spécifique
         const isCustomSubdomain = parts.length >= 3 &&
           parts[0] !== 'www' &&
           parts[0] !== 'app' &&
@@ -162,7 +160,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-purple-800 to-indigo-700 flex items-center justify-center">
       <div className="text-center">
         <div className="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-white text-2xl font-bold">🧺 PressingManager</p>
+        <p className="text-white text-2xl font-bold">PressingManager</p>
         <p className="text-purple-200 text-sm mt-1">Chargement en cours...</p>
       </div>
     </div>
@@ -171,11 +169,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Routes publiques */}
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
         <Route path="/scan/:ticket" element={<ScanPage />} />
-
-        {/* Routes protégées */}
         <Route path="/" element={<Protected><DashboardPage /></Protected>} />
         <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
         <Route path="/clients" element={<Protected><ClientsPage /></Protected>} />
@@ -201,5 +196,3 @@ function App() {
 }
 
 export default App
-
-
