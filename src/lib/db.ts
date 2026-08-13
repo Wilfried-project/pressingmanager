@@ -205,7 +205,7 @@ export const stockService = {
     const tenant_id = await getTenantId()
     const { data, error } = await supabase
       .from('stock_items')
-      .insert({ ...item, tenant_id })
+      .insert({ ...Object.fromEntries(Object.entries(item).filter(([k]) => k !== 'agency_id')), tenant_id })
       .select()
       .single()
     if (error) throw error
@@ -353,3 +353,4 @@ export const tenantService = {
     return data
   }
 }
+
