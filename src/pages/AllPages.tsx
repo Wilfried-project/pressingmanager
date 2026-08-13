@@ -623,7 +623,6 @@ export const AccountingPage: React.FC = () => {
 export const ReportsPage: React.FC = () => {
   const orders = useOrderStore(s => s.orders)
   const clients = useClientStore(s => s.clients)
-  const { employees } = useHRStore()
   const [activeTab, setActiveTab] = useState('overview')
   const stats = useMemo(() => { const month = new Date().toISOString().slice(0,7); const monthOrders = orders.filter(o => o.created_at.startsWith(month)); const monthRevenue = monthOrders.filter(o => o.payment_status === 'paye').reduce((s,o) => s+o.total,0); const totalRevenue = orders.filter(o => o.payment_status === 'paye').reduce((s,o) => s+o.total,0); const avgTicket = orders.filter(o => o.payment_status === 'paye').length > 0 ? totalRevenue / orders.filter(o => o.payment_status === 'paye').length : 0; return { monthOrders: monthOrders.length, monthRevenue, totalRevenue, totalOrders: orders.length, lateOrders: orders.filter(o => o.status !== 'livre' && o.status !== 'annule' && new Date(o.expected_at) < new Date()).length, avgTicket, cancelRate: orders.length > 0 ? (orders.filter(o => o.status === 'annule').length / orders.length) * 100 : 0 } }, [orders])
   const revenueTrend = Array.from({ length: 30 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (29-i)); const ds = d.toISOString().split('T')[0]; return { date: String(d.getDate()), CA: orders.filter(o => o.created_at.startsWith(ds) && o.payment_status === 'paye').reduce((s,o) => s+o.total,0) } })
@@ -705,7 +704,10 @@ export const ServicesPage: React.FC = () => {
 export const DeliveryPage: React.FC = () => {
   const { deliveries, addDelivery, updateDelivery, getTodayDeliveries } = useDeliveryStore()
   const orders = useOrderStore(s => s.orders)
-  const { employees } = useHRStore()
+  const [employees, setEmployees] = useState<Employee[]>([])
+  useEffect(() => {
+    employeeService.getAll().then(data => setEmployees(data as Employee[])).catch(err => console.error('Erreur chargement employés:', err))
+  }, [])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ order_id: '', driver_id: '', address: '', scheduled_at: '', notes: '' })
   const readyOrders = orders.filter(o => o.status === 'pret')
