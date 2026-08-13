@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Trash2, Edit2, Save, X, Key } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { employeeService } from '../../lib/db'
 import { ALL_MODULES, ROLE_PERMISSIONS } from '../../components/layout/Layout'
+import type { Employee } from '../../types'
 
 interface AppUser {
   id: string
@@ -54,12 +56,23 @@ export const UsersPage: React.FC = () => {
     permissions: [] as string[], is_active: true, password: ''
   })
 
-  useEffect(() => { loadUsers() }, [])
+  // Employés créés dans RH mais qui n'ont pas encore de compte de connexion
+  const [availableEmployees, setAvailableEmployees] = useState<Employee[]>([])
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('')
+
+  const loadAvailableEmployees = async () => {
+    try {
+      const data = await employeeService.getWithoutAccount()
+      setAvailableEmployees(data as Employee[])
+    } catch (err) { console.error('Erreur chargement employés disponibles:', err) }
+  }
+
+  useEffect(() => { loadUsers(); loadAvailableEmployees() }, [])
 
   const loadUsers = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase.from('employees').select('*').order('created_at', { ascending: false })
+      const { data, error } = await supabase.from('employees').select('*').not('user_id', 'is', null).order('created_at', { ascending: false })
       if (error) throw error
       setUsers(data || [])
     } catch (err) { console.error(err) }
@@ -83,7 +96,17 @@ export const UsersPage: React.FC = () => {
     setForm({ ...form, permissions: perms })
   }
 
+  const handleSelectEmployee = (id: string) => {
+    setSelectedEmployeeId(id)
+    const emp = availableEmployees.find(e => e.id === id)
+    if (emp) {
+      const roleExists = DEFAULT_ROLES.some(r => r.value === emp.role)
+      setForm({ ...form, full_name: emp.full_name, phone: emp.phone || '', role: roleExists ? emp.role : form.role })
+    }
+  }
+
   const handleSave = async () => {
+    if (!editUser && !selectedEmployeeId) { setError('Sélectionnez un employé créé dans RH'); return }
     if (!form.full_name || !form.email) { setError('Nom et email requis'); return }
     if (!editUser && !form.password) { setError('Mot de passe requis pour un nouvel utilisateur'); return }
     if (!editUser && form.password.length < 6) { setError('Mot de passe minimum 6 caractères'); return }
@@ -121,25 +144,21 @@ export const UsersPage: React.FC = () => {
         })
         if (authError) throw authError
 
-        // Créer l'employé dans la table
-        const { data: empData, error: empError } = await supabase.from('employees').insert({
-          id: crypto.randomUUID(),
+        // Lier le compte au profil employé déjà créé dans RH (pas de nouvelle ligne)
+        const { error: empError } = await supabase.from('employees').update({
           user_id: authData.user?.id,
-          tenant_id: currentTenantId,
-          full_name: form.full_name,
           email: form.email,
-          phone: form.phone,
           role: form.role,
           permissions: effectivePerms,
           is_active: form.is_active,
-          salary: 0,
-        }).select().single()
+        }).eq('id', selectedEmployeeId)
         if (empError) throw empError
 
         setSuccess(` Compte créé ! ${form.full_name} peut se connecter avec ${form.email}`)
       }
 
       await loadUsers()
+      await loadAvailableEmployees()
       resetForm()
     } catch (err: any) {
       setError('Erreur : ' + (err.message || 'Impossible de créer le compte'))
@@ -160,11 +179,11 @@ export const UsersPage: React.FC = () => {
       } catch {
         // Fallback: envoyer email de réinitialisation
         await supabase.auth.resetPasswordForEmail(user.email)
-        alert(`📧 Email de réinitialisation envoyé à ${user.email}`)
+        alert(` Email de réinitialisation envoyé à ${user.email}`)
       }
     } else {
       await supabase.auth.resetPasswordForEmail(user.email)
-      alert(`📧 Email de réinitialisation envoyé à ${user.email}`)
+      alert(` Email de réinitialisation envoyé à ${user.email}`)
     }
   }
 
@@ -181,11 +200,13 @@ export const UsersPage: React.FC = () => {
     try {
       await supabase.from('employees').delete().eq('id', user.id)
       setUsers(users.filter(u => u.id !== user.id))
+      await loadAvailableEmployees()
     } catch { alert('Erreur lors de la suppression') }
   }
 
   const startEdit = (user: AppUser) => {
     setEditUser(user)
+    setSelectedEmployeeId('')
     setForm({ full_name: user.full_name, email: user.email, phone: user.phone, role: user.role, permissions: user.permissions, is_active: user.is_active, password: '' })
     setShowForm(true)
     setError('')
@@ -193,6 +214,7 @@ export const UsersPage: React.FC = () => {
 
   const resetForm = () => {
     setForm({ full_name: '', email: '', phone: '', role: 'employe', permissions: [], is_active: true, password: '' })
+    setSelectedEmployeeId('')
     setEditUser(null)
     setShowForm(false)
     setError('')
@@ -206,19 +228,29 @@ export const UsersPage: React.FC = () => {
   }, {} as Record<string, typeof ALL_MODULES>)
 
   const effectivePerms = getEffectivePermissions(form.role, form.permissions)
+  const canCreateUser = availableEmployees.length > 0
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900"> Gestion des utilisateurs</h1>
-          <p className="text-gray-500 text-sm mt-1">Créez des comptes et définissez leurs accès</p>
+          <p className="text-gray-500 text-sm mt-1">Attribuez un accès de connexion à un employé créé dans RH</p>
         </div>
-        <button onClick={() => { setShowForm(true); setEditUser(null); setError(''); setSuccess('') }}
-          className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-purple-700 transition">
+        <button
+          onClick={() => { if (!canCreateUser) return; setShowForm(true); setEditUser(null); setSelectedEmployeeId(''); setError(''); setSuccess('') }}
+          disabled={!canCreateUser}
+          title={!canCreateUser ? "Créez d'abord un employé dans RH" : ''}
+          className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-600">
           <Plus size={18} /> Nouvel utilisateur
         </button>
       </div>
+
+      {!canCreateUser && (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm font-medium text-yellow-800">
+          Aucun employé disponible — créez d'abord un employé dans Employés &amp; RH avant de lui attribuer un accès de connexion ici.
+        </div>
+      )}
 
       {success && <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-sm font-semibold text-green-700">{success}</div>}
 
@@ -262,7 +294,7 @@ export const UsersPage: React.FC = () => {
                 <div className="flex gap-2">
                   <button onClick={() => startEdit(user)} className="p-2 hover:bg-purple-100 text-purple-600 rounded-lg" title="Modifier"><Edit2 size={15} /></button>
                   <button onClick={() => handleResetPassword(user)} className="p-2 hover:bg-yellow-100 text-yellow-600 rounded-lg" title="Réinitialiser mot de passe"><Key size={15} /></button>
-                  <button onClick={() => handleToggleActive(user)} className={`p-2 rounded-lg text-xs font-semibold ${user.is_active ? 'hover:bg-red-100 text-red-500' : 'hover:bg-green-100 text-green-600'}`} title={user.is_active ? 'Désactiver' : 'Activer'}>{user.is_active ? '' : '▶'}</button>
+                  <button onClick={() => handleToggleActive(user)} className={`p-2 rounded-lg text-xs font-semibold ${user.is_active ? 'hover:bg-red-100 text-red-500' : 'hover:bg-green-100 text-green-600'}`} title={user.is_active ? 'Désactiver' : 'Activer'}>{user.is_active ? '' : ''}</button>
                   <button onClick={() => handleDelete(user)} className="p-2 hover:bg-red-100 text-red-500 rounded-lg" title="Supprimer"><Trash2 size={15} /></button>
                 </div>
               </div>
@@ -271,7 +303,7 @@ export const UsersPage: React.FC = () => {
           {!loading && users.length === 0 && (
             <div className="text-center py-12 text-gray-400">
               <p className="text-4xl mb-3"></p>
-              <p>Aucun utilisateur — créez le premier compte</p>
+              <p>Aucun utilisateur — attribuez un accès à un employé RH</p>
             </div>
           )}
         </div>
@@ -289,18 +321,32 @@ export const UsersPage: React.FC = () => {
               {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">{error}</div>}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nom complet *</label>
-                  <input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Prénom Nom" />
-                </div>
+                {!editUser && (
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Employé (créé dans RH) *</label>
+                    <select value={selectedEmployeeId} onChange={e => handleSelectEmployee(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                      <option value="">Sélectionner un employé...</option>
+                      {availableEmployees.map(emp => <option key={emp.id} value={emp.id}>{emp.full_name} — {emp.role}</option>)}
+                    </select>
+                    {selectedEmployeeId && <p className="text-xs text-gray-400 mt-1.5">Nom et téléphone repris automatiquement depuis la fiche RH.</p>}
+                  </div>
+                )}
+                {editUser && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nom complet *</label>
+                    <input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Prénom Nom" />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email *</label>
                   <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} disabled={!!editUser} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400" placeholder="email@pressing.ci" />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Téléphone</label>
-                  <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="+225 07..." />
-                </div>
+                {editUser && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Téléphone</label>
+                    <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="+225 07..." />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                     {editUser ? 'Nouveau mot de passe (laisser vide = inchangé)' : 'Mot de passe *'}
