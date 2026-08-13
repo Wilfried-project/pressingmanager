@@ -148,7 +148,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </nav>
           <div className="p-4 border-t border-gray-100">
             <p className="text-xs text-gray-400 text-center">PressingManager v1.0.0</p>
-            <p className="text-xs text-gray-300 text-center">© 2024 — Tous droits réservés</p>
+            <p className="text-xs text-gray-300 text-center">© 2026 — Tous droits réservés</p>
           </div>
         </aside>
 
@@ -163,5 +163,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     </div>
   )
 }
+
 
 
