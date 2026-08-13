@@ -141,6 +141,24 @@ export const HRPage: React.FC = () => {
     refreshEmployees()
   }
 
+  const handleApproveLeave = async (leave: Leave) => {
+    updateLeave(leave.id, { status: 'approved' })
+    const emp = employees.find(e => e.id === leave.employee_id)
+    try {
+      await agendaService.create({
+        id: crypto.randomUUID(),
+        title: `Congé — ${emp?.full_name || 'Employé'}`,
+        type: 'conge',
+        date: leave.start_date,
+        time: '09:00',
+        description: leave.end_date && leave.end_date !== leave.start_date
+          ? `Du ${new Date(leave.start_date).toLocaleDateString('fr-FR')} au ${new Date(leave.end_date).toLocaleDateString('fr-FR')}${leave.notes ? ' — ' + leave.notes : ''}`
+          : (leave.notes || ''),
+        created_at: new Date().toISOString()
+      })
+    } catch (err) { console.error('Erreur création événement agenda:', err) }
+  }
+
   const todayAtt = getTodayAttendance()
   const activeEmployees = employees.filter(e => e.is_active)
   const pendingLeaves = leaves.filter(l => l.status === 'pending')
@@ -210,7 +228,7 @@ export const HRPage: React.FC = () => {
                   <td className="px-5 py-4 text-sm">{new Date(leave.start_date).toLocaleDateString('fr-FR')}</td>
                   <td className="px-5 py-4 text-sm">{new Date(leave.end_date).toLocaleDateString('fr-FR')}</td>
                   <td className="px-5 py-4"><Badge label={leave.status} color={leave.status === 'approved' ? 'green' : leave.status === 'rejected' ? 'red' : 'yellow'} /></td>
-                  <td className="px-5 py-4">{leave.status === 'pending' && <div className="flex gap-1"><button onClick={() => updateLeave(leave.id, { status: 'approved' })} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs"></button><button onClick={() => updateLeave(leave.id, { status: 'rejected' })} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs"></button></div>}</td>
+                  <td className="px-5 py-4">{leave.status === 'pending' && <div className="flex gap-1"><button onClick={() => handleApproveLeave(leave)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs"></button><button onClick={() => updateLeave(leave.id, { status: 'rejected' })} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs"></button></div>}</td>
                 </tr>
               )})}
             </Table>
