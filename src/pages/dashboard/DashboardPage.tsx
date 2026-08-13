@@ -64,9 +64,9 @@ export const DashboardPage: React.FC = () => {
       const todayOrders = orders.filter(o => new Date(o.created_at) >= today)
       const todayClothes = todayOrders.reduce((s, o) => s + (o.clothes?.length || 0), 0)
       const readyOrders = orders.filter(o => o.status === 'pret').length
-      const todayCA = todayOrders.reduce((s, o) => s + (o.total_amount || 0), 0)
+      const todayCA = todayOrders.reduce((s, o) => s + (o.total || 0), 0)
       const monthOrders = orders.filter(o => new Date(o.created_at) >= new Date(monthStart))
-      const monthCA = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0)
+      const monthCA = monthOrders.reduce((s, o) => s + (o.total || 0), 0)
       const lateOrders = orders.filter(o => {
         if (!o.expected_at || ['livre', 'annule'].includes(o.status)) return false
         return new Date(o.expected_at) < new Date()
@@ -109,7 +109,7 @@ export const DashboardPage: React.FC = () => {
           const created = new Date(o.created_at)
           return created >= d && created < nextD
         })
-        const ca = dayOrders.reduce((s, o) => s + (o.total_amount || 0), 0)
+        const ca = dayOrders.reduce((s, o) => s + (o.total || 0), 0)
         const clothes = dayOrders.reduce((s, o) => s + (o.clothes?.length || 0), 0)
         caByDay.push({ name: dayNames[d.getDay()], ca })
         clothesByDay.push({ name: dayNames[d.getDay()], habits: clothes })
@@ -121,7 +121,7 @@ export const DashboardPage: React.FC = () => {
         if (!o.client) return
         const id = o.client_id
         if (!clientMap[id]) clientMap[id] = { name: `${o.client.first_name} ${o.client.last_name}`, total: 0, count: 0 }
-        clientMap[id].total += o.total_amount || 0
+        clientMap[id].total += o.total || 0
         clientMap[id].count++
       })
       const topClients = Object.values(clientMap).sort((a, b) => b.total - a.total).slice(0, 5)
@@ -320,7 +320,7 @@ export const DashboardPage: React.FC = () => {
                   <p className="text-xs text-gray-500">{o.client?.first_name} {o.client?.last_name} — {o.clothes?.length || 0} vêtement(s) — {new Date(o.created_at).toLocaleDateString('fr-FR')}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-purple-600">{(o.total_amount || 0).toLocaleString('fr-FR')} XOF</p>
+                  <p className="text-sm font-bold text-purple-600">{(o.total || 0).toLocaleString('fr-FR')} XOF</p>
                   <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{STATUS_LABELS[o.status] || o.status}</span>
                 </div>
               </div>
