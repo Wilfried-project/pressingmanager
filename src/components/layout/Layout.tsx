@@ -71,7 +71,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm" style={{minHeight:"80px"}}>
         <div className="px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
@@ -80,7 +80,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               </button>
               <div className="flex items-center gap-2">
                 {config.logo
-                  ? <img src={config.logo} alt="logo" className="w-9 h-9 rounded-xl object-cover" />
+                  ? <img src={config.logo} alt="logo" className="h-16 w-auto object-contain" />
                   : <div className="w-9 h-9 bg-purple-600 rounded-xl flex items-center justify-center text-white text-lg">🧺</div>
                 }
                 <div className="hidden sm:block">
