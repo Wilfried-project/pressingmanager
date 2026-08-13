@@ -18,10 +18,10 @@ export const StockPage: React.FC = () => {
   const { items: localItems, addItem, deleteItem, addMovement, getLowStockItems } = useStockStore()
   const [items, setItems] = useState<StockItem[]>([])
   const [showForm, setShowForm] = useState(false)
-  const [showMovement, setShowMovement] = useState<StockItem | null>(null)
+  const [showMovement, setShowMovement] = useState<StockItem  null>(null)
   const [search, setSearch] = useState('')
   const [form, setForm] = useState({ name: '', category: 'lessive' as StockItem['category'], quantity: 0, unit: 'L', min_threshold: 5, purchase_price: 0, supplier: '' })
-  const [mvt, setMvt] = useState({ type: 'entree' as 'entree' | 'sortie', quantity: 0, reason: '' })
+  const [mvt, setMvt] = useState({ type: 'entree' as 'entree'  'sortie', quantity: 0, reason: '' })
 
   useEffect(() => {
     stockService.getAll().then(data => setItems(data as StockItem[])).catch(() => setItems(localItems))
@@ -66,7 +66,7 @@ export const StockPage: React.FC = () => {
               <td className="px-5 py-4"><span className={`font-bold text-sm ${item.quantity <= item.min_threshold ? 'text-red-600' : 'text-green-600'}`}>{item.quantity} {item.unit}</span>{item.quantity <= item.min_threshold && <span className="ml-1 text-xs text-red-500"></span>}</td>
               <td className="px-5 py-4 text-sm text-gray-500">{item.min_threshold} {item.unit}</td>
               <td className="px-5 py-4 text-sm">{item.purchase_price.toLocaleString('fr-FR')} XOF</td>
-              <td className="px-5 py-4 text-sm">{item.supplier || '-'}</td>
+              <td className="px-5 py-4 text-sm">{item.supplier  '-'}</td>
               <td className="px-5 py-4">
                 <div className="flex gap-1">
                   <button onClick={() => setShowMovement(item)} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold">Mouvement</button>
@@ -84,9 +84,9 @@ export const StockPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <Field label="Catégorie"><Select value={form.category} onChange={e => setForm({ ...form, category: e.target.value as StockItem['category'] })}>{['lessive','eau_javel','detachant','parfum','sacs','etiquettes','cintres','emballages','autre'].map(c => <option key={c} value={c}>{c.replace('_',' ')}</option>)}</Select></Field>
             <Field label="Unité"><Input value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} placeholder="L, kg, pièces..." /></Field>
-            <Field label="Quantité initiale"><Input type="number" min="0" value={form.quantity} onChange={e => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })} /></Field>
-            <Field label="Seuil d'alerte"><Input type="number" min="0" value={form.min_threshold} onChange={e => setForm({ ...form, min_threshold: parseInt(e.target.value) || 0 })} /></Field>
-            <Field label="Prix d'achat (XOF)"><Input type="number" min="0" value={form.purchase_price} onChange={e => setForm({ ...form, purchase_price: parseFloat(e.target.value) || 0 })} /></Field>
+            <Field label="Quantité initiale"><Input type="number" min="0" value={form.quantity} onChange={e => setForm({ ...form, quantity: parseInt(e.target.value)  0 })} /></Field>
+            <Field label="Seuil d'alerte"><Input type="number" min="0" value={form.min_threshold} onChange={e => setForm({ ...form, min_threshold: parseInt(e.target.value)  0 })} /></Field>
+            <Field label="Prix d'achat (XOF)"><Input type="number" min="0" value={form.purchase_price} onChange={e => setForm({ ...form, purchase_price: parseFloat(e.target.value)  0 })} /></Field>
             <Field label="Fournisseur"><Input value={form.supplier} onChange={e => setForm({ ...form, supplier: e.target.value })} placeholder="Nom du fournisseur" /></Field>
           </div>
           <div className="flex gap-3"><Button type="submit" className="flex-1">Enregistrer</Button><Button type="button" variant="secondary" className="flex-1" onClick={() => setShowForm(false)}>Annuler</Button></div>
@@ -97,7 +97,7 @@ export const StockPage: React.FC = () => {
         <form onSubmit={handleMovement} className="space-y-4">
           <div className="bg-gray-50 rounded-xl p-4 text-center"><p className="text-sm text-gray-500">Stock actuel</p><p className="text-3xl font-bold text-purple-700">{showMovement?.quantity} {showMovement?.unit}</p></div>
           <Field label="Type"><Select value={mvt.type} onChange={e => setMvt({ ...mvt, type: e.target.value as any })}><option value="entree"> Entrée</option><option value="sortie"> Sortie</option></Select></Field>
-          <Field label="Quantité" required><Input type="number" min="1" required value={mvt.quantity} onChange={e => setMvt({ ...mvt, quantity: parseInt(e.target.value) || 0 })} /></Field>
+          <Field label="Quantité" required><Input type="number" min="1" required value={mvt.quantity} onChange={e => setMvt({ ...mvt, quantity: parseInt(e.target.value)  0 })} /></Field>
           <Field label="Raison" required><Input required value={mvt.reason} onChange={e => setMvt({ ...mvt, reason: e.target.value })} placeholder="Ex: Achat fournisseur..." /></Field>
           <div className="flex gap-3"><Button type="submit" className="flex-1">Enregistrer</Button><Button type="button" variant="secondary" className="flex-1" onClick={() => setShowMovement(null)}>Annuler</Button></div>
         </form>
@@ -133,7 +133,7 @@ export const HRPage: React.FC = () => {
         <StatCard label="Congés en attente" value={pendingLeaves.length} icon={<Calendar size={20} />} color="yellow" />
         <StatCard label="Masse salariale" value={`${totalSalaries.toLocaleString('fr-FR')} XOF`} icon={<DollarSign size={20} />} color="blue" />
       </div>
-      <Tabs tabs={[{ key: 'employees', label: 'Employés', icon: '' }, { key: 'attendance', label: 'Pointage', icon: '️' }, { key: 'leaves', label: 'Congés', icon: '' }]} active={activeTab} onChange={setActiveTab} />
+      <Tabs tabs={[{ key: 'employees', label: 'Employés', icon: '' }, { key: 'attendance', label: 'Pointage', icon: '' }, { key: 'leaves', label: 'Congés', icon: '' }]} active={activeTab} onChange={setActiveTab} />
       {activeTab === 'employees' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {employees.map(emp => (
@@ -146,7 +146,7 @@ export const HRPage: React.FC = () => {
                 </div>
               </div>
               <h3 className="font-bold text-gray-900">{emp.full_name}</h3>
-              <Badge label={emp.role} color={roleColors[emp.role] || 'gray'} />
+              <Badge label={emp.role} color={roleColors[emp.role]  'gray'} />
               <div className="mt-4 space-y-1.5">
                 {emp.phone && <p className="text-sm text-gray-500"> {emp.phone}</p>}
                 <p className="text-sm font-semibold text-gray-700"> {Number(emp.salary).toLocaleString('fr-FR')} XOF/mois</p>
@@ -164,14 +164,14 @@ export const HRPage: React.FC = () => {
             <Table headers={['Employé', 'Statut', 'Heure arrivée', 'Heure départ']}>
               {todayAtt.map(att => { const emp = employees.find(e => e.id === att.employee_id); return (
                 <tr key={att.id} className="hover:bg-gray-50">
-                  <td className="px-5 py-4 font-medium text-sm">{emp?.full_name || 'Inconnu'}</td>
+                  <td className="px-5 py-4 font-medium text-sm">{emp?.full_name  'Inconnu'}</td>
                   <td className="px-5 py-4"><Badge label={att.status} color={att.status === 'present' ? 'green' : att.status === 'absent' ? 'red' : 'yellow'} /></td>
                   <td className="px-5 py-4 text-sm">{new Date(att.check_in).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</td>
                   <td className="px-5 py-4 text-sm">{att.check_out ? new Date(att.check_out).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
                 </tr>
               )})}
             </Table>
-          ) : <Card><EmptyState icon="️" message="Aucun pointage aujourd'hui" /></Card>}
+          ) : <Card><EmptyState icon="" message="Aucun pointage aujourd'hui" /></Card>}
         </div>
       )}
       {activeTab === 'leaves' && (
@@ -181,7 +181,7 @@ export const HRPage: React.FC = () => {
             <Table headers={['Employé', 'Type', 'Du', 'Au', 'Statut', 'Actions']}>
               {leaves.map(leave => { const emp = employees.find(e => e.id === leave.employee_id); return (
                 <tr key={leave.id} className="hover:bg-gray-50">
-                  <td className="px-5 py-4 font-medium text-sm">{emp?.full_name || 'Inconnu'}</td>
+                  <td className="px-5 py-4 font-medium text-sm">{emp?.full_name  'Inconnu'}</td>
                   <td className="px-5 py-4"><Badge label={leave.type} color="blue" /></td>
                   <td className="px-5 py-4 text-sm">{new Date(leave.start_date).toLocaleDateString('fr-FR')}</td>
                   <td className="px-5 py-4 text-sm">{new Date(leave.end_date).toLocaleDateString('fr-FR')}</td>
@@ -199,7 +199,7 @@ export const HRPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <Field label="Rôle"><Select value={form.role} onChange={e => setForm({ ...form, role: e.target.value as Employee['role'] })}>{['admin','manager','caissier','reception','laveur','repasseur','livreur'].map(r => <option key={r} value={r}>{r}</option>)}</Select></Field>
             <Field label="Téléphone"><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></Field>
-            <Field label="Salaire (XOF)"><Input type="number" min="0" value={form.salary} onChange={e => setForm({ ...form, salary: parseInt(e.target.value) || 0 })} /></Field>
+            <Field label="Salaire (XOF)"><Input type="number" min="0" value={form.salary} onChange={e => setForm({ ...form, salary: parseInt(e.target.value)  0 })} /></Field>
             <Field label="Date d'embauche"><Input type="date" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} /></Field>
           </div>
           <div className="flex gap-3"><Button type="submit" className="flex-1">Enregistrer</Button><Button type="button" variant="secondary" className="flex-1" onClick={() => setShowForm(false)}>Annuler</Button></div>
@@ -216,7 +216,7 @@ export const HRPage: React.FC = () => {
         <form onSubmit={e => { e.preventDefault(); addLeave({ id: crypto.randomUUID(), ...leaveForm, status: 'pending' }); setShowLeave(false); setLeaveForm({ employee_id: '', type: 'conge', start_date: '', end_date: '', notes: '' }) }} className="space-y-4">
           <Field label="Employé" required><Select required value={leaveForm.employee_id} onChange={e => setLeaveForm({ ...leaveForm, employee_id: e.target.value })}><option value="">Sélectionner...</option>{employees.filter(e => e.is_active).map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}</Select></Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Type"><Select value={leaveForm.type} onChange={e => setLeaveForm({ ...leaveForm, type: e.target.value as any })}><option value="conge"> Congé</option><option value="maladie">🏥 Maladie</option><option value="autre"> Autre</option></Select></Field>
+            <Field label="Type"><Select value={leaveForm.type} onChange={e => setLeaveForm({ ...leaveForm, type: e.target.value as any })}><option value="conge"> Congé</option><option value="maladie"> Maladie</option><option value="autre"> Autre</option></Select></Field>
             <div />
             <Field label="Date début"><Input type="date" required value={leaveForm.start_date} onChange={e => setLeaveForm({ ...leaveForm, start_date: e.target.value })} /></Field>
             <Field label="Date fin"><Input type="date" required value={leaveForm.end_date} onChange={e => setLeaveForm({ ...leaveForm, end_date: e.target.value })} /></Field>
@@ -248,7 +248,7 @@ export const NotificationsPage: React.FC = () => {
   const sentCount = notifications.filter(n => n.status === 'sent').length
 
   const sendBulkReady = () => {
-    readyOrders.forEach(order => addNotification({ id: crypto.randomUUID(), client_id: order.client_id, client_name: `${order.client?.first_name} ${order.client?.last_name}`, client_phone: order.client?.phone || '', type: 'whatsapp', message: `Bonjour ${order.client?.first_name} !  Votre commande #${order.ticket_number} est prête. — PressingManager`, status: 'pending', created_at: new Date().toISOString() }))
+    readyOrders.forEach(order => addNotification({ id: crypto.randomUUID(), client_id: order.client_id, client_name: `${order.client?.first_name} ${order.client?.last_name}`, client_phone: order.client?.phone  '', type: 'whatsapp', message: `Bonjour ${order.client?.first_name} !  Votre commande #${order.ticket_number} est prête. — PressingManager`, status: 'pending', created_at: new Date().toISOString() }))
     alert(` ${readyOrders.length} notification(s) préparée(s)`)
   }
 
@@ -266,7 +266,7 @@ export const NotificationsPage: React.FC = () => {
             <tr key={n.id} className="hover:bg-gray-50">
               <td className="px-5 py-4 font-medium text-sm">{n.client_name}</td>
               <td className="px-5 py-4 text-sm">{n.client_phone}</td>
-              <td className="px-5 py-4"><Badge label={n.type === 'whatsapp' ? ' WhatsApp' : n.type === 'sms' ? ' SMS' : '📧 Email'} color={n.type === 'whatsapp' ? 'green' : 'blue'} /></td>
+              <td className="px-5 py-4"><Badge label={n.type === 'whatsapp' ? ' WhatsApp' : n.type === 'sms' ? ' SMS' : ' Email'} color={n.type === 'whatsapp' ? 'green' : 'blue'} /></td>
               <td className="px-5 py-4 text-sm max-w-xs truncate">{n.message}</td>
               <td className="px-5 py-4"><Badge label={n.status} color={n.status === 'sent' ? 'green' : n.status === 'failed' ? 'red' : 'yellow'} /></td>
               <td className="px-5 py-4">{n.status === 'pending' && <button onClick={() => { window.open(n.type === 'whatsapp' ? `https://wa.me/${n.client_phone.replace(/\s/g,'')}?text=${encodeURIComponent(n.message)}` : `sms:${n.client_phone}`, '_blank'); updateNotification(n.id, { status: 'sent', sent_at: new Date().toISOString() }) }} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Envoyer</button>}</td>
@@ -277,7 +277,7 @@ export const NotificationsPage: React.FC = () => {
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nouvelle notification">
         <form onSubmit={e => { e.preventDefault(); const c = clients.find(cl => cl.id === form.client_id); if (!c) return; addNotification({ id: crypto.randomUUID(), client_id: c.id, client_name: `${c.first_name} ${c.last_name}`, client_phone: c.phone, type: form.type, message: form.message, status: 'pending', created_at: new Date().toISOString() }); setShowForm(false); setForm({ client_id: '', type: 'whatsapp', message: '' }) }} className="space-y-4">
           <Field label="Client" required><Select required value={form.client_id} onChange={e => setForm({ ...form, client_id: e.target.value })}><option value="">Sélectionner...</option>{clients.map(c => <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}</Select></Field>
-          <Field label="Canal"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value as any })}><option value="whatsapp"> WhatsApp</option><option value="sms"> SMS</option><option value="email">📧 Email</option></Select></Field>
+          <Field label="Canal"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value as any })}><option value="whatsapp"> WhatsApp</option><option value="sms"> SMS</option><option value="email"> Email</option></Select></Field>
           <Field label="Message" required><Textarea required value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} rows={4} /></Field>
           <div className="flex gap-3"><Button type="submit" className="flex-1">Préparer</Button><Button type="button" variant="secondary" className="flex-1" onClick={() => setShowForm(false)}>Annuler</Button></div>
         </form>
@@ -294,7 +294,7 @@ export const LoyaltyPage: React.FC = () => {
   const { coupons, addCoupon, getLevelFromPoints } = useLoyaltyStore()
   const [showCoupon, setShowCoupon] = useState(false)
   const [couponForm, setCouponForm] = useState({ code: '', discount_percent: 10, valid_until: '', client_id: '' })
-  const levelConfig = { bronze: { min: 0, max: 499, color: 'from-amber-700 to-amber-500', icon: '🥉' }, silver: { min: 500, max: 1999, color: 'from-gray-500 to-gray-400', icon: '🥈' }, gold: { min: 2000, max: 4999, color: 'from-yellow-500 to-yellow-400', icon: '' }, platinum: { min: 5000, max: Infinity, color: 'from-purple-600 to-indigo-500', icon: '' } }
+  const levelConfig = { bronze: { min: 0, max: 499, color: 'from-amber-700 to-amber-500', icon: '' }, silver: { min: 500, max: 1999, color: 'from-gray-500 to-gray-400', icon: '' }, gold: { min: 2000, max: 4999, color: 'from-yellow-500 to-yellow-400', icon: '' }, platinum: { min: 5000, max: Infinity, color: 'from-purple-600 to-indigo-500', icon: '' } }
   const clientsByLevel = useMemo(() => ({ bronze: clients.filter(c => getLevelFromPoints(c.loyalty_points) === 'bronze').length, silver: clients.filter(c => getLevelFromPoints(c.loyalty_points) === 'silver').length, gold: clients.filter(c => getLevelFromPoints(c.loyalty_points) === 'gold').length, platinum: clients.filter(c => getLevelFromPoints(c.loyalty_points) === 'platinum').length }), [clients])
   const topByPoints = [...clients].sort((a, b) => b.loyalty_points - a.loyalty_points).slice(0, 10)
 
@@ -316,7 +316,7 @@ export const LoyaltyPage: React.FC = () => {
           <div className="space-y-2">
             {topByPoints.filter(c => c.loyalty_points > 0).map((c, i) => {
               const level = getLevelFromPoints(c.loyalty_points)
-              const icons: Record<string,string> = { bronze: '🥉', silver: '🥈', gold: '', platinum: '' }
+              const icons: Record<string,string> = { bronze: '', silver: '', gold: '', platinum: '' }
               return (
                 <div key={c.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <div className="flex items-center gap-3"><span className="w-7 h-7 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs font-bold">{i+1}</span><div><p className="font-semibold text-sm">{c.first_name} {c.last_name}</p><p className="text-xs text-gray-400">{c.phone}</p></div></div>
@@ -518,7 +518,7 @@ export const MultiAgencyPage: React.FC = () => {
           <Card key={agency.id}>
             <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-2xl"></div><div className="flex gap-2"><Badge label={agency.is_active ? 'Active' : 'Inactive'} color={agency.is_active ? 'green' : 'red'} />{agency.id !== 'default' && <button onClick={() => { if (confirm('Supprimer ?')) deleteAgency(agency.id) }} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>}</div></div>
             <h3 className="font-bold text-lg">{agency.name}</h3>
-            <p className="text-sm text-gray-500"> {agency.address || '-'}</p>
+            <p className="text-sm text-gray-500"> {agency.address  '-'}</p>
             <div className="mt-4 pt-4 border-t space-y-2">
               <div className="flex justify-between text-sm"><span className="text-gray-500">CA</span><span className="font-bold text-purple-700">{revenue.toLocaleString('fr-FR')} XOF</span></div>
               <div className="bg-gray-100 rounded-full h-2"><div className="bg-purple-500 h-2 rounded-full" style={{ width: `${pct}%` }} /></div>
@@ -557,9 +557,9 @@ export const AccountingPage: React.FC = () => {
   const benefice = totalRecettes - totalDepenses
   const [showForm, setShowForm] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
-  const [form, setForm] = useState({ type: 'recette' as 'recette' | 'depense', category: '', amount: 0, description: '', date: new Date().toISOString().split('T')[0] })
+  const [form, setForm] = useState({ type: 'recette' as 'recette'  'depense', category: '', amount: 0, description: '', date: new Date().toISOString().split('T')[0] })
   const trend = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (6-i)); const ds = d.toISOString().split('T')[0]; const dayT = transactions.filter(t => t.date === ds); return { date: d.toLocaleDateString('fr-FR', { weekday: 'short' }), Recettes: dayT.filter(t => t.type === 'recette').reduce((s,t) => s+t.amount,0), Dépenses: dayT.filter(t => t.type === 'depense').reduce((s,t) => s+t.amount,0) } })
-  const byCategory = useMemo(() => { const map = new Map<string,number>(); transactions.filter(t => t.type === 'depense').forEach(t => map.set(t.category, (map.get(t.category)||0)+t.amount)); return Array.from(map.entries()).map(([name,value]) => ({ name, value })) }, [transactions])
+  const byCategory = useMemo(() => { const map = new Map<string,number>(); transactions.filter(t => t.type === 'depense').forEach(t => map.set(t.category, (map.get(t.category)0)+t.amount)); return Array.from(map.entries()).map(([name,value]) => ({ name, value })) }, [transactions])
 
   return (
     <div className="space-y-6">
@@ -576,14 +576,14 @@ export const AccountingPage: React.FC = () => {
           <Card><h2 className="text-base font-bold mb-4">Dépenses par catégorie</h2>{byCategory.length > 0 ? <ResponsiveContainer width="100%" height={220}><PieChart><Pie data={byCategory} cx="50%" cy="50%" outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`} labelLine={false}>{byCategory.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]} />)}</Pie><Tooltip formatter={(v) => `${Number(v).toLocaleString('fr-FR')} XOF`} /></PieChart></ResponsiveContainer> : <EmptyState icon="" message="Aucune dépense" />}</Card>
         </div>
       )}
-      {activeTab === 'journal' && (transactions.length > 0 ? <Table headers={['Date','Type','Catégorie','Description','Montant','Par']}>{transactions.slice().reverse().map(t => <tr key={t.id} className="hover:bg-gray-50"><td className="px-5 py-4 text-sm">{new Date(t.date).toLocaleDateString('fr-FR')}</td><td className="px-5 py-4"><Badge label={t.type === 'recette' ? ' Recette' : '📉 Dépense'} color={t.type === 'recette' ? 'green' : 'red'} /></td><td className="px-5 py-4 text-sm capitalize">{t.category}</td><td className="px-5 py-4 text-sm">{t.description}</td><td className={`px-5 py-4 font-bold text-sm ${t.type === 'recette' ? 'text-green-600' : 'text-red-600'}`}>{t.type === 'depense' ? '-' : '+'}{t.amount.toLocaleString('fr-FR')} XOF</td><td className="px-5 py-4 text-xs text-gray-400">{t.created_by}</td></tr>)}</Table> : <Card><EmptyState icon="" message="Aucune transaction" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter</Button>} /></Card>)}
+      {activeTab === 'journal' && (transactions.length > 0 ? <Table headers={['Date','Type','Catégorie','Description','Montant','Par']}>{transactions.slice().reverse().map(t => <tr key={t.id} className="hover:bg-gray-50"><td className="px-5 py-4 text-sm">{new Date(t.date).toLocaleDateString('fr-FR')}</td><td className="px-5 py-4"><Badge label={t.type === 'recette' ? ' Recette' : ' Dépense'} color={t.type === 'recette' ? 'green' : 'red'} /></td><td className="px-5 py-4 text-sm capitalize">{t.category}</td><td className="px-5 py-4 text-sm">{t.description}</td><td className={`px-5 py-4 font-bold text-sm ${t.type === 'recette' ? 'text-green-600' : 'text-red-600'}`}>{t.type === 'depense' ? '-' : '+'}{t.amount.toLocaleString('fr-FR')} XOF</td><td className="px-5 py-4 text-xs text-gray-400">{t.created_by}</td></tr>)}</Table> : <Card><EmptyState icon="" message="Aucune transaction" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter</Button>} /></Card>)}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nouvelle transaction">
         <form onSubmit={e => { e.preventDefault(); transactionService.create({ id: crypto.randomUUID(), ...form, amount: Number(form.amount), created_by: 'system' }).then(tx => setTransactions([tx as Transaction, ...transactions])).catch(() => addTransaction({ id: crypto.randomUUID(), ...form, amount: Number(form.amount), created_by: 'system' })); setShowForm(false); setForm({ type: 'recette', category: '', amount: 0, description: '', date: new Date().toISOString().split('T')[0] }) }} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value as any })}><option value="recette"> Recette</option><option value="depense">📉 Dépense</option></Select></Field>
+            <Field label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value as any })}><option value="recette"> Recette</option><option value="depense"> Dépense</option></Select></Field>
             <Field label="Date"><Input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></Field>
             <Field label="Catégorie" required><Input required value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="Vente, Salaire, Loyer..." /></Field>
-            <Field label="Montant (XOF)" required><Input type="number" min="1" required value={form.amount} onChange={e => setForm({ ...form, amount: parseFloat(e.target.value) || 0 })} /></Field>
+            <Field label="Montant (XOF)" required><Input type="number" min="1" required value={form.amount} onChange={e => setForm({ ...form, amount: parseFloat(e.target.value)  0 })} /></Field>
           </div>
           <Field label="Description"><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></Field>
           <div className="flex gap-3"><Button type="submit" className="flex-1">Enregistrer</Button><Button type="button" variant="secondary" className="flex-1" onClick={() => setShowForm(false)}>Annuler</Button></div>
@@ -643,7 +643,7 @@ const DEFAULT_PRICES = [
 
 export const ServicesPage: React.FC = () => {
   const [prices, setPrices] = useState(DEFAULT_PRICES)
-  const [editId, setEditId] = useState<string | null>(null)
+  const [editId, setEditId] = useState<string  null>(null)
   const [editData, setEditData] = useState({ price: 0, express_surcharge: 0, duration_hours: 0 })
 
   return (
@@ -703,7 +703,7 @@ export const DeliveryPage: React.FC = () => {
               <td className="px-5 py-4 font-bold text-purple-700 text-sm">{order ? `#${order.ticket_number}` : '-'}</td>
               <td className="px-5 py-4 text-sm">{order ? `${order.client?.first_name} ${order.client?.last_name}` : '-'}</td>
               <td className="px-5 py-4 text-sm max-w-32 truncate">{d.address}</td>
-              <td className="px-5 py-4 text-sm">{driver?.full_name || '-'}</td>
+              <td className="px-5 py-4 text-sm">{driver?.full_name  '-'}</td>
               <td className="px-5 py-4 text-sm">{new Date(d.scheduled_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</td>
               <td className="px-5 py-4"><Badge label={d.status} color={statusColors[d.status]} /></td>
               <td className="px-5 py-4"><Select value={d.status} onChange={e => updateDelivery(d.id, { status: e.target.value as any, ...(e.target.value === 'livre' ? { delivered_at: new Date().toISOString() } : {}) })} className="text-xs py-1 w-32"><option value="planifie">Planifié</option><option value="en_route">En route</option><option value="livre">Livré </option><option value="echec">Échec </option></Select></td>
@@ -713,7 +713,7 @@ export const DeliveryPage: React.FC = () => {
       ) : <Card><EmptyState icon="" message="Aucune livraison" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Planifier</Button>} /></Card>}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Planifier une livraison">
         <form onSubmit={e => { e.preventDefault(); addDelivery({ id: crypto.randomUUID(), ...form, status: 'planifie', created_at: new Date().toISOString() } as Delivery); setShowForm(false); setForm({ order_id: '', driver_id: '', address: '', scheduled_at: '', notes: '' }) }} className="space-y-4">
-          <Field label="Commande prête" required><Select required value={form.order_id} onChange={e => { const o = orders.find(ord => ord.id === e.target.value); setForm({ ...form, order_id: e.target.value, address: o?.client?.address || '' }) }}><option value="">Sélectionner...</option>{readyOrders.map(o => <option key={o.id} value={o.id}>#{o.ticket_number} — {o.client?.first_name} {o.client?.last_name}</option>)}</Select></Field>
+          <Field label="Commande prête" required><Select required value={form.order_id} onChange={e => { const o = orders.find(ord => ord.id === e.target.value); setForm({ ...form, order_id: e.target.value, address: o?.client?.address  '' }) }}><option value="">Sélectionner...</option>{readyOrders.map(o => <option key={o.id} value={o.id}>#{o.ticket_number} — {o.client?.first_name} {o.client?.last_name}</option>)}</Select></Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Livreur"><Select value={form.driver_id} onChange={e => setForm({ ...form, driver_id: e.target.value })}><option value="">Sélectionner...</option>{livreurs.map(l => <option key={l.id} value={l.id}>{l.full_name}</option>)}</Select></Field>
             <Field label="Date et heure" required><Input required type="datetime-local" value={form.scheduled_at} onChange={e => setForm({ ...form, scheduled_at: e.target.value })} /></Field>
@@ -735,7 +735,7 @@ export const BillingPage: React.FC = () => {
   const { config } = useShopConfig()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('')
-  const filtered = orders.filter(o => { const ms = o.ticket_number.toLowerCase().includes(search.toLowerCase()) || `${o.client?.first_name} ${o.client?.last_name}`.toLowerCase().includes(search.toLowerCase()); return ms && (!filter || o.payment_status === filter) })
+  const filtered = orders.filter(o => { const ms = o.ticket_number.toLowerCase().includes(search.toLowerCase())  `${o.client?.first_name} ${o.client?.last_name}`.toLowerCase().includes(search.toLowerCase()); return ms && (!filter  o.payment_status === filter) })
   const totalRevenue = orders.filter(o => o.payment_status === 'paye').reduce((s,o) => s+o.total,0)
   const pendingRevenue = orders.filter(o => o.payment_status === 'non_paye').reduce((s,o) => s+o.remaining,0)
   const acompteRevenue = orders.filter(o => o.payment_status === 'acompte').reduce((s,o) => s+o.remaining,0)
@@ -747,7 +747,7 @@ export const BillingPage: React.FC = () => {
     <div class="header">
       <div>
         ${config.logo ? `<img src="${config.logo}" alt="logo" style="width:60px;height:60px;object-fit:cover;border-radius:8px;margin-bottom:6px" />` : '<h1 style="color:#7c3aed;margin:0"></h1>'}
-        <h1 style="color:#7c3aed;margin:0">${config.name || 'PressingManager'}</h1>
+        <h1 style="color:#7c3aed;margin:0">${config.name  'PressingManager'}</h1>
         ${config.slogan ? `<p style="color:#666;font-size:13px;margin-top:4px">${config.slogan}</p>` : ''}
         ${config.phone ? `<p style="color:#666;font-size:12px"> ${config.phone}</p>` : ''}
         ${config.address ? `<p style="color:#666;font-size:12px"> ${config.address}</p>` : ''}
@@ -755,9 +755,9 @@ export const BillingPage: React.FC = () => {
       <div style="text-align:right"><h2 style="color:#7c3aed;margin:0">FACTURE</h2><p>#${order.ticket_number}</p><p>${new Date(order.created_at).toLocaleDateString('fr-FR')}</p></div>
     </div>
     <h3>Client: ${order.client?.first_name} ${order.client?.last_name} — ${order.client?.phone}</h3>
-    <table><tr><th>Article</th><th>Service</th><th>Qté</th><th>Prix unit.</th><th>Total</th></tr>${order.clothes.map(c => `<tr><td style="text-transform:capitalize">${c.type}</td><td>${(c.service||'').replace(/_/g,' ')}</td><td>${c.quantity}</td><td>${c.price.toLocaleString('fr-FR')} XOF</td><td>${(c.price*c.quantity).toLocaleString('fr-FR')} XOF</td></tr>`).join('')}</table>
+    <table><tr><th>Article</th><th>Service</th><th>Qté</th><th>Prix unit.</th><th>Total</th></tr>${order.clothes.map(c => `<tr><td style="text-transform:capitalize">${c.type}</td><td>${(c.service'').replace(/_/g,' ')}</td><td>${c.quantity}</td><td>${c.price.toLocaleString('fr-FR')} XOF</td><td>${(c.price*c.quantity).toLocaleString('fr-FR')} XOF</td></tr>`).join('')}</table>
     <div style="text-align:right"><p>Sous-total: ${order.subtotal.toLocaleString('fr-FR')} XOF</p>${order.discount > 0 ? `<p style="color:green">Remise: -${order.discount.toLocaleString('fr-FR')} XOF</p>` : ''}<p class="total">TOTAL: ${order.total.toLocaleString('fr-FR')} XOF</p>${order.remaining > 0 ? `<p style="color:red;font-weight:bold">Reste à payer: ${order.remaining.toLocaleString('fr-FR')} XOF</p>` : ''}</div>
-    <div class="footer">${config.footer || 'Merci pour votre confiance'} — Facture générée le ${new Date().toLocaleDateString('fr-FR')}</div>
+    <div class="footer">${config.footer  'Merci pour votre confiance'} — Facture générée le ${new Date().toLocaleDateString('fr-FR')}</div>
     </body></html>`)
     win.document.close()
     setTimeout(() => win.print(), 500)
@@ -774,7 +774,7 @@ export const BillingPage: React.FC = () => {
       <Card className="p-4"><div className="flex gap-3"><SearchInput value={search} onChange={setSearch} placeholder="Ticket, nom client..." className="flex-1" /><Select value={filter} onChange={e => setFilter(e.target.value)} className="w-44"><option value="">Tous</option><option value="paye"> Payés</option><option value="acompte"> Acompte</option><option value="non_paye"> Non payés</option></Select></div></Card>
       {filtered.length > 0 ? (
         <Table headers={['Ticket','Client','Date','Total','Reste','Statut','Actions']}>
-          {filtered.map(o => <tr key={o.id} className="hover:bg-purple-50"><td className="px-5 py-4 font-bold text-purple-700 text-sm">#{o.ticket_number}</td><td className="px-5 py-4 text-sm">{o.client?.first_name} {o.client?.last_name}</td><td className="px-5 py-4 text-sm text-gray-500">{new Date(o.created_at).toLocaleDateString('fr-FR')}</td><td className="px-5 py-4 font-bold text-sm">{o.total.toLocaleString('fr-FR')} XOF</td><td className={`px-5 py-4 font-bold text-sm ${o.remaining > 0 ? 'text-red-600' : 'text-green-600'}`}>{o.remaining > 0 ? `${o.remaining.toLocaleString('fr-FR')} XOF` : ' Soldé'}</td><td className="px-5 py-4"><Badge label={o.payment_status === 'paye' ? ' Payé' : o.payment_status === 'acompte' ? ' Acompte' : ' Impayé'} color={o.payment_status === 'paye' ? 'green' : o.payment_status === 'acompte' ? 'yellow' : 'red'} /></td><td className="px-5 py-4"><button onClick={() => printInvoice(o)} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold">🖨️ Facture</button></td></tr>)}
+          {filtered.map(o => <tr key={o.id} className="hover:bg-purple-50"><td className="px-5 py-4 font-bold text-purple-700 text-sm">#{o.ticket_number}</td><td className="px-5 py-4 text-sm">{o.client?.first_name} {o.client?.last_name}</td><td className="px-5 py-4 text-sm text-gray-500">{new Date(o.created_at).toLocaleDateString('fr-FR')}</td><td className="px-5 py-4 font-bold text-sm">{o.total.toLocaleString('fr-FR')} XOF</td><td className={`px-5 py-4 font-bold text-sm ${o.remaining > 0 ? 'text-red-600' : 'text-green-600'}`}>{o.remaining > 0 ? `${o.remaining.toLocaleString('fr-FR')} XOF` : ' Soldé'}</td><td className="px-5 py-4"><Badge label={o.payment_status === 'paye' ? ' Payé' : o.payment_status === 'acompte' ? ' Acompte' : ' Impayé'} color={o.payment_status === 'paye' ? 'green' : o.payment_status === 'acompte' ? 'yellow' : 'red'} /></td><td className="px-5 py-4"><button onClick={() => printInvoice(o)} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold"> Facture</button></td></tr>)}
         </Table>
       ) : <Card><EmptyState icon="" message="Aucune facture trouvée" /></Card>}
     </div>
