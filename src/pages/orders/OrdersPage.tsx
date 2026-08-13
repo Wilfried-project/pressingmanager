@@ -401,7 +401,7 @@ export const OrdersPage: React.FC = () => {
       body { font-family: Arial, sans-serif; font-size: 12px; background: #fff; color: #000; }
       .ticket { width: 80mm; margin: 0 auto; padding: 8px; }
       .header { background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; text-align: center; padding: 16px 8px; border-radius: 8px 8px 0 0; }
-      .logo { font-size: 28px; margin-bottom: 4px; }
+      .logo { width: 140px; height: auto; object-fit: contain; margin-bottom: 8px; }
       .title { font-size: 18px; font-weight: bold; letter-spacing: 1px; }
       .subtitle { font-size: 10px; opacity: 0.8; margin-top: 2px; }
       .ticket-num { background: #fff; color: #7c3aed; font-size: 20px; font-weight: bold; text-align: center; padding: 10px; margin: 0; border-left: 3px solid #7c3aed; border-right: 3px solid #7c3aed; letter-spacing: 2px; }
@@ -428,7 +428,7 @@ export const OrdersPage: React.FC = () => {
     </style></head><body>
     <div class="ticket">
       <div class="header">
-        ${config.logo ? `<img src="${config.logo}" alt="logo" style="width:50px;height:50px;object-fit:cover;border-radius:8px;margin-bottom:6px" />` : '<div class="logo"></div>'}
+        ${config.logo ? `<img src="${config.logo}" alt="logo" style="width: 140px;height: auto;object-fit:cover;border-radius:8px;margin-bottom:6px" />` : '<div class="logo"></div>'}
         <div class="title">${config.name || 'PRESSINGMANAGER'}</div>
         <div class="subtitle">${config.slogan || 'Reçu de dépôt — Ticket client'}</div>
       </div>
