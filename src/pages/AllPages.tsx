@@ -578,7 +578,7 @@ export const AccountingPage: React.FC = () => {
       )}
       {activeTab === 'journal' && (transactions.length > 0 ? <Table headers={['Date','Type','Catégorie','Description','Montant','Par']}>{transactions.slice().reverse().map(t => <tr key={t.id} className="hover:bg-gray-50"><td className="px-5 py-4 text-sm">{new Date(t.date).toLocaleDateString('fr-FR')}</td><td className="px-5 py-4"><Badge label={t.type === 'recette' ? ' Recette' : '📉 Dépense'} color={t.type === 'recette' ? 'green' : 'red'} /></td><td className="px-5 py-4 text-sm capitalize">{t.category}</td><td className="px-5 py-4 text-sm">{t.description}</td><td className={`px-5 py-4 font-bold text-sm ${t.type === 'recette' ? 'text-green-600' : 'text-red-600'}`}>{t.type === 'depense' ? '-' : '+'}{t.amount.toLocaleString('fr-FR')} XOF</td><td className="px-5 py-4 text-xs text-gray-400">{t.created_by}</td></tr>)}</Table> : <Card><EmptyState icon="" message="Aucune transaction" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter</Button>} /></Card>)}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nouvelle transaction">
-        <form onSubmit={e => { e.preventDefault(); transactionService.create({ id: crypto.randomUUID(), agency_id: 'default', ...form, amount: Number(form.amount), created_by: 'system' }).then(tx => setTransactions([tx as Transaction, ...transactions])).catch(() => addTransaction({ id: crypto.randomUUID(), agency_id: 'default', ...form, amount: Number(form.amount), created_by: 'system' })); setShowForm(false); setForm({ type: 'recette', category: '', amount: 0, description: '', date: new Date().toISOString().split('T')[0] }) }} className="space-y-4">
+        <form onSubmit={e => { e.preventDefault(); transactionService.create({ id: crypto.randomUUID(), ...form, amount: Number(form.amount), created_by: 'system' }).then(tx => setTransactions([tx as Transaction, ...transactions])).catch(() => addTransaction({ id: crypto.randomUUID(), ...form, amount: Number(form.amount), created_by: 'system' })); setShowForm(false); setForm({ type: 'recette', category: '', amount: 0, description: '', date: new Date().toISOString().split('T')[0] }) }} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value as any })}><option value="recette"> Recette</option><option value="depense">📉 Dépense</option></Select></Field>
             <Field label="Date"><Input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></Field>
@@ -780,3 +780,5 @@ export const BillingPage: React.FC = () => {
     </div>
   )
 }
+
+
