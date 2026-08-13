@@ -1,239 +1,341 @@
-import React, { useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useOrderStore, useClientStore, useStockStore, useDeliveryStore, useHRStore } from '../../lib/store'
-import { StatCard, Card, Button, Badge, getOrderStatusColor } from '../../components/ui'
+import { supabase } from '../../lib/supabase'
+import { useAuthStore } from '../../lib/store'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { ShoppingBag, Users, CheckCircle, Clock, TrendingUp, AlertTriangle, Truck, Package, DollarSign, Calendar } from 'lucide-react'
+import { ShoppingBag, Users, CheckCircle, Clock, TrendingUp, AlertTriangle, Package, DollarSign, Calendar } from 'lucide-react'
 
 const COLORS = ['#7c3aed', '#06b6d4', '#10b981', '#f97316', '#ef4444', '#8b5cf6', '#14b8a6']
 
+const STATUS_LABELS: Record<string, string> = {
+  recu: 'Reçu', en_attente: 'En attente', tri: 'Tri', lavage: 'Lavage',
+  sechage: 'Séchage', repassage: 'Repassage', emballage: 'Emballage',
+  pret: 'Prêt', livre: 'Livré', annule: 'Annulé'
+}
+
+async function getTenantId() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return null
+  const { data: emp } = await supabase.from('employees').select('tenant_id').eq('user_id', session.user.id).single()
+  return emp?.tenant_id || null
+}
+
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
-  const orders = useOrderStore(s => s.orders)
-  const getTodayOrders = useOrderStore(s => s.getTodayOrders)
-  const getLateOrders = useOrderStore(s => s.getLateOrders)
-  const getTodayRevenue = useOrderStore(s => s.getTodayRevenue)
-  const getMonthRevenue = useOrderStore(s => s.getMonthRevenue)
-  const clients = useClientStore(s => s.clients)
-  const getLowStockItems = useStockStore(s => s.getLowStockItems)
-  const getTodayDeliveries = useDeliveryStore(s => s.getTodayDeliveries)
-  const { employees } = useHRStore()
+  const { user } = useAuthStore()
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    todayOrders: 0, todayClothes: 0, readyOrders: 0,
+    todayCA: 0, monthCA: 0, totalClients: 0,
+    lateOrders: 0, activeEmployees: 0, todayDeliveries: 0,
+    completedOrders: 0, cancelledOrders: 0
+  })
+  const [recentOrders, setRecentOrders] = useState<any[]>([])
+  const [ordersByStatus, setOrdersByStatus] = useState<any[]>([])
+  const [caByDay, setCaByDay] = useState<any[]>([])
+  const [clothesByDay, setClothesByDay] = useState<any[]>([])
+  const [topClients, setTopClients] = useState<any[]>([])
+  const [lateOrdersList, setLateOrdersList] = useState<any[]>([])
 
-  const todayOrders = getTodayOrders()
-  const lateOrders = getLateOrders()
-  const lowStock = getLowStockItems()
-  const todayDeliveries = getTodayDeliveries()
-  const totalClothes = todayOrders.reduce((sum, o) => sum + o.clothes.length, 0)
-  const readyOrders = orders.filter(o => o.status === 'pret')
-  const deliveredToday = orders.filter(o => { const t = new Date().toISOString().split('T')[0]; return o.status === 'livre' && o.delivered_at?.startsWith(t) })
-  const waitingClients = orders.filter(o => ['en_attente', 'en_cours'].includes(o.status)).length
+  useEffect(() => {
+    loadDashboard()
+  }, [])
 
-  const revenueTrend = useMemo(() => Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (6 - i))
-    const ds = d.toISOString().split('T')[0]
-    const dayOrders = orders.filter(o => o.created_at.startsWith(ds) && o.payment_status === 'paye')
-    return { date: d.toLocaleDateString('fr-FR', { weekday: 'short' }), CA: dayOrders.reduce((s, o) => s + o.total, 0), Commandes: dayOrders.length }
-  }), [orders])
+  const loadDashboard = async () => {
+    setLoading(true)
+    try {
+      const tenantId = await getTenantId()
+      if (!tenantId) return
 
-  const ordersByStatus = useMemo(() => {
-    const map = new Map<string, number>()
-    orders.forEach(o => map.set(o.status, (map.get(o.status) || 0) + 1))
-    return Array.from(map.entries()).map(([status, count]) => ({ status: status.replace('_', ' '), count }))
-  }, [orders])
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const todayStr = today.toISOString()
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
 
-  const topClients = useMemo(() => {
-    return clients.map(c => ({
-      name: `${c.first_name} ${c.last_name}`,
-      total: orders.filter(o => o.client_id === c.id && o.payment_status === 'paye').reduce((s, o) => s + o.total, 0),
-      count: orders.filter(o => o.client_id === c.id).length
-    })).sort((a, b) => b.total - a.total).slice(0, 5).filter(c => c.total > 0)
-  }, [clients, orders])
+      // Charger toutes les commandes
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('*, client:clients(*), clothes(*)')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
 
-  const clothesTrend = useMemo(() => Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (6 - i))
-    const ds = d.toISOString().split('T')[0]
-    const dayClothes = orders.filter(o => o.created_at.startsWith(ds)).reduce((s, o) => s + o.clothes.length, 0)
-    return { date: d.toLocaleDateString('fr-FR', { weekday: 'short' }), vêtements: dayClothes }
-  }), [orders])
+      if (!orders) return
+
+      const todayOrders = orders.filter(o => new Date(o.created_at) >= today)
+      const todayClothes = todayOrders.reduce((s, o) => s + (o.clothes?.length || 0), 0)
+      const readyOrders = orders.filter(o => o.status === 'pret').length
+      const todayCA = todayOrders.reduce((s, o) => s + (o.total_amount || 0), 0)
+      const monthOrders = orders.filter(o => new Date(o.created_at) >= new Date(monthStart))
+      const monthCA = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0)
+      const lateOrders = orders.filter(o => {
+        if (!o.expected_at || ['livre', 'annule'].includes(o.status)) return false
+        return new Date(o.expected_at) < new Date()
+      })
+      const completedOrders = orders.filter(o => o.status === 'livre').length
+      const cancelledOrders = orders.filter(o => o.status === 'annule').length
+
+      // Clients
+      const { count: totalClients } = await supabase
+        .from('clients')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+
+      // Employés
+      const { count: activeEmployees } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true)
+
+      // Commandes par statut
+      const statusMap: Record<string, number> = {}
+      orders.forEach(o => {
+        const s = STATUS_LABELS[o.status] || o.status
+        statusMap[s] = (statusMap[s] || 0) + 1
+      })
+      const ordersByStatus = Object.entries(statusMap).map(([name, value]) => ({ name, value }))
+
+      // CA 7 derniers jours
+      const caByDay = []
+      const clothesByDay = []
+      const dayNames = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam']
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date()
+        d.setDate(d.getDate() - i)
+        d.setHours(0, 0, 0, 0)
+        const nextD = new Date(d)
+        nextD.setDate(nextD.getDate() + 1)
+        const dayOrders = orders.filter(o => {
+          const created = new Date(o.created_at)
+          return created >= d && created < nextD
+        })
+        const ca = dayOrders.reduce((s, o) => s + (o.total_amount || 0), 0)
+        const clothes = dayOrders.reduce((s, o) => s + (o.clothes?.length || 0), 0)
+        caByDay.push({ name: dayNames[d.getDay()], ca })
+        clothesByDay.push({ name: dayNames[d.getDay()], habits: clothes })
+      }
+
+      // Top clients
+      const clientMap: Record<string, { name: string, total: number, count: number }> = {}
+      orders.forEach(o => {
+        if (!o.client) return
+        const id = o.client_id
+        if (!clientMap[id]) clientMap[id] = { name: `${o.client.first_name} ${o.client.last_name}`, total: 0, count: 0 }
+        clientMap[id].total += o.total_amount || 0
+        clientMap[id].count++
+      })
+      const topClients = Object.values(clientMap).sort((a, b) => b.total - a.total).slice(0, 5)
+
+      setStats({
+        todayOrders: todayOrders.length, todayClothes, readyOrders,
+        todayCA, monthCA, totalClients: totalClients || 0,
+        lateOrders: lateOrders.length, activeEmployees: activeEmployees || 0,
+        todayDeliveries: 0, completedOrders, cancelledOrders
+      })
+      setRecentOrders(orders.slice(0, 5))
+      setOrdersByStatus(ordersByStatus)
+      setCaByDay(caByDay)
+      setClothesByDay(clothesByDay)
+      setTopClients(topClients)
+      setLateOrdersList(lateOrders.slice(0, 3))
+    } catch (err) {
+      console.error('Erreur dashboard:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tableau de Bord</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <h1 className="text-2xl font-bold text-gray-900">Tableau de Bord</h1>
+          <p className="text-sm text-gray-500 capitalize">{today}</p>
         </div>
-        <Button icon={<ShoppingBag size={18} />} onClick={() => navigate('/orders')}>Nouvelle commande</Button>
+        <button onClick={() => navigate('/orders')} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-xl transition text-sm">
+          <ShoppingBag size={16} /> Nouvelle commande
+        </button>
       </div>
 
-      {/* Alerts */}
-      {(lateOrders.length > 0 || lowStock.length > 0) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {lateOrders.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 cursor-pointer hover:bg-red-100 transition" onClick={() => navigate('/orders')}>
-              <AlertTriangle className="text-red-500 flex-shrink-0 mt-0.5" size={20} />
-              <div>
-                <p className="font-bold text-red-800">{lateOrders.length} commande(s) en retard !</p>
-                <p className="text-xs text-red-600 mt-0.5">Clients à contacter immédiatement — cliquez pour voir</p>
-              </div>
-            </div>
-          )}
-          {lowStock.length > 0 && (
-            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3 cursor-pointer hover:bg-orange-100 transition" onClick={() => navigate('/stock')}>
-              <Package className="text-orange-500 flex-shrink-0 mt-0.5" size={20} />
-              <div>
-                <p className="font-bold text-orange-800">{lowStock.length} produit(s) en rupture</p>
-                <p className="text-xs text-orange-600 mt-0.5">{lowStock.map(i => i.name).join(', ')}</p>
-              </div>
-            </div>
-          )}
+      {/* Alerte retards */}
+      {lateOrdersList.length > 0 && (
+        <div onClick={() => navigate('/orders')} className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:bg-red-100 transition">
+          <AlertTriangle size={20} className="text-red-500 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-red-700">{lateOrdersList.length} commande(s) en retard !</p>
+            <p className="text-xs text-red-500">Clients à contacter immédiatement — cliquez pour voir</p>
+          </div>
         </div>
       )}
 
-      {/* KPIs Row 1 */}
+      {/* Stats principales */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Commandes Aujourd'hui" value={todayOrders.length} icon={<ShoppingBag size={22} />} color="purple" sub={`${totalClothes} vêtements`} />
-        <StatCard label="Vêtements Reçus" value={totalClothes} icon={<Package size={22} />} color="blue" />
-        <StatCard label="Prêts à Récupérer" value={readyOrders.length} icon={<CheckCircle size={22} />} color="green" sub="À notifier" />
-        <StatCard label="Livrés Aujourd'hui" value={deliveredToday.length} icon={<Truck size={22} />} color="indigo" />
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2"><ShoppingBag size={16} className="text-purple-600" /><span className="text-xs text-gray-500">Commandes Aujourd'hui</span></div>
+          <p className="text-3xl font-bold text-gray-900">{stats.todayOrders}</p>
+          <p className="text-xs text-gray-400 mt-1">{stats.todayClothes} vêtements</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2"><Package size={16} className="text-blue-600" /><span className="text-xs text-gray-500">Vêtements Reçus</span></div>
+          <p className="text-3xl font-bold text-gray-900">{stats.todayClothes}</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2"><CheckCircle size={16} className="text-green-600" /><span className="text-xs text-gray-500">Prêts à Récupérer</span></div>
+          <p className="text-3xl font-bold text-gray-900">{stats.readyOrders}</p>
+          <p className="text-xs text-gray-400 mt-1">À notifier</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2"><Clock size={16} className="text-orange-600" /><span className="text-xs text-gray-500">Livrés Aujourd'hui</span></div>
+          <p className="text-3xl font-bold text-gray-900">{stats.todayDeliveries}</p>
+        </div>
       </div>
 
-      {/* KPIs Row 2 */}
+      {/* Stats financières */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="CA Aujourd'hui" value={`${getTodayRevenue().toLocaleString('fr-FR')} XOF`} icon={<DollarSign size={22} />} color="green" />
-        <StatCard label="CA du Mois" value={`${getMonthRevenue().toLocaleString('fr-FR')} XOF`} icon={<TrendingUp size={22} />} color="purple" />
-        <StatCard label="Clients en Attente" value={waitingClients} icon={<Clock size={22} />} color="yellow" />
-        <StatCard label="Retards" value={lateOrders.length} icon={<AlertTriangle size={22} />} color="red" sub={lateOrders.length > 0 ? 'Action requise' : 'Aucun retard'} />
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2"><DollarSign size={16} className="text-green-600" /><span className="text-xs text-gray-500">CA Aujourd'hui</span></div>
+          <p className="text-2xl font-bold text-gray-900">{stats.todayCA.toLocaleString('fr-FR')} XOF</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2"><TrendingUp size={16} className="text-purple-600" /><span className="text-xs text-gray-500">CA du Mois</span></div>
+          <p className="text-2xl font-bold text-gray-900">{stats.monthCA.toLocaleString('fr-FR')} XOF</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2"><Users size={16} className="text-blue-600" /><span className="text-xs text-gray-500">Clients en Attente</span></div>
+          <p className="text-2xl font-bold text-gray-900">{stats.readyOrders}</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2"><AlertTriangle size={16} className="text-red-600" /><span className="text-xs text-gray-500">Retards</span></div>
+          <p className="text-2xl font-bold text-gray-900">{stats.lateOrders}</p>
+          {stats.lateOrders > 0 && <p className="text-xs text-red-500 mt-1">Action requise</p>}
+        </div>
       </div>
 
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Card>
-          <h2 className="text-base font-bold text-gray-900 mb-4">CA 7 derniers jours</h2>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={revenueTrend}>
+      {/* Graphiques */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">CA 7 derniers jours</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={caByDay}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v) => `${Number(v).toLocaleString('fr-FR')} XOF`} />
-              <Line type="monotone" dataKey="CA" stroke="#7c3aed" strokeWidth={2.5} dot={{ fill: '#7c3aed', r: 4 }} activeDot={{ r: 6 }} />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip formatter={(v: any) => v.toLocaleString('fr-FR') + ' XOF'} />
+              <Line type="monotone" dataKey="ca" stroke="#7c3aed" strokeWidth={2} dot={{ fill: '#7c3aed', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
-        </Card>
+        </div>
 
-        <Card>
-          <h2 className="text-base font-bold text-gray-900 mb-4">Commandes par Statut</h2>
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">Commandes par Statut</h3>
           {ordersByStatus.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={180}>
               <PieChart>
-                <Pie data={ordersByStatus} cx="50%" cy="50%" outerRadius={80} innerRadius={40} dataKey="count" nameKey="status" label={({ status, percent }) => `${status} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                <Pie data={ordersByStatus} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                   {ordersByStatus.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          ) : <div className="flex items-center justify-center h-48 text-gray-400 flex-col gap-2"><span className="text-4xl"></span><p className="text-sm">Aucune commande</p></div>}
-        </Card>
+          ) : <p className="text-sm text-gray-400 text-center py-8">Aucune commande</p>}
+        </div>
       </div>
 
-      {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Card>
-          <h2 className="text-base font-bold text-gray-900 mb-4">Vêtements reçus (7 jours)</h2>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={clothesTrend}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">Vêtements reçus (7 jours)</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={clothesByDay}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Bar dataKey="vêtements" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="habits" fill="#7c3aed" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </Card>
+        </div>
 
-        <Card>
-          <h2 className="text-base font-bold text-gray-900 mb-4">Top Clients</h2>
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">Top Clients</h3>
           {topClients.length > 0 ? (
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {topClients.map((c, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-purple-50 transition cursor-pointer" onClick={() => navigate('/clients')}>
+                <div key={i} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${i === 0 ? 'bg-yellow-500' : i === 1 ? 'bg-gray-400' : i === 2 ? 'bg-amber-700' : 'bg-purple-400'}`}>
-                      {i + 1}
-                    </div>
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-700 font-bold text-sm">{c.name.charAt(0)}</div>
                     <div>
-                      <p className="font-semibold text-sm text-gray-900">{c.name}</p>
+                      <p className="text-sm font-semibold text-gray-800">{c.name}</p>
                       <p className="text-xs text-gray-400">{c.count} commande(s)</p>
                     </div>
                   </div>
-                  <p className="font-bold text-sm text-purple-700">{c.total.toLocaleString('fr-FR')} XOF</p>
+                  <p className="text-sm font-bold text-purple-600">{c.total.toLocaleString('fr-FR')} XOF</p>
                 </div>
               ))}
             </div>
-          ) : <div className="flex items-center justify-center h-32 text-gray-400 flex-col gap-2"><span className="text-3xl"></span><p className="text-sm">Aucune vente</p></div>}
-        </Card>
+          ) : <p className="text-sm text-gray-400 text-center py-8">Aucune vente</p>}
+        </div>
       </div>
 
-      {/* Quick stats + recent orders */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <Card>
-          <h2 className="text-base font-bold text-gray-900 mb-4">Statistiques Rapides</h2>
+      {/* Stats rapides */}
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-4">Statistiques Rapides</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 text-center">
+          {[
+            { label: 'Total commandes', value: recentOrders.length > 0 ? (recentOrders.length + 1) : 0 },
+            { label: 'Total clients', value: stats.totalClients },
+            { label: 'Employés actifs', value: stats.activeEmployees },
+            { label: 'Livraisons aujourd\'hui', value: stats.todayDeliveries },
+            { label: 'Commandes terminées', value: stats.completedOrders },
+            { label: 'Annulations', value: stats.cancelledOrders },
+          ].map((s, i) => (
+            <div key={i} className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs text-gray-500 mb-1">{s.label}</p>
+              <p className="text-2xl font-bold text-gray-900">{s.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Commandes récentes */}
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-700">Commandes Récentes</h3>
+          <button onClick={() => navigate('/orders')} className="text-xs text-purple-600 hover:underline font-medium">Voir tout</button>
+        </div>
+        {recentOrders.length > 0 ? (
           <div className="space-y-3">
-            {[
-              { label: 'Total commandes', value: orders.length, icon: '' },
-              { label: 'Total clients', value: clients.length, icon: '' },
-              { label: 'Employés actifs', value: employees.filter(e => e.is_active).length, icon: '' },
-              { label: 'Livraisons aujourd\'hui', value: todayDeliveries.length, icon: '' },
-              { label: 'Commandes terminées', value: orders.filter(o => o.status === 'livre').length, icon: '' },
-              { label: 'Annulations', value: orders.filter(o => o.status === 'annule').length, icon: '' },
-            ].map((s, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{s.icon}</span>
-                  <span className="text-sm text-gray-600">{s.label}</span>
+            {recentOrders.map(o => (
+              <div key={o.id} onClick={() => navigate('/orders')} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">#{o.ticket_number}</p>
+                  <p className="text-xs text-gray-500">{o.client?.first_name} {o.client?.last_name} — {o.clothes?.length || 0} vêtement(s) — {new Date(o.created_at).toLocaleDateString('fr-FR')}</p>
                 </div>
-                <span className="font-bold text-gray-900">{s.value}</span>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-purple-600">{(o.total_amount || 0).toLocaleString('fr-FR')} XOF</p>
+                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{STATUS_LABELS[o.status] || o.status}</span>
+                </div>
               </div>
             ))}
           </div>
-        </Card>
-
-        <div className="lg:col-span-2">
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-gray-900">Commandes Récentes</h2>
-              <button onClick={() => navigate('/orders')} className="text-purple-600 hover:underline text-sm">Voir tout</button>
-            </div>
-            {orders.length > 0 ? (
-              <div className="space-y-2">
-                {orders.slice(-6).reverse().map(order => (
-                  <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-purple-50 transition cursor-pointer" onClick={() => navigate('/orders')}>
-                    <div className="flex items-center gap-3">
-                      <div className="text-center">
-                        <p className="font-bold text-xs text-purple-600">#{order.ticket_number}</p>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm">{order.client?.first_name} {order.client?.last_name}</p>
-                        <p className="text-xs text-gray-400">{order.clothes.length} vêtement(s) — {new Date(order.created_at).toLocaleDateString('fr-FR')}</p>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-sm text-gray-900">{order.total.toLocaleString('fr-FR')} XOF</p>
-                      <Badge label={order.status.replace('_', ' ')} color={getOrderStatusColor(order.status)} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-400">
-                <p className="text-3xl mb-2"></p>
-                <p className="text-sm">Aucune commande encore</p>
-                <Button className="mt-3" size="sm" onClick={() => navigate('/orders')}>Créer la première</Button>
-              </div>
-            )}
-          </Card>
-        </div>
+        ) : (
+          <div className="text-center py-8">
+            <ShoppingBag size={32} className="mx-auto text-gray-300 mb-2" />
+            <p className="text-sm text-gray-400">Aucune commande encore</p>
+            <button onClick={() => navigate('/orders')} className="mt-2 text-xs text-purple-600 hover:underline">Créer la première</button>
+          </div>
+        )}
       </div>
+
+      <p className="text-center text-xs text-gray-400">© 2026 — PressingManager. Tous droits réservés.</p>
     </div>
   )
 }
