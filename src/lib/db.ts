@@ -18,6 +18,28 @@ async function getTenantId(): Promise<string> {
   return 'bc4ba4d5-b9b6-48d8-8344-84c2fc2c299f'
 }
 
+// Génère un numéro de commande séquentiel PM/ANNÉE/MOIS/NUMÉRO
+// Le compteur ne redémarre jamais à zéro — il continue de s'incrémenter
+export async function generateTicketNumber(): Promise<string> {
+  const tenant_id = await getTenantId()
+  const { count, error } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('tenant_id', tenant_id)
+
+  if (error) {
+    // En cas d'erreur, on retombe sur l'ancien format pour ne jamais bloquer une commande
+    return `PM-${Date.now().toString().slice(-6)}`
+  }
+
+  const nextNumber = (count || 0) + 1
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const num = String(nextNumber).padStart(5, '0')
+  return `PM/${year}/${month}/${num}`
+}
+
 // ============================================================
 // CLIENTS
 // ============================================================
