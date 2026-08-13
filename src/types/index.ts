@@ -11,7 +11,7 @@ export type Priority = 'economique' | 'normal' | 'express' | 'vip'
 
 export interface User {
   id: string; email: string; full_name: string; phone: string
-  role: UserRole; agency_id: string; avatar_url?: string
+  role: UserRole; agency_id?: string; avatar_url?: string
   is_active: boolean; permissions: Permission[]; created_at: string
 }
 
@@ -21,7 +21,7 @@ export interface Agency {
 }
 
 export interface Client {
-  id: string; agency_id: string; first_name: string; last_name: string
+  id: string; agency_id?: string; first_name: string; last_name: string
   phone: string; whatsapp: string; email: string; address: string
   group: ClientGroup; balance: number; credit: number; loyalty_points: number
   discount_rate: number; notes: string; is_blacklisted: boolean
@@ -42,7 +42,7 @@ export interface Cloth {
 }
 
 export interface Order {
-  id: string; ticket_number: string; agency_id: string; client_id: string
+  id: string; ticket_number: string; agency_id?: string; client_id: string
   client: Client; clothes: Cloth[]; status: OrderStatus; priority: Priority
   received_at: string; expected_at: string; delivered_at?: string
   subtotal: number; discount: number; total: number; deposit: number
@@ -56,7 +56,7 @@ export interface PaymentDetail {
 }
 
 export interface CashSession {
-  id: string; agency_id: string; opened_by: string; opened_at: string
+  id: string; agency_id?: string; opened_by: string; opened_at: string
   closed_at?: string; opening_amount: number; closing_amount?: number
   expected_amount?: number; difference?: number; status: 'open' | 'closed'
   notes: string
@@ -69,11 +69,11 @@ export interface CashTransaction {
 
 export interface ServicePrice {
   id: string; cloth_type: ClothType; service_type: ServiceType
-  price: number; express_surcharge: number; duration_hours: number; agency_id: string
+  price: number; express_surcharge: number; duration_hours: number; agency_id?: string
 }
 
 export interface StockItem {
-  id: string; agency_id: string; name: string
+  id: string; agency_id?: string; name: string
   category: 'lessive' | 'eau_javel' | 'detachant' | 'parfum' | 'sacs' | 'etiquettes' | 'cintres' | 'emballages' | 'autre'
   quantity: number; unit: string; min_threshold: number
   purchase_price: number; supplier: string; created_at: string
@@ -85,7 +85,7 @@ export interface StockMovement {
 }
 
 export interface Employee {
-  id: string; user_id: string; agency_id: string; full_name: string
+  id: string; user_id: string; agency_id?: string; full_name: string
   role: UserRole; phone: string; salary: number; hire_date: string; is_active: boolean
 }
 
@@ -107,7 +107,7 @@ export interface Delivery {
 }
 
 export interface Transaction {
-  id: string; agency_id: string; type: 'recette' | 'depense'
+  id: string; agency_id?: string; type: 'recette' | 'depense'
   category: string; amount: number; description: string; date: string; created_by: string
 }
 
@@ -132,3 +132,4 @@ export interface AgendaEvent {
   date: string; time: string; description: string; order_id?: string
   employee_id?: string; created_at: string
 }
+
