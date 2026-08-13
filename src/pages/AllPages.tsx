@@ -33,9 +33,9 @@ export const StockPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const item = await stockService.create({ id: crypto.randomUUID(), agency_id: 'default', ...form, quantity: Number(form.quantity), min_threshold: Number(form.min_threshold), purchase_price: Number(form.purchase_price), created_at: new Date().toISOString() })
+      const item = await stockService.create({ id: crypto.randomUUID(), ...form, quantity: Number(form.quantity), min_threshold: Number(form.min_threshold), purchase_price: Number(form.purchase_price), created_at: new Date().toISOString() })
       setItems([...items, item as StockItem])
-    } catch { addItem({ id: crypto.randomUUID(), agency_id: 'default', ...form, quantity: Number(form.quantity), min_threshold: Number(form.min_threshold), purchase_price: Number(form.purchase_price), created_at: new Date().toISOString() }) }
+    } catch { addItem({ id: crypto.randomUUID(), ...form, quantity: Number(form.quantity), min_threshold: Number(form.min_threshold), purchase_price: Number(form.purchase_price), created_at: new Date().toISOString() }) }
     setShowForm(false)
     setForm({ name: '', category: 'lessive', quantity: 0, unit: 'L', min_threshold: 5, purchase_price: 0, supplier: '' })
   }
