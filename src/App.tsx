@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { useAuthStore, useShopConfig } from './lib/store'
-import { Layout } from './components/layout/Layout'
+import { BillingPage } from './pages/billing/BillingPage'\nimport { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/auth/LoginPage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { ClientsPage } from './pages/clients/ClientsPage'
@@ -14,7 +14,7 @@ import { AtelierPage } from './pages/atelier/AtelierPage'
 import {
   StockPage, HRPage, NotificationsPage, LoyaltyPage,
   AgendaPage, MultiAgencyPage, AccountingPage, ReportsPage,
-  ServicesPage, DeliveryPage, BillingPage, SettingsPage
+  ServicesPage, DeliveryPage, SettingsPage
 } from './pages/AllPages'
 
 const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -201,3 +201,5 @@ function App() {
 }
 
 export default App
+
+
