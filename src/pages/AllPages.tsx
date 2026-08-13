@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useStockStore, useHRStore, useNotificationStore, useLoyaltyStore, useAgendaStore, useAgencyStore, useTransactionStore, useOrderStore, useClientStore, useDeliveryStore, useAuthStore, useShopConfig } from '../lib/store'
-import { stockService, transactionService, notificationService, agendaService } from '../lib/db'
+import { stockService, transactionService, notificationService, agendaService, employeeService } from '../lib/db'
 import { PageHeader, Button, Table, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Card, StatCard, SearchInput, Tabs, Alert } from '../components/ui'
 import { Plus, Trash2, Edit2, Bell, Calendar, Building, DollarSign, TrendingUp, TrendingDown, Package, Users, CheckCircle } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
@@ -110,7 +110,9 @@ export const StockPage: React.FC = () => {
 // HR PAGE
 // ============================================================
 export const HRPage: React.FC = () => {
-  const { employees, attendances, leaves, addEmployee, updateEmployee, deleteEmployee, addAttendance, addLeave, updateLeave, getTodayAttendance } = useHRStore()
+  const { attendances, leaves, addAttendance, addLeave, updateLeave, getTodayAttendance } = useHRStore()
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [loadingEmployees, setLoadingEmployees] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [showAttendance, setShowAttendance] = useState(false)
   const [showLeave, setShowLeave] = useState(false)
@@ -118,6 +120,27 @@ export const HRPage: React.FC = () => {
   const [form, setForm] = useState({ full_name: '', role: 'laveur' as Employee['role'], phone: '', salary: 0, hire_date: '' })
   const [attForm, setAttForm] = useState({ employee_id: '', status: 'present' as Attendance['status'] })
   const [leaveForm, setLeaveForm] = useState({ employee_id: '', type: 'conge' as Leave['type'], start_date: '', end_date: '', notes: '' })
+
+  const refreshEmployees = () => {
+    setLoadingEmployees(true)
+    employeeService.getAll()
+      .then(data => setEmployees(data as Employee[]))
+      .catch(err => console.error('Erreur chargement employés:', err))
+      .finally(() => setLoadingEmployees(false))
+  }
+
+  useEffect(() => { refreshEmployees() }, [])
+
+  const toggleActive = async (emp: Employee) => {
+    await employeeService.update(emp.id, { is_active: !emp.is_active })
+    refreshEmployees()
+  }
+
+  const deleteEmployeeHandler = async (id: string) => {
+    await employeeService.delete(id)
+    refreshEmployees()
+  }
+
   const todayAtt = getTodayAttendance()
   const activeEmployees = employees.filter(e => e.is_active)
   const pendingLeaves = leaves.filter(l => l.status === 'pending')
@@ -136,13 +159,14 @@ export const HRPage: React.FC = () => {
       <Tabs tabs={[{ key: 'employees', label: 'Employés', icon: '' }, { key: 'attendance', label: 'Pointage', icon: '️' }, { key: 'leaves', label: 'Congés', icon: '' }]} active={activeTab} onChange={setActiveTab} />
       {activeTab === 'employees' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {employees.map(emp => (
+          {loadingEmployees && <p className="text-gray-500 col-span-3">Chargement...</p>}
+          {!loadingEmployees && employees.map(emp => (
             <Card key={emp.id}>
               <div className="flex justify-between items-start mb-4">
                 <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-700 font-bold text-lg">{emp.full_name.charAt(0)}</div>
                 <div className="flex gap-1">
-                  <button onClick={() => updateEmployee(emp.id, { is_active: !emp.is_active })} className={`px-2 py-1 rounded text-xs font-medium ${emp.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{emp.is_active ? 'Actif' : 'Inactif'}</button>
-                  <button onClick={() => { if (confirm('Supprimer ?')) deleteEmployee(emp.id) }} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+                  <button onClick={() => toggleActive(emp)} className={`px-2 py-1 rounded text-xs font-medium ${emp.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{emp.is_active ? 'Actif' : 'Inactif'}</button>
+                  <button onClick={() => { if (confirm('Supprimer ?')) deleteEmployeeHandler(emp.id) }} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
                 </div>
               </div>
               <h3 className="font-bold text-gray-900">{emp.full_name}</h3>
@@ -154,7 +178,7 @@ export const HRPage: React.FC = () => {
               </div>
             </Card>
           ))}
-          {employees.length === 0 && <div className="col-span-3 bg-white rounded-xl shadow-sm border"><EmptyState icon="" message="Aucun employé" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter</Button>} /></div>}
+          {!loadingEmployees && employees.length === 0 && <div className="col-span-3 bg-white rounded-xl shadow-sm border"><EmptyState icon="" message="Aucun employé" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter</Button>} /></div>}
         </div>
       )}
       {activeTab === 'attendance' && (
@@ -194,7 +218,7 @@ export const HRPage: React.FC = () => {
         </div>
       )}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nouvel employé">
-        <form onSubmit={e => { e.preventDefault(); addEmployee({ id: crypto.randomUUID(), user_id: crypto.randomUUID(), agency_id: 'default', ...form, salary: Number(form.salary), is_active: true }); setShowForm(false); setForm({ full_name: '', role: 'laveur', phone: '', salary: 0, hire_date: '' }) }} className="space-y-4">
+        <form onSubmit={async e => { e.preventDefault(); await employeeService.create({ ...form, salary: Number(form.salary), is_active: true }); refreshEmployees(); setShowForm(false); setForm({ full_name: '', role: 'laveur', phone: '', salary: 0, hire_date: '' }) }} className="space-y-4">
           <Field label="Nom complet" required><Input required value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} placeholder="Prénom et Nom" /></Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Rôle"><Select value={form.role} onChange={e => setForm({ ...form, role: e.target.value as Employee['role'] })}>{['admin','manager','caissier','reception','laveur','repasseur','livreur'].map(r => <option key={r} value={r}>{r}</option>)}</Select></Field>
@@ -780,6 +804,3 @@ export const BillingPage: React.FC = () => {
     </div>
   )
 }
-
-
-
