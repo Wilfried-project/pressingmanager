@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useStockStore, useHRStore, useNotificationStore, useLoyaltyStore, useAgendaStore, useAgencyStore, useTransactionStore, useOrderStore, useClientStore, useDeliveryStore, useAuthStore, useShopConfig } from '../lib/store'
-import { stockService, transactionService, notificationService, agendaService, employeeService } from '../lib/db'
+import { stockService, transactionService, notificationService, agendaService, employeeService, attendanceService, leaveService } from '../lib/db'
 import { PageHeader, Button, Table, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Card, StatCard, SearchInput, Tabs, Alert } from '../components/ui'
 import { Plus, Trash2, Edit2, Bell, Calendar, Building, DollarSign, TrendingUp, TrendingDown, Package, Users, CheckCircle } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
@@ -110,7 +110,18 @@ export const StockPage: React.FC = () => {
 // HR PAGE
 // ============================================================
 export const HRPage: React.FC = () => {
-  const { attendances, leaves, addAttendance, addLeave, updateLeave, getTodayAttendance } = useHRStore()
+  const [attendances, setAttendances] = useState<Attendance[]>([])
+  const [leaves, setLeaves] = useState<Leave[]>([])
+
+  const refreshAttendances = () => attendanceService.getAll().then(data => setAttendances(data as Attendance[])).catch(err => console.error('Erreur chargement pointage:', err))
+  const refreshLeaves = () => leaveService.getAll().then(data => setLeaves(data as Leave[])).catch(err => console.error('Erreur chargement congés:', err))
+
+  const addAttendance = async (att: Attendance) => { await attendanceService.create(att); refreshAttendances() }
+  const addLeave = async (leave: Leave) => { await leaveService.create(leave); refreshLeaves() }
+  const updateLeave = async (id: string, updates: Partial<Leave>) => { await leaveService.update(id, updates); refreshLeaves() }
+  const getTodayAttendance = () => { const t = new Date().toISOString().split('T')[0]; return attendances.filter(a => a.date === t) }
+
+  useEffect(() => { refreshAttendances(); refreshLeaves() }, [])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loadingEmployees, setLoadingEmployees] = useState(true)
   const [showForm, setShowForm] = useState(false)

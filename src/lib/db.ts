@@ -405,6 +405,82 @@ export const employeeService = {
 }
 
 // ============================================================
+// POINTAGE (ATTENDANCES)
+// ============================================================
+export const attendanceService = {
+  async getAll() {
+    const tenant_id = await getTenantId()
+    const { data, error } = await supabase
+      .from('attendances')
+      .select('*')
+      .eq('tenant_id', tenant_id)
+      .order('date', { ascending: false })
+    if (error) throw error
+    return data || []
+  },
+
+  async getByDate(date: string) {
+    const tenant_id = await getTenantId()
+    const { data, error } = await supabase
+      .from('attendances')
+      .select('*')
+      .eq('tenant_id', tenant_id)
+      .eq('date', date)
+    if (error) throw error
+    return data || []
+  },
+
+  async create(att: any) {
+    const tenant_id = await getTenantId()
+    const { data, error } = await supabase
+      .from('attendances')
+      .insert({ ...att, tenant_id })
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  }
+}
+
+// ============================================================
+// CONGÉS (LEAVES)
+// ============================================================
+export const leaveService = {
+  async getAll() {
+    const tenant_id = await getTenantId()
+    const { data, error } = await supabase
+      .from('leaves')
+      .select('*')
+      .eq('tenant_id', tenant_id)
+      .order('start_date', { ascending: false })
+    if (error) throw error
+    return data || []
+  },
+
+  async create(leave: any) {
+    const tenant_id = await getTenantId()
+    const { data, error } = await supabase
+      .from('leaves')
+      .insert({ ...leave, tenant_id })
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+
+  async update(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('leaves')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  }
+}
+
+// ============================================================
 // TENANT CONFIG
 // ============================================================
 export const tenantService = {
