@@ -12,11 +12,7 @@ export const ScanPage: React.FC = () => {
     const loadOrder = async () => {
       if (!ticket) { setError('Ticket invalide'); setLoading(false); return }
       try {
-        const { data, error } = await supabase
-          .from('orders')
-          .select(`*, client:clients(*), clothes(*)`)
-          .eq('ticket_number', ticket.toUpperCase())
-          .single()
+        const { data, error } = await supabase.rpc('get_order_by_ticket', { ticket_input: ticket })
         if (error || !data) { setError('Commande introuvable'); setLoading(false); return }
         setOrder(data)
       } catch { setError('Erreur de chargement') }
@@ -56,19 +52,18 @@ export const ScanPage: React.FC = () => {
   )
 
   const statusColor = STATUS_COLORS[order.status] || '#6b7280'
+  const clothes = order.clothes || []
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8f7ff', padding: 24, fontFamily: 'Inter, sans-serif' }}>
       <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
-        {/* Header */}
         <div style={{ background: '#6c47ff', borderRadius: 20, padding: 24, marginBottom: 20, textAlign: 'center', color: 'white' }}>
           <p style={{ fontSize: 32, marginBottom: 8 }}></p>
           <h1 style={{ fontSize: 22, fontWeight: 900, marginBottom: 4 }}>PressingManager</h1>
           <p style={{ fontSize: 14, opacity: 0.8 }}>Suivi de commande</p>
         </div>
 
-        {/* Info commande */}
         <div style={{ background: 'white', borderRadius: 16, padding: 20, marginBottom: 16, border: '1px solid #e2e8f0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div>
@@ -83,11 +78,11 @@ export const ScanPage: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div style={{ background: '#f8f7ff', borderRadius: 10, padding: 12 }}>
               <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>Client</p>
-              <p style={{ fontSize: 14, fontWeight: 600, color: '#1e293b' }}>{order.client?.first_name} {order.client?.last_name}</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: '#1e293b' }}>{order.client_first_name} {order.client_last_name}</p>
             </div>
             <div style={{ background: '#f8f7ff', borderRadius: 10, padding: 12 }}>
               <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>Articles</p>
-              <p style={{ fontSize: 14, fontWeight: 600, color: '#1e293b' }}>{order.clothes?.length || 0} vêtement(s)</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: '#1e293b' }}>{clothes.length} vêtement(s)</p>
             </div>
             <div style={{ background: '#f8f7ff', borderRadius: 10, padding: 12 }}>
               <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>Date dépôt</p>
@@ -100,16 +95,15 @@ export const ScanPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Vêtements */}
-        {order.clothes && order.clothes.length > 0 && (
+        {clothes.length > 0 && (
           <div style={{ background: 'white', borderRadius: 16, padding: 20, border: '1px solid #e2e8f0' }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Vêtements</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {order.clothes.map((cloth: any, i: number) => {
+              {clothes.map((cloth: any, i: number) => {
                 const clothStatus = STATUS_LABELS[cloth.status] || cloth.status
                 const clothColor = STATUS_COLORS[cloth.status] || '#6b7280'
                 return (
-                  <div key={cloth.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: '#f8f7ff', borderRadius: 10 }}>
+                  <div key={cloth.id || i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: '#f8f7ff', borderRadius: 10 }}>
                     <div style={{ width: 32, height: 32, background: '#6c47ff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: 13 }}>{i + 1}</div>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: 14, fontWeight: 600, color: '#1e293b', textTransform: 'capitalize' }}>{cloth.type} {cloth.color ? `— ${cloth.color}` : ''}</p>
@@ -123,7 +117,6 @@ export const ScanPage: React.FC = () => {
           </div>
         )}
 
-        {/* Message statut */}
         {order.status === 'pret' && (
           <div style={{ background: '#f0fdf4', border: '2px solid #86efac', borderRadius: 16, padding: 20, marginTop: 16, textAlign: 'center' }}>
             <p style={{ fontSize: 40, marginBottom: 8 }}></p>
