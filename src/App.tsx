@@ -5,6 +5,7 @@ import { useAuthStore, useShopConfig } from './lib/store'
 import { BillingPage } from './pages/billing/BillingPage'
 import { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/auth/LoginPage'
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { ClientsPage } from './pages/clients/ClientsPage'
 import { OrdersPage } from './pages/orders/OrdersPage'
@@ -17,17 +18,17 @@ import {
   AgendaPage, MultiAgencyPage, AccountingPage, ReportsPage,
   ServicesPage, DeliveryPage, SettingsPage
 } from './pages/AllPages'
-
+ 
 const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const user = useAuthStore(s => s.user)
   return user ? <Layout>{children}</Layout> : <Navigate to="/login" replace />
 }
-
+ 
 function App() {
   const [loading, setLoading] = useState(true)
   const { user, setUser, setSession } = useAuthStore()
   const { setConfig } = useShopConfig()
-
+ 
   useEffect(() => {
     const loadTenantConfig = async () => {
       try {
@@ -38,7 +39,7 @@ function App() {
           parts[0] !== 'app' &&
           parts[0] !== 'admin' &&
           parts[0] !== 'localhost'
-
+ 
         if (isCustomSubdomain) {
           const slug = parts[0]
           const { data: tenant } = await supabase
@@ -46,7 +47,7 @@ function App() {
             .select('*')
             .eq('slug', slug)
             .single()
-
+ 
           if (tenant) {
             setConfig({
               name: tenant.name || 'Mon Pressing',
@@ -69,7 +70,7 @@ function App() {
     }
     loadTenantConfig()
   }, [])
-
+ 
   useEffect(() => {
     const init = async () => {
       try {
@@ -81,7 +82,7 @@ function App() {
             .select('*')
             .eq('user_id', session.user.id)
             .single()
-
+ 
           if (employee) {
             setUser({
               id: session.user.id,
@@ -112,7 +113,7 @@ function App() {
       finally { setLoading(false) }
     }
     init()
-
+ 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
       if (session) {
         setSession(session)
@@ -121,7 +122,7 @@ function App() {
           .select('*')
           .eq('user_id', session.user.id)
           .single()
-
+ 
         if (employee) {
           setUser({
             id: session.user.id,
@@ -136,8 +137,7 @@ function App() {
           })
         } else {
           setUser({
-            id: session.user.id,
-            email: session.user.email || '',
+            id: session.user.id,            email: session.user.email || '',
             full_name: session.user.email?.split('@')[0] || 'Admin',
             phone: '',
             role: 'admin',
@@ -155,7 +155,7 @@ function App() {
     })
     return () => subscription?.unsubscribe()
   }, [])
-
+ 
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-purple-800 to-indigo-700 flex items-center justify-center">
       <div className="text-center">
@@ -165,11 +165,12 @@ function App() {
       </div>
     </div>
   )
-
+ 
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/scan/:ticket" element={<ScanPage />} />
         <Route path="/" element={<Protected><DashboardPage /></Protected>} />
         <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
@@ -194,5 +195,5 @@ function App() {
     </BrowserRouter>
   )
 }
-
+ 
 export default App
