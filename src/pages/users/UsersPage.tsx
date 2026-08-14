@@ -128,12 +128,6 @@ export const UsersPage: React.FC = () => {
         }).eq('id', editUser.id)
         if (error) throw error
 
-        // Changer le mot de passe si renseigné
-        if (form.password && editUser.user_id) {
-          const { error: pwError } = await supabase.auth.admin.updateUserById(editUser.user_id, { password: form.password })
-          if (pwError) console.warn('Impossible de changer le mdp:', pwError.message)
-        }
-
         setSuccess(' Utilisateur modifié avec succès')
       } else {
         // Sauvegarder la session admin AVANT de créer le compte —
@@ -177,22 +171,12 @@ export const UsersPage: React.FC = () => {
   }
 
   const handleResetPassword = async (user: AppUser) => {
-    const newPass = prompt(`Nouveau mot de passe pour ${user.full_name} (min. 6 caractères) :`)
-    if (!newPass) return
-    if (newPass.length < 6) { alert('Mot de passe trop court (minimum 6 caractères)'); return }
-
-    if (user.user_id) {
-      try {
-        await supabase.auth.admin.updateUserById(user.user_id, { password: newPass })
-        alert(` Mot de passe réinitialisé pour ${user.full_name}`)
-      } catch {
-        // Fallback: envoyer email de réinitialisation
-        await supabase.auth.resetPasswordForEmail(user.email)
-        alert(` Email de réinitialisation envoyé à ${user.email}`)
-      }
-    } else {
-      await supabase.auth.resetPasswordForEmail(user.email)
+    if (!confirm(`Envoyer un email de réinitialisation de mot de passe à ${user.full_name} (${user.email}) ?`)) return
+    try {
+      await supabase.auth.resetPasswordForEmail(user.email, { redirectTo: window.location.origin + '/reset-password' })
       alert(` Email de réinitialisation envoyé à ${user.email}`)
+    } catch (err: any) {
+      alert('Erreur lors de l\'envoi : ' + (err.message || 'réessayez plus tard'))
     }
   }
 
@@ -358,9 +342,16 @@ export const UsersPage: React.FC = () => {
                 )}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    {editUser ? 'Nouveau mot de passe (laisser vide = inchangé)' : 'Mot de passe *'}
+                    {editUser ? 'Mot de passe' : 'Mot de passe *'}
                   </label>
-                  <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder={editUser ? 'Laisser vide pour ne pas changer' : 'Minimum 6 caractères'} />
+                  {editUser ? (
+                    <button type="button" onClick={() => { setForm({ ...form, password: 'reset-requested' }); handleResetPassword({ ...editUser, full_name: form.full_name, email: form.email } as AppUser) }}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-purple-700 hover:bg-purple-50 transition text-left">
+                       Envoyer un email de réinitialisation
+                    </button>
+                  ) : (
+                    <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Minimum 6 caractères" />
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Statut</label>
