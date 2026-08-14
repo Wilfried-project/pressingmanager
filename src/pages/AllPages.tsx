@@ -348,7 +348,7 @@ export const LoyaltyPage: React.FC = () => {
   const { coupons, addCoupon, getLevelFromPoints } = useLoyaltyStore()
   const [showCoupon, setShowCoupon] = useState(false)
   const [couponForm, setCouponForm] = useState({ code: '', discount_percent: 10, valid_until: '', client_id: '' })
-  const levelConfig = { bronze: { min: 0, max: 499, color: 'from-amber-700 to-amber-500', icon: '🥉' }, silver: { min: 500, max: 1999, color: 'from-gray-500 to-gray-400', icon: '🥈' }, gold: { min: 2000, max: 4999, color: 'from-yellow-500 to-yellow-400', icon: '' }, platinum: { min: 5000, max: Infinity, color: 'from-purple-600 to-indigo-500', icon: '' } }
+  const levelConfig = { bronze: { min: 0, max: 499, color: 'from-amber-700 to-amber-500', icon: '' }, silver: { min: 500, max: 1999, color: 'from-gray-500 to-gray-400', icon: '' }, gold: { min: 2000, max: 4999, color: 'from-yellow-500 to-yellow-400', icon: '' }, platinum: { min: 5000, max: Infinity, color: 'from-purple-600 to-indigo-500', icon: '' } }
   const clientsByLevel = useMemo(() => ({ bronze: clients.filter(c => getLevelFromPoints(c.loyalty_points) === 'bronze').length, silver: clients.filter(c => getLevelFromPoints(c.loyalty_points) === 'silver').length, gold: clients.filter(c => getLevelFromPoints(c.loyalty_points) === 'gold').length, platinum: clients.filter(c => getLevelFromPoints(c.loyalty_points) === 'platinum').length }), [clients])
   const topByPoints = [...clients].sort((a, b) => b.loyalty_points - a.loyalty_points).slice(0, 10)
 
@@ -370,7 +370,7 @@ export const LoyaltyPage: React.FC = () => {
           <div className="space-y-2">
             {topByPoints.filter(c => c.loyalty_points > 0).map((c, i) => {
               const level = getLevelFromPoints(c.loyalty_points)
-              const icons: Record<string,string> = { bronze: '🥉', silver: '🥈', gold: '', platinum: '' }
+              const icons: Record<string,string> = { bronze: '', silver: '', gold: '', platinum: '' }
               return (
                 <div key={c.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <div className="flex items-center gap-3"><span className="w-7 h-7 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs font-bold">{i+1}</span><div><p className="font-semibold text-sm">{c.first_name} {c.last_name}</p><p className="text-xs text-gray-400">{c.phone}</p></div></div>
