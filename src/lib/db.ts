@@ -439,6 +439,17 @@ export const attendanceService = {
       .single()
     if (error) throw error
     return data
+  },
+
+  async update(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('attendances')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
   }
 }
 

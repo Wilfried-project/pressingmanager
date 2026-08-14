@@ -214,13 +214,14 @@ export const HRPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex justify-end"><Button icon={<Plus size={18} />} onClick={() => setShowAttendance(true)}>Enregistrer présence</Button></div>
           {todayAtt.length > 0 ? (
-            <Table headers={['Employé', 'Statut', 'Heure arrivée', 'Heure départ']}>
+            <Table headers={['Employé', 'Statut', 'Heure arrivée', 'Heure départ', 'Actions']}>
               {todayAtt.map(att => { const emp = employees.find(e => e.id === att.employee_id); return (
                 <tr key={att.id} className="hover:bg-gray-50">
                   <td className="px-5 py-4 font-medium text-sm">{emp?.full_name || 'Inconnu'}</td>
                   <td className="px-5 py-4"><Badge label={att.status} color={att.status === 'present' ? 'green' : att.status === 'absent' ? 'red' : 'yellow'} /></td>
                   <td className="px-5 py-4 text-sm">{new Date(att.check_in).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</td>
                   <td className="px-5 py-4 text-sm">{att.check_out ? new Date(att.check_out).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                  <td className="px-5 py-4">{!att.check_out && <button onClick={async () => { await attendanceService.update(att.id, { check_out: new Date().toISOString() }); refreshAttendances() }} className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-semibold">Enregistrer le départ</button>}</td>
                 </tr>
               )})}
             </Table>
