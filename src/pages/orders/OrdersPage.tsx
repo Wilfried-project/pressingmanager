@@ -8,13 +8,13 @@ import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, Pay
 
 const CLOTH_TYPES: { value: ClothType; label: string; icon: string }[] = [
   { value: 'chemise', label: 'Chemise', icon: '' }, { value: 'pantalon', label: 'Pantalon', icon: '' },
-  { value: 'robe', label: 'Robe', icon: '' }, { value: 'costume', label: 'Costume', icon: '🤵' },
+  { value: 'robe', label: 'Robe', icon: '' }, { value: 'costume', label: 'Costume', icon: '' },
   { value: 'veste', label: 'Veste', icon: '' }, { value: 'manteau', label: 'Manteau', icon: '' },
-  { value: 'jupe', label: 'Jupe', icon: '' }, { value: 'pull', label: 'Pull', icon: '🧶' },
+  { value: 'jupe', label: 'Jupe', icon: '' }, { value: 'pull', label: 'Pull', icon: '' },
   { value: 'tshirt', label: 'T-Shirt', icon: '' }, { value: 'cravate', label: 'Cravate', icon: '' },
-  { value: 'couverture', label: 'Couverture', icon: '🛏️' }, { value: 'rideau', label: 'Rideau', icon: '🪟' },
-  { value: 'nappe', label: 'Nappe', icon: '🍽️' }, { value: 'tapis', label: 'Tapis', icon: '🪸' },
-  { value: 'couette', label: 'Couette', icon: '🛌' }, { value: 'chaussures', label: 'Chaussures', icon: '👟' },
+  { value: 'couverture', label: 'Couverture', icon: '' }, { value: 'rideau', label: 'Rideau', icon: '' },
+  { value: 'nappe', label: 'Nappe', icon: '' }, { value: 'tapis', label: 'Tapis', icon: '' },
+  { value: 'couette', label: 'Couette', icon: '' }, { value: 'chaussures', label: 'Chaussures', icon: '' },
   { value: 'sac', label: 'Sac', icon: '' }, { value: 'autre', label: 'Autre', icon: '' },
 ]
 
@@ -33,7 +33,7 @@ const STATUS_STEPS = [
   { key: 'pretraitement', label: 'Prétraitement', icon: '' }, { key: 'detachage', label: 'Détachage', icon: '' },
   { key: 'lavage', label: 'Lavage', icon: '' }, { key: 'essorage', label: 'Essorage', icon: '' },
   { key: 'sechage', label: 'Séchage', icon: '' }, { key: 'repassage', label: 'Repassage', icon: '' },
-  { key: 'controle', label: 'Contrôle', icon: '' }, { key: 'retouche', label: 'Retouche', icon: '🪡' },
+  { key: 'controle', label: 'Contrôle', icon: '' }, { key: 'retouche', label: 'Retouche', icon: '' },
   { key: 'emballage', label: 'Emballage', icon: '' }, { key: 'stock', label: 'Stock', icon: '' },
   { key: 'pret', label: 'Prêt', icon: '' }, { key: 'livre', label: 'Livré', icon: '' },
 ]
@@ -733,9 +733,9 @@ export const OrdersPage: React.FC = () => {
               <Field label="Priorité">
                 <Select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as Priority })}>
                   <option value="economique">💚 Économique</option>
-                  <option value="normal">⚪ Normal</option>
-                  <option value="express"> Express (+20%)</option>
-                  <option value="vip"> VIP (+50%)</option>
+                  <option value="normal">Normal</option>
+                  <option value="express">Express (+20%)</option>
+                  <option value="vip">VIP (+50%)</option>
                 </Select>
               </Field>
               <Field label="Date limite" required>
