@@ -185,8 +185,7 @@ export const OrdersPage: React.FC = () => {
         email: newClient.email,
         loyalty_points: 0,
         discount_rate: 0,
-        group: 'standard',
-        is_blacklisted: false,
+                is_blacklisted: false,
         whatsapp: newClient.phone, address: "", balance: 0, credit: 0, notes: "",
       })
       addClient(client as Client)
@@ -1062,6 +1061,7 @@ export const OrdersPage: React.FC = () => {
     </div>
   )
 }
+
 
 
 
