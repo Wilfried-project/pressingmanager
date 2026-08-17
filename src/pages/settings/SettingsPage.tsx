@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useAuthStore, useShopConfig } from '../../lib/store'
 import { PageHeader, Button, Field, Input, Select, Textarea, Card, Tabs, Badge, Alert } from '../../components/ui'
 import { supabase } from '../../lib/supabase'
@@ -13,6 +13,23 @@ export const SettingsPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState('boutique')
   const [saved, setSaved] = useState(false)
+  const [cashOpenTime, setCashOpenTime] = useState('08:00')
+  const [cashCloseTime, setCashCloseTime] = useState('20:00')
+
+  useEffect(() => {
+    const loadCashHours = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        const { data: emp } = await supabase.from('employees').select('tenant_id').eq('user_id', session.user.id).single()
+        if (!emp?.tenant_id) return
+        const { data: tenant } = await supabase.from('tenants').select('cash_open_time, cash_close_time').eq('id', emp.tenant_id).single()
+        if (tenant?.cash_open_time) setCashOpenTime(tenant.cash_open_time)
+        if (tenant?.cash_close_time) setCashCloseTime(tenant.cash_close_time)
+      } catch (err) { console.error('Erreur chargement heures caisse:', err) }
+    }
+    loadCashHours()
+  }, [])
 
   const [form, setForm] = useState({
     name: config.name,
@@ -72,6 +89,8 @@ export const SettingsPage: React.FC = () => {
             msg_reception: form.msgReception,
             msg_pret: form.msgPret,
             logo: form.logo,
+            cash_open_time: cashOpenTime,
+            cash_close_time: cashCloseTime,
           }).eq('id', emp.tenant_id)
         }
       }
@@ -202,6 +221,15 @@ export const SettingsPage: React.FC = () => {
             <Field label="Message de pied de ticket/facture">
               <Input value={form.footer} onChange={e => setForm(f => ({ ...f, footer: e.target.value }))} placeholder="Ex: Merci pour votre confiance ! Revenez nous voir." />
             </Field>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Ouverture automatique de la caisse" hint="La caisse s'ouvre automatiquement dès qu'un employé se connecte après cette heure">
+                <Input type="time" value={cashOpenTime} onChange={e => setCashOpenTime(e.target.value)} />
+              </Field>
+              <Field label="Fermeture automatique de la caisse" hint="La caisse se ferme automatiquement dès qu'un employé se connecte après cette heure">
+                <Input type="time" value={cashCloseTime} onChange={e => setCashCloseTime(e.target.value)} />
+              </Field>
+            </div>
 
             <Button className="w-full" icon={<Save size={16} />} onClick={handleSave}>
               Sauvegarder les informations
