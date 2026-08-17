@@ -22,22 +22,38 @@ async function getTenantId(): Promise<string> {
 // Le compteur ne redémarre jamais à zéro — il continue de s'incrémenter
 export async function generateTicketNumber(): Promise<string> {
   const tenant_id = await getTenantId()
-  const { count, error } = await supabase
-    .from('orders')
-    .select('id', { count: 'exact', head: true })
-    .eq('tenant_id', tenant_id)
+  const { data: nextNumber, error } = await supabase
+    .rpc('get_next_counter', { p_tenant_id: tenant_id, p_counter_type: 'ticket' })
 
-  if (error) {
+  if (error || nextNumber == null) {
     // En cas d'erreur, on retombe sur l'ancien format pour ne jamais bloquer une commande
     return `PM-${Date.now().toString().slice(-6)}`
   }
 
-  const nextNumber = (count || 0) + 1
   const now = new Date()
   const year = now.getFullYear()
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const num = String(nextNumber).padStart(5, '0')
   return `PM/${year}/${month}/${num}`
+}
+
+// Génère un numéro de facture séquentiel FAC/ANNÉE/NUMÉRO — compteur
+// indépendant de celui des tickets, incrémenté de façon atomique côté
+// base (évite toute collision même en cas de créations simultanées).
+// Une fois attribué à une commande (colonne invoice_number), il reste
+// figé même en cas de réimpression.
+export async function generateInvoiceNumber(): Promise<string> {
+  const tenant_id = await getTenantId()
+  const { data: nextNumber, error } = await supabase
+    .rpc('get_next_counter', { p_tenant_id: tenant_id, p_counter_type: 'invoice' })
+
+  if (error || nextNumber == null) {
+    return `FAC-${Date.now().toString().slice(-6)}`
+  }
+
+  const year = new Date().getFullYear()
+  const num = String(nextNumber).padStart(5, '0')
+  return `FAC/${year}/${num}`
 }
 
 // ============================================================
