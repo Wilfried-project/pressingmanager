@@ -870,11 +870,11 @@ export const OrdersPage: React.FC = () => {
                     </Field>
                     <Field label="État à réception">
                       <Select value={cloth.condition_on_arrival} onChange={e => updateCloth(i, { condition_on_arrival: e.target.value })}>
-                        <option value="bon"> Bon état</option>
-                        <option value="taches">🟡 Taches</option>
-                        <option value="dechire">🔴 Déchiré</option>
-                        <option value="use">⚪ Usé</option>
-                        <option value="abime"> Abîmé</option>
+                        <option value="bon">Bon état</option>
+                        <option value="taches">Taches</option>
+                        <option value="dechire">Déchiré</option>
+                        <option value="use">Usé</option>
+                        <option value="abime">Abîmé</option>
                       </Select>
                     </Field>
                     <Field label="Instructions spéciales">
