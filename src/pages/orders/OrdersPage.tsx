@@ -588,8 +588,8 @@ export const OrdersPage: React.FC = () => {
                 <Badge label={order.payment_status === 'paye' ? ' Payé' : order.payment_status === 'acompte' ? ' Acompte' : ' Non payé'}
                   color={order.payment_status === 'paye' ? 'green' : order.payment_status === 'acompte' ? 'yellow' : 'red'} />
               </td>
-              <td className="px-5 py-4"><Badge label={order.status.replace('_', ' ')} color={getOrderStatusColor(order.status)} /></td>
-              <td className="px-5 py-4"><Badge label={order.priority} color={getPriorityColor(order.priority)} /></td>
+              <td className="px-5 py-4"><Badge label={order.status.replace('_', ' ').replace(/^./, c => c.toUpperCase())} color={getOrderStatusColor(order.status)} /></td>
+              <td className="px-5 py-4"><Badge label={order.priority.replace(/^./, c => c.toUpperCase())} color={getPriorityColor(order.priority)} /></td>
               <td className="px-5 py-4 text-sm text-gray-500">{order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : '-'}</td>
               <td className="px-5 py-4">
                 <div className="flex gap-1">
@@ -1003,7 +1003,7 @@ export const OrdersPage: React.FC = () => {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-purple-700 text-sm">{((cloth.price || 0) * cloth.quantity).toLocaleString('fr-FR')} XOF</p>
-                          <Badge label={cloth.status} color={getClothStatusColor(cloth.status)} />
+                          <Badge label={cloth.status.replace(/^./, c => c.toUpperCase())} color={getClothStatusColor(cloth.status)} />
                         </div>
                       </div>
                       {/* Photos dans le détail */}
