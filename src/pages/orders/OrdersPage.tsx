@@ -838,8 +838,9 @@ export const OrdersPage: React.FC = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
                     <Field label="Type">
                       <Select value={cloth.type} onChange={e => updateCloth(i, { type: e.target.value as ClothType })}>
-                        {CLOTH_TYPES.map(t => <option key={t.value} value={t.value}>{t.icon} {t.label}</option>)}
+                        {CLOTH_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                       </Select>
+                      <input type="text" placeholder="Ou saisir un type personnalisé..." onChange={e => { if (e.target.value) updateCloth(i, { type: e.target.value as ClothType }) }} className="w-full mt-1 px-2 py-1 border border-gray-200 rounded-lg text-xs" />
                     </Field>
                     <Field label="Service">
                       <Select value={cloth.service} onChange={e => {
