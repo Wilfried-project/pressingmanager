@@ -172,31 +172,30 @@ export const OrdersPage: React.FC = () => {
   }
 
   // Créer nouveau client à la volée
-  const handleCreateClient = () => {
+  const handleCreateClient = async () => {
     if (!newClient.first_name || !newClient.phone) {
       alert('Prénom et téléphone requis')
       return
     }
-    const client: Client = {
-      id: crypto.randomUUID(),
-      first_name: newClient.first_name,
-      last_name: newClient.last_name,
-      phone: newClient.phone,
-      email: newClient.email,
-      loyalty_points: 0,
-      discount_rate: 0,
-      group: 'standard',
-      is_blacklisted: false,
-      agency_id: 'default',
-      created_at: new Date().toISOString(), whatsapp: newClient.phone, address: "", balance: 0, credit: 0, notes: "",
-      
-      
-      
+    try {
+      const client = await clientsService.create({
+        first_name: newClient.first_name,
+        last_name: newClient.last_name,
+        phone: newClient.phone,
+        email: newClient.email,
+        loyalty_points: 0,
+        discount_rate: 0,
+        group: 'standard',
+        is_blacklisted: false,
+        whatsapp: newClient.phone, address: "", balance: 0, credit: 0, notes: "",
+      })
+      addClient(client as Client)
+      setForm({ ...form, client_id: client.id })
+      setClientSearch(`${client.first_name} ${client.last_name}`)
+      setShowNewClientForm(false)
+    } catch (err: any) {
+      alert('Erreur création client : ' + (err.message || 'réessayez'))
     }
-    addClient(client)
-    setForm({ ...form, client_id: client.id })
-    setClientSearch(`${client.first_name} ${client.last_name}`)
-    setShowNewClientForm(false)
     setNewClient({ first_name: '', last_name: '', phone: '', email: '' })
   }
 
