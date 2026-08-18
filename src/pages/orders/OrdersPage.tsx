@@ -56,6 +56,21 @@ export const OrdersPage: React.FC = () => {
     if (custom) return custom.price
     return SERVICES.find(s => s.value === serviceType)?.basePrice || 0
   }
+
+  // Listes déroulantes enrichies avec les types/services personnalisés que le
+  // pressing a ajoutés dans Services & Tarifs, en plus des valeurs par défaut
+  const allClothTypes = [
+    ...CLOTH_TYPES,
+    ...Array.from(new Set(customPrices.map(p => p.cloth_type)))
+      .filter(t => !CLOTH_TYPES.some(ct => ct.value === t))
+      .map(t => ({ value: t as ClothType, label: t.charAt(0).toUpperCase() + t.slice(1), icon: '' }))
+  ]
+  const allServiceTypes = [
+    ...SERVICES,
+    ...Array.from(new Set(customPrices.map(p => p.service_type)))
+      .filter(s => !SERVICES.some(sv => sv.value === s))
+      .map(s => ({ value: s as ServiceType, label: s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' '), basePrice: 0 }))
+  ]
   const [loadingClients, setLoadingClients] = useState(false)
 
   // Charger les clients depuis Supabase
@@ -856,7 +871,7 @@ export const OrdersPage: React.FC = () => {
                         const price = cloth.service ? getPriceFor(newType, cloth.service) : cloth.price
                         updateCloth(i, { type: newType, ...(cloth.service ? { price } : {}) })
                       }}>
-                        {CLOTH_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                        {allClothTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                       </Select>
                       <input type="text" placeholder="Ou saisir un type personnalisé..." onChange={e => { if (e.target.value) updateCloth(i, { type: e.target.value as ClothType }) }} className="w-full mt-1 px-2 py-1 border border-gray-200 rounded-lg text-xs" />
                     </Field>
@@ -865,7 +880,7 @@ export const OrdersPage: React.FC = () => {
                         const price = getPriceFor(cloth.type || '', e.target.value)
                         updateCloth(i, { service: e.target.value as ServiceType, price: price || cloth.price })
                       }}>
-                        {SERVICES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                        {allServiceTypes.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                       </Select>
                     </Field>
                     <Field label="Quantité">

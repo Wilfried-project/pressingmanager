@@ -699,6 +699,8 @@ export const ServicesPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [editId, setEditId] = useState<string | null>(null)
   const [editData, setEditData] = useState({ price: 0 })
+  const [showAdd, setShowAdd] = useState(false)
+  const [newEntry, setNewEntry] = useState({ cloth_type: '', service_type: '', price: 0 })
 
   const loadPrices = async () => {
     setLoading(true)
@@ -730,10 +732,56 @@ export const ServicesPage: React.FC = () => {
     setEditId(null)
   }
 
+  const handleAdd = async () => {
+    const clothType = newEntry.cloth_type.trim().toLowerCase()
+    const serviceType = newEntry.service_type.trim().toLowerCase()
+    if (!clothType || !serviceType || !newEntry.price) { alert('Remplissez tous les champs'); return }
+    try {
+      const saved = await servicePriceService.upsert(clothType, serviceType, newEntry.price)
+      setPrices(ps => [...ps.filter(p => !(p.cloth_type === clothType && p.service_type === serviceType)), saved])
+      setNewEntry({ cloth_type: '', service_type: '', price: 0 })
+      setShowAdd(false)
+    } catch (err) {
+      alert('Erreur lors de l\'ajout')
+    }
+  }
+
+  const handleDelete = async (p: any) => {
+    if (!confirm(`Supprimer "${p.cloth_type} / ${p.service_type.replace(/_/g,' ')}" ?`)) return
+    try {
+      // Les tarifs par défaut n'ont pas de vrai id Supabase — suppression locale uniquement pour eux
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-/.test(p.id)) {
+        setPrices(ps => ps.filter(pp => pp.id !== p.id))
+        return
+      }
+      await servicePriceService.delete(p.id)
+      setPrices(ps => ps.filter(pp => pp.id !== p.id))
+    } catch (err) {
+      alert('Erreur lors de la suppression')
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <PageHeader title="Services & Tarifs" subtitle="Configurez vos prix — appliqués directement dans les commandes" />
-      <Alert type="info" message="Cliquez sur l'icône pour modifier un prix. Les changements s'appliquent immédiatement à la création de commande." />
+      <PageHeader title="Services & Tarifs" subtitle="Configurez vos prix — appliqués directement dans les commandes" action={<Button onClick={() => setShowAdd(true)}>+ Ajouter un tarif</Button>} />
+      <Alert type="info" message="Cliquez sur l'icône pour modifier un prix. Ajoutez vos propres types de vêtements et services — ils apparaîtront automatiquement dans les commandes." />
+      {showAdd && (
+        <div className="bg-white rounded-xl shadow-sm border p-5 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+          <Field label="Type de vêtement">
+            <Input value={newEntry.cloth_type} onChange={e => setNewEntry({ ...newEntry, cloth_type: e.target.value })} placeholder="Ex: ensemble militaire" />
+          </Field>
+          <Field label="Service">
+            <Input value={newEntry.service_type} onChange={e => setNewEntry({ ...newEntry, service_type: e.target.value })} placeholder="Ex: nettoyage sec" />
+          </Field>
+          <Field label="Prix (XOF)">
+            <Input type="number" value={newEntry.price} onChange={e => setNewEntry({ ...newEntry, price: parseInt(e.target.value) || 0 })} />
+          </Field>
+          <div className="flex gap-2">
+            <Button onClick={handleAdd} className="flex-1">Ajouter</Button>
+            <Button variant="secondary" onClick={() => setShowAdd(false)}>Annuler</Button>
+          </div>
+        </div>
+      )}
       {loading ? <p className="text-gray-500 text-sm">Chargement...</p> : (
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
@@ -747,7 +795,7 @@ export const ServicesPage: React.FC = () => {
                   <td className="px-5 py-4 font-semibold capitalize text-sm">{p.cloth_type}</td>
                   <td className="px-5 py-4 text-sm capitalize text-gray-600">{p.service_type.replace(/_/g,' ')}</td>
                   <td className="px-5 py-4">{editId === p.id ? <Input type="number" value={editData.price} onChange={e => setEditData({ price: parseInt(e.target.value) })} className="w-24" /> : <span className="font-bold text-purple-700">{p.price.toLocaleString('fr-FR')}</span>}</td>
-                  <td className="px-5 py-4">{editId === p.id ? <div className="flex gap-2"><button onClick={() => handleSave(p)} className="px-3 py-1 bg-green-600 text-white rounded-lg text-xs">Sauver</button><button onClick={() => setEditId(null)} className="px-3 py-1 bg-gray-300 rounded-lg text-xs">Annuler</button></div> : <button onClick={() => { setEditId(p.id); setEditData({ price: p.price }) }} className="p-1.5 hover:bg-purple-100 text-purple-600 rounded-lg"><Edit2 size={16} /></button>}</td>
+                  <td className="px-5 py-4">{editId === p.id ? <div className="flex gap-2"><button onClick={() => handleSave(p)} className="px-3 py-1 bg-green-600 text-white rounded-lg text-xs">Sauver</button><button onClick={() => setEditId(null)} className="px-3 py-1 bg-gray-300 rounded-lg text-xs">Annuler</button></div> : <div className="flex gap-1"><button onClick={() => { setEditId(p.id); setEditData({ price: p.price }) }} className="p-1.5 hover:bg-purple-100 text-purple-600 rounded-lg"><Edit2 size={16} /></button><button onClick={() => handleDelete(p)} className="p-1.5 hover:bg-red-100 text-red-500 rounded-lg"><Trash2 size={16} /></button></div>}</td>
                 </tr>
               ))}
             </tbody>

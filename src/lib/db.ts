@@ -530,6 +530,11 @@ export const servicePriceService = {
       .single()
     if (error) throw error
     return data
+  },
+
+  async delete(id: string) {
+    const { error } = await supabase.from('service_prices').delete().eq('id', id)
+    if (error) throw error
   }
 }
 
