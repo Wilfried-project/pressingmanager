@@ -97,7 +97,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               )}
               {alertCount > 0 && (
                 <button className="hidden sm:flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium">
-                  ⚠️ {alertCount} alerte(s)
+                  {alertCount} alerte(s)
                 </button>
               )}
               <div className="flex items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-xl">
@@ -121,7 +121,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-64 bg-white border-r border-gray-200 transition-transform duration-200 z-20 h-full overflow-y-auto flex-shrink-0 flex flex-col`}>
           {(lateCount > 0 || lowStockCount > 0) && (
             <div className="m-3 p-3 bg-red-50 border border-red-200 rounded-xl">
-              {lateCount > 0 && <p className="text-xs text-red-700 font-semibold">⚠️ {lateCount} retard(s)</p>}
+              {lateCount > 0 && <p className="text-xs text-red-700 font-semibold">{lateCount} retard(s)</p>}
               {lowStockCount > 0 && <p className="text-xs text-red-700 font-semibold mt-0.5">📦 {lowStockCount} rupture(s) stock</p>}
             </div>
           )}

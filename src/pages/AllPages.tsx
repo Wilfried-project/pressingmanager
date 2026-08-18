@@ -840,7 +840,7 @@ export const DeliveryPage: React.FC = () => {
               <td className="px-5 py-4 text-sm max-w-32 truncate">{d.address}</td>
               <td className="px-5 py-4 text-sm">{driver?.full_name || '-'}</td>
               <td className="px-5 py-4 text-sm">{new Date(d.scheduled_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</td>
-              <td className="px-5 py-4"><Badge label={d.status} color={statusColors[d.status]} /></td>
+              <td className="px-5 py-4"><Badge label={d.status.replace('_',' ').replace(/^./, c => c.toUpperCase())} color={statusColors[d.status]} /></td>
               <td className="px-5 py-4"><Select value={d.status} onChange={e => updateDelivery(d.id, { status: e.target.value as any, ...(e.target.value === 'livre' ? { delivered_at: new Date().toISOString() } : {}) })} className="text-xs py-1 w-32"><option value="planifie">Planifié</option><option value="en_route">En route</option><option value="livre">Livré </option><option value="echec">Échec </option></Select></td>
             </tr>
           )})}

@@ -197,7 +197,7 @@ export const Alert: React.FC<{ type: 'success' | 'error' | 'warning' | 'info'; m
     warning: 'bg-yellow-50 border-yellow-300 text-yellow-800',
     info: 'bg-blue-50 border-blue-300 text-blue-800',
   }
-  const icons: Record<string, string> = { success: '', error: '', warning: '', info: 'ℹ️' }
+  const icons: Record<string, string> = { success: '', error: '', warning: '', info: '' }
   return (
     <div className={`flex items-center gap-3 p-4 rounded-xl border ${styles[type]} ${className}`}>
       <span className="text-lg">{icons[type]}</span>
