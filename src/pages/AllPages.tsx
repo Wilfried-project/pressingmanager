@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useStockStore, useHRStore, useNotificationStore, useLoyaltyStore, useAgendaStore, useAgencyStore, useTransactionStore, useOrderStore, useClientStore, useDeliveryStore, useAuthStore, useShopConfig } from '../lib/store'
-import { stockService, transactionService, notificationService, agendaService, employeeService, attendanceService, leaveService } from '../lib/db'
+import { stockService, transactionService, notificationService, agendaService, employeeService, attendanceService, leaveService, servicePriceService } from '../lib/db'
 import { PageHeader, Button, Table, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Card, StatCard, SearchInput, Tabs, Alert } from '../components/ui'
 import { Plus, Trash2, Edit2, Bell, Calendar, Building, DollarSign, TrendingUp, TrendingDown, Package, Users, CheckCircle } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
@@ -695,35 +695,66 @@ const DEFAULT_PRICES = [
 ]
 
 export const ServicesPage: React.FC = () => {
-  const [prices, setPrices] = useState(DEFAULT_PRICES)
+  const [prices, setPrices] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [editId, setEditId] = useState<string | null>(null)
-  const [editData, setEditData] = useState({ price: 0, express_surcharge: 0, duration_hours: 0 })
+  const [editData, setEditData] = useState({ price: 0 })
+
+  const loadPrices = async () => {
+    setLoading(true)
+    try {
+      const data = await servicePriceService.getAll()
+      if (data.length > 0) {
+        setPrices(data)
+      } else {
+        // Aucun prix personnalisé encore — on initialise avec les valeurs par défaut
+        setPrices(DEFAULT_PRICES.map(p => ({ ...p, id: `${p.cloth_type}-${p.service_type}` })))
+      }
+    } catch (err) {
+      console.error('Erreur chargement prix:', err)
+      setPrices(DEFAULT_PRICES.map(p => ({ ...p, id: `${p.cloth_type}-${p.service_type}` })))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { loadPrices() }, [])
+
+  const handleSave = async (p: any) => {
+    try {
+      await servicePriceService.upsert(p.cloth_type, p.service_type, editData.price)
+      setPrices(ps => ps.map(pp => pp.id === p.id ? { ...pp, price: editData.price } : pp))
+    } catch (err) {
+      alert('Erreur lors de la sauvegarde du prix')
+    }
+    setEditId(null)
+  }
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Services & Tarifs" subtitle="Configurez vos prix et délais" />
-      <Alert type="info" message=" Cliquez sur  pour modifier un prix." />
+      <PageHeader title="Services & Tarifs" subtitle="Configurez vos prix — appliqués directement dans les commandes" />
+      <Alert type="info" message="Cliquez sur l'icône pour modifier un prix. Les changements s'appliquent immédiatement à la création de commande." />
+      {loading ? <p className="text-gray-500 text-sm">Chargement...</p> : (
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b">
-              <tr>{['Type', 'Service', 'Prix normal (XOF)', 'Express (XOF)', 'Délai (h)', 'Actions'].map(h => <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-purple-700 uppercase whitespace-nowrap">{h}</th>)}</tr>
+              <tr>{['Type', 'Service', 'Prix (XOF)', 'Actions'].map(h => <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-purple-700 uppercase whitespace-nowrap">{h}</th>)}</tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {prices.map(p => (
                 <tr key={p.id} className="hover:bg-gray-50">
                   <td className="px-5 py-4 font-semibold capitalize text-sm">{p.cloth_type}</td>
                   <td className="px-5 py-4 text-sm capitalize text-gray-600">{p.service_type.replace(/_/g,' ')}</td>
-                  <td className="px-5 py-4">{editId === p.id ? <Input type="number" value={editData.price} onChange={e => setEditData({ ...editData, price: parseInt(e.target.value) })} className="w-24" /> : <span className="font-bold text-purple-700">{p.price.toLocaleString('fr-FR')}</span>}</td>
-                  <td className="px-5 py-4">{editId === p.id ? <Input type="number" value={editData.express_surcharge} onChange={e => setEditData({ ...editData, express_surcharge: parseInt(e.target.value) })} className="w-24" /> : <span className="text-sm text-orange-600 font-medium">+{p.express_surcharge.toLocaleString('fr-FR')}</span>}</td>
-                  <td className="px-5 py-4">{editId === p.id ? <Input type="number" value={editData.duration_hours} onChange={e => setEditData({ ...editData, duration_hours: parseInt(e.target.value) })} className="w-20" /> : <span className="text-sm">{p.duration_hours}h</span>}</td>
-                  <td className="px-5 py-4">{editId === p.id ? <div className="flex gap-2"><button onClick={() => { setPrices(ps => ps.map(pp => pp.id === p.id ? { ...pp, ...editData } : pp)); setEditId(null) }} className="px-3 py-1 bg-green-600 text-white rounded-lg text-xs"> Sauver</button><button onClick={() => setEditId(null)} className="px-3 py-1 bg-gray-300 rounded-lg text-xs">Annuler</button></div> : <button onClick={() => { setEditId(p.id); setEditData({ price: p.price, express_surcharge: p.express_surcharge, duration_hours: p.duration_hours }) }} className="p-1.5 hover:bg-purple-100 text-purple-600 rounded-lg"><Edit2 size={16} /></button>}</td>
+                  <td className="px-5 py-4">{editId === p.id ? <Input type="number" value={editData.price} onChange={e => setEditData({ price: parseInt(e.target.value) })} className="w-24" /> : <span className="font-bold text-purple-700">{p.price.toLocaleString('fr-FR')}</span>}</td>
+                  <td className="px-5 py-4">{editId === p.id ? <div className="flex gap-2"><button onClick={() => handleSave(p)} className="px-3 py-1 bg-green-600 text-white rounded-lg text-xs">Sauver</button><button onClick={() => setEditId(null)} className="px-3 py-1 bg-gray-300 rounded-lg text-xs">Annuler</button></div> : <button onClick={() => { setEditId(p.id); setEditData({ price: p.price }) }} className="p-1.5 hover:bg-purple-100 text-purple-600 rounded-lg"><Edit2 size={16} /></button>}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+      )}
     </div>
   )
 }

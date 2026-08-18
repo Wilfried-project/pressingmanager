@@ -508,6 +508,32 @@ export const leaveService = {
 }
 
 // ============================================================
+// PRIX PERSONNALISES (SERVICES & TARIFS)
+// ============================================================
+export const servicePriceService = {
+  async getAll() {
+    const tenant_id = await getTenantId()
+    const { data, error } = await supabase
+      .from('service_prices')
+      .select('*')
+      .eq('tenant_id', tenant_id)
+    if (error) throw error
+    return data || []
+  },
+
+  async upsert(cloth_type: string, service_type: string, price: number) {
+    const tenant_id = await getTenantId()
+    const { data, error } = await supabase
+      .from('service_prices')
+      .upsert({ tenant_id, cloth_type, service_type, price }, { onConflict: 'tenant_id,cloth_type,service_type' })
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  }
+}
+
+// ============================================================
 // TENANT CONFIG
 // ============================================================
 export const tenantService = {

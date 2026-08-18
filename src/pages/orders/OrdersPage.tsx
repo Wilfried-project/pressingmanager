@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 import QRCode from 'qrcode'
 import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig, useAgendaStore } from '../../lib/store'
-import { clientsService, ordersService, generateTicketNumber, cashService } from '../../lib/db'
+import { clientsService, ordersService, generateTicketNumber, servicePriceService } from '../../lib/db'
 import { PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Table, Card, getOrderStatusColor, getPriorityColor, getClothStatusColor } from '../../components/ui'
 import { Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
@@ -42,6 +42,20 @@ export const OrdersPage: React.FC = () => {
   const { orders, addOrder, updateOrder, deleteOrder } = useOrderStore()
   const { clients: localClients, addClient } = useClientStore()
   const [dbClients, setDbClients] = useState<Client[]>([])
+  const [customPrices, setCustomPrices] = useState<any[]>([])
+
+  // Charger les prix personnalisés (Services & Tarifs)
+  useEffect(() => {
+    servicePriceService.getAll().then(setCustomPrices).catch(() => setCustomPrices([]))
+  }, [])
+
+  // Retrouve le prix réel pour une combinaison type de vêtement + service —
+  // priorité au prix personnalisé (Services & Tarifs), sinon prix de base du service
+  const getPriceFor = (clothType: string, serviceType: string) => {
+    const custom = customPrices.find(p => p.cloth_type === clothType && p.service_type === serviceType)
+    if (custom) return custom.price
+    return SERVICES.find(s => s.value === serviceType)?.basePrice || 0
+  }
   const [loadingClients, setLoadingClients] = useState(false)
 
   // Charger les clients depuis Supabase
@@ -266,23 +280,18 @@ export const OrdersPage: React.FC = () => {
       console.error('Erreur sauvegarde Supabase:', err)
     }
 
-    // Enregistrement automatique en caisse (Supabase — connecte a la vraie caisse)
-    if (depositFinal > 0) {
-      try {
-        const allSessions = await cashService.getSessions()
-        const openSession = allSessions.find((s: any) => s.status === 'open')
-        if (openSession) {
-          await cashService.addTransaction({
-            id: crypto.randomUUID(),
-            session_id: openSession.id,
-            type: 'entree',
-            amount: depositFinal,
-            reason: `Acompte commande #${ticket} — ${client.first_name} ${client.last_name}`,
-            created_by: user?.full_name || 'Admin',
-            created_at: new Date().toISOString()
-          })
-        }
-      } catch (err) { console.error('Erreur enregistrement caisse:', err) }
+    // Enregistrement automatique en caisse
+    const session = getCurrentSession()
+    if (session && depositFinal > 0) {
+      addCashTransaction({
+        id: crypto.randomUUID(),
+        session_id: session.id,
+        type: 'entree',
+        amount: depositFinal,
+        reason: `Acompte commande #${ticket} — ${client.first_name} ${client.last_name}`,
+        created_by: user?.full_name || 'Admin',
+        created_at: new Date().toISOString()
+      })
     }
 
     // Enregistrement automatique en comptabilité
@@ -346,7 +355,7 @@ export const OrdersPage: React.FC = () => {
   }
 
   // Paiement à la livraison
-  const handlePaymentOnPickup = async () => {
+  const handlePaymentOnPickup = () => {
     if (!showPaymentModal) return
     const order = showPaymentModal
     const newDeposit = order.deposit + paymentAmount
@@ -360,23 +369,18 @@ export const OrdersPage: React.FC = () => {
       ...(newRemaining <= 0 ? { status: 'livre', delivered_at: new Date().toISOString() } : {})
     })
 
-    // Enregistrement automatique en caisse (Supabase — connecte a la vraie caisse)
-    if (paymentAmount > 0) {
-      try {
-        const allSessions = await cashService.getSessions()
-        const openSession = allSessions.find((s: any) => s.status === 'open')
-        if (openSession) {
-          await cashService.addTransaction({
-            id: crypto.randomUUID(),
-            session_id: openSession.id,
-            type: 'entree',
-            amount: paymentAmount,
-            reason: `Paiement livraison #${order.ticket_number} — ${order.client?.first_name} ${order.client?.last_name}`,
-            created_by: user?.full_name || 'Admin',
-            created_at: new Date().toISOString()
-          })
-        }
-      } catch (err) { console.error('Erreur enregistrement caisse:', err) }
+    // Enregistrement automatique en caisse
+    const session = getCurrentSession()
+    if (session && paymentAmount > 0) {
+      addCashTransaction({
+        id: crypto.randomUUID(),
+        session_id: session.id,
+        type: 'entree',
+        amount: paymentAmount,
+        reason: `Paiement livraison #${order.ticket_number} — ${order.client?.first_name} ${order.client?.last_name}`,
+        created_by: user?.full_name || 'Admin',
+        created_at: new Date().toISOString()
+      })
     }
 
     // Enregistrement automatique en comptabilité
@@ -847,15 +851,19 @@ export const OrdersPage: React.FC = () => {
                 <div key={i} className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
                     <Field label="Type">
-                      <Select value={cloth.type} onChange={e => updateCloth(i, { type: e.target.value as ClothType })}>
+                      <Select value={cloth.type} onChange={e => {
+                        const newType = e.target.value as ClothType
+                        const price = cloth.service ? getPriceFor(newType, cloth.service) : cloth.price
+                        updateCloth(i, { type: newType, ...(cloth.service ? { price } : {}) })
+                      }}>
                         {CLOTH_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                       </Select>
                       <input type="text" placeholder="Ou saisir un type personnalisé..." onChange={e => { if (e.target.value) updateCloth(i, { type: e.target.value as ClothType }) }} className="w-full mt-1 px-2 py-1 border border-gray-200 rounded-lg text-xs" />
                     </Field>
                     <Field label="Service">
                       <Select value={cloth.service} onChange={e => {
-                        const svc = SERVICES.find(s => s.value === e.target.value)
-                        updateCloth(i, { service: e.target.value as ServiceType, price: svc?.basePrice || cloth.price })
+                        const price = getPriceFor(cloth.type || '', e.target.value)
+                        updateCloth(i, { service: e.target.value as ServiceType, price: price || cloth.price })
                       }}>
                         {SERVICES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                       </Select>
