@@ -111,11 +111,11 @@ export const SettingsPage: React.FC = () => {
 
       <Tabs
         tabs={[
-          { key: 'boutique', label: 'Mon Pressing', icon: '🏪' },
-          { key: 'messages', label: 'Messages', icon: '💬' },
-          { key: 'apparence', label: 'Apparence', icon: '🎨' },
-          { key: 'account', label: 'Compte', icon: '👤' },
-          { key: 'system', label: 'Système', icon: '⚙️' },
+          { key: 'boutique', label: 'Mon Pressing', icon: '' },
+          { key: 'messages', label: 'Messages', icon: '' },
+          { key: 'apparence', label: 'Apparence', icon: '' },
+          { key: 'account', label: 'Compte', icon: '' },
+          { key: 'system', label: 'Système', icon: '' },
         ]}
         active={activeTab}
         onChange={setActiveTab}
@@ -381,7 +381,7 @@ export const SettingsPage: React.FC = () => {
       )}
 
       <button onClick={handleLogout} className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition">
-        🔓 Se déconnecter
+        Se déconnecter
       </button>
     </div>
   )
