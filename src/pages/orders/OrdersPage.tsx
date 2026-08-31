@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 import QRCode from 'qrcode'
 import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig, useAgendaStore } from '../../lib/store'
-import { clientsService, ordersService, generateTicketNumber, servicePriceService } from '../../lib/db'
+import { clientsService, ordersService, generateTicketNumber, servicePriceService, cashService } from '../../lib/db'
 import { PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Table, Card, getOrderStatusColor, getPriorityColor, getClothStatusColor } from '../../components/ui'
 import { Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
@@ -99,7 +99,6 @@ export const OrdersPage: React.FC = () => {
   }, [dbClients, localClients])
   const { addNotification } = useNotificationStore()
   const { addLoyaltyPoints } = useCS()
-  const { addCashTransaction, getCurrentSession } = useCashStore()
   const { user } = useAuthStore()
   const { addTransaction } = useTransactionStore()
   const { config } = useShopConfig()
@@ -295,18 +294,23 @@ export const OrdersPage: React.FC = () => {
       console.error('Erreur sauvegarde Supabase:', err)
     }
 
-    // Enregistrement automatique en caisse
-    const session = getCurrentSession()
-    if (session && depositFinal > 0) {
-      addCashTransaction({
-        id: crypto.randomUUID(),
-        session_id: session.id,
-        type: 'entree',
-        amount: depositFinal,
-        reason: `Acompte commande #${ticket} — ${client.first_name} ${client.last_name}`,
-        created_by: user?.full_name || 'Admin',
-        created_at: new Date().toISOString()
-      })
+    // Enregistrement automatique en caisse (Supabase — connecte a la vraie caisse)
+    if (depositFinal > 0) {
+      try {
+        const allSessions = await cashService.getSessions()
+        const openSession = allSessions.find((s: any) => s.status === 'open')
+        if (openSession) {
+          await cashService.addTransaction({
+            id: crypto.randomUUID(),
+            session_id: openSession.id,
+            type: 'entree',
+            amount: depositFinal,
+            reason: `Acompte commande #${ticket} — ${client.first_name} ${client.last_name}`,
+            created_by: user?.full_name || 'Admin',
+            created_at: new Date().toISOString()
+          })
+        }
+      } catch (err) { console.error('Erreur enregistrement caisse:', err) }
     }
 
     // Enregistrement automatique en comptabilité
@@ -370,7 +374,7 @@ export const OrdersPage: React.FC = () => {
   }
 
   // Paiement à la livraison
-  const handlePaymentOnPickup = () => {
+  const handlePaymentOnPickup = async () => {
     if (!showPaymentModal) return
     const order = showPaymentModal
     const newDeposit = order.deposit + paymentAmount
@@ -384,18 +388,23 @@ export const OrdersPage: React.FC = () => {
       ...(newRemaining <= 0 ? { status: 'livre', delivered_at: new Date().toISOString() } : {})
     })
 
-    // Enregistrement automatique en caisse
-    const session = getCurrentSession()
-    if (session && paymentAmount > 0) {
-      addCashTransaction({
-        id: crypto.randomUUID(),
-        session_id: session.id,
-        type: 'entree',
-        amount: paymentAmount,
-        reason: `Paiement livraison #${order.ticket_number} — ${order.client?.first_name} ${order.client?.last_name}`,
-        created_by: user?.full_name || 'Admin',
-        created_at: new Date().toISOString()
-      })
+    // Enregistrement automatique en caisse (Supabase — connecte a la vraie caisse)
+    if (paymentAmount > 0) {
+      try {
+        const allSessions = await cashService.getSessions()
+        const openSession = allSessions.find((s: any) => s.status === 'open')
+        if (openSession) {
+          await cashService.addTransaction({
+            id: crypto.randomUUID(),
+            session_id: openSession.id,
+            type: 'entree',
+            amount: paymentAmount,
+            reason: `Paiement livraison #${order.ticket_number} — ${order.client?.first_name} ${order.client?.last_name}`,
+            created_by: user?.full_name || 'Admin',
+            created_at: new Date().toISOString()
+          })
+        }
+      } catch (err) { console.error('Erreur enregistrement caisse:', err) }
     }
 
     // Enregistrement automatique en comptabilité
