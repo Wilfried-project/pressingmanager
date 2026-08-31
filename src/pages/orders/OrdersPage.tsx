@@ -232,13 +232,19 @@ export const OrdersPage: React.FC = () => {
     if (!client) { alert('Veuillez sélectionner un client'); return }
     const ticket = await generateTicketNumber()
     const now = new Date().toISOString()
-    const clothesFull: Cloth[] = clothes.map(c => ({
-      ...c, id: crypto.randomUUID(), order_id: ticket,
-      qr_code: `QR-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
-      status: 'recu' as const,
-      status_history: [{ status: 'recu' as const, changed_at: now, changed_by: 'system', notes: 'Réception client' }],
-      photos: c.photos || [], created_at: now
-    } as Cloth))
+    // Saisie groupée (ex: "3 chemises") mais suivi individuel : chaque
+    // quantité génère sa propre pièce physique, avec son propre QR code
+    // et son propre statut — pour retrouver précisément chaque vêtement.
+    const clothesFull: Cloth[] = clothes.flatMap(c => {
+      const qty = Math.max(1, Number(c.quantity) || 1)
+      return Array.from({ length: qty }, () => ({
+        ...c, id: crypto.randomUUID(), order_id: ticket, quantity: 1,
+        qr_code: `QR-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+        status: 'recu' as const,
+        status_history: [{ status: 'recu' as const, changed_at: now, changed_by: 'system', notes: 'Réception client' }],
+        photos: c.photos || [], created_at: now
+      } as Cloth))
+    })
 
     const depositFinal = form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit
     const remainingFinal = total - depositFinal
@@ -775,14 +781,6 @@ export const OrdersPage: React.FC = () => {
                 )}
               </div>
 
-              <Field label="Priorité">
-                <Select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as Priority })}>
-                  <option value="economique">💚 Économique</option>
-                  <option value="normal">Normal</option>
-                  <option value="express">Express (+20%)</option>
-                  <option value="vip">VIP (+50%)</option>
-                </Select>
-              </Field>
               <Field label="Date limite" required>
                 <Input required type="datetime-local" value={form.expected_at} onChange={e => setForm({ ...form, expected_at: e.target.value })} />
                 <button type="button" onClick={() => setForm({ ...form, expected_at: suggestedDate })}
