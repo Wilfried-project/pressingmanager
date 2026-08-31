@@ -721,142 +721,62 @@ export const OrdersPage: React.FC = () => {
       {/* FORMULAIRE NOUVELLE COMMANDE */}
       <Modal open={showForm} onClose={resetForm} title="Nouvelle commande" size="full">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 1. CLIENT */}
           <div className="bg-purple-50 rounded-xl p-4">
-            <h3 className="font-bold text-gray-900 mb-4"> Informations générales</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-              {/* Recherche client avec création à la volée */}
-              <div className="sm:col-span-2 lg:col-span-3">
-                <Field label="Client" required>
-                  <div className="relative">
-                    <Input
-                      placeholder="Rechercher par nom ou téléphone..."
-                      value={clientSearch}
-                      onChange={e => { setClientSearch(e.target.value); setForm({ ...form, client_id: '' }) }}
-                    />
-                    {clientSearch && !form.client_id && (
-                      <div className="absolute z-10 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                        {filteredClients.length > 0 ? (
-                          filteredClients.map(c => (
-                            <button key={c.id} type="button"
-                              onClick={() => { setForm({ ...form, client_id: c.id }); setClientSearch(`${c.first_name} ${c.last_name} — ${c.phone}`) }}
-                              className="w-full text-left px-4 py-3 hover:bg-purple-50 border-b border-gray-100 last:border-0">
-                              <p className="font-semibold text-sm">{c.first_name} {c.last_name}</p>
-                              <p className="text-xs text-gray-400">{c.phone} — {c.loyalty_points} pts</p>
-                            </button>
-                          ))
-                        ) : null}
-                        <button type="button"
-                          onClick={() => { setShowNewClientForm(true); setNewClient({ ...newClient, first_name: clientSearch }) }}
-                          className="w-full text-left px-4 py-3 hover:bg-green-50 text-green-700 font-semibold text-sm border-t border-gray-100">
-                          ➕ Créer "{clientSearch}" comme nouveau client
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </Field>
-                {/* Mini-formulaire nouveau client */}
-                {showNewClientForm && (
-                  <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-xl">
-                    <p className="font-bold text-green-800 mb-3">➕ Nouveau client</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="Prénom *">
-                        <Input value={newClient.first_name} onChange={e => setNewClient({ ...newClient, first_name: e.target.value })} placeholder="Prénom" />
-                      </Field>
-                      <Field label="Nom">
-                        <Input value={newClient.last_name} onChange={e => setNewClient({ ...newClient, last_name: e.target.value })} placeholder="Nom" />
-                      </Field>
-                      <Field label="Téléphone *">
-                        <Input value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} placeholder="+225 07..." />
-                      </Field>
-                      <Field label="Email">
-                        <Input value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} placeholder="email@..." />
-                      </Field>
-                    </div>
-                    <div className="flex gap-2 mt-3">
-                      <Button type="button" onClick={handleCreateClient} size="sm"> Créer le client</Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setShowNewClientForm(false)}>Annuler</Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <Field label="Date limite" required>
-                <Input required type="datetime-local" value={form.expected_at} onChange={e => setForm({ ...form, expected_at: e.target.value })} />
-                <button type="button" onClick={() => setForm({ ...form, expected_at: suggestedDate })}
-                  className="mt-1.5 text-xs text-purple-600 hover:underline font-semibold flex items-center gap-1">
-                   Date suggérée : {new Date(suggestedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à 9h00
-                </button>
-              </Field>
-              <Field label="Mode de paiement">
-                <Select value={form.payment_method} onChange={e => setForm({ ...form, payment_method: e.target.value as PaymentMethod })}>
-                  <option value="wave"> Wave</option>
-                  <option value="orange_money"> Orange Money</option>
-                  <option value="mtn"> MTN Money</option>
-                  <option value="especes"> Espèces</option>
-                  <option value="mixte"> Paiement mixte</option>
-                </Select>
-              </Field>
-
-              {/* Détail paiement mixte */}
-              {form.payment_method === 'mixte' && (
-                <div className="col-span-2 bg-purple-50 border border-purple-200 rounded-xl p-4">
-                  <p className="text-sm font-bold text-purple-800 mb-3"> Détail du paiement mixte</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { id: 'wave', label: 'Wave ' },
-                      { id: 'orange', label: 'Orange Money ' },
-                      { id: 'mtn', label: 'MTN Money ' },
-                      { id: 'especes', label: 'Espèces ' },
-                    ].map(m => (
-                      <Field key={m.id} label={m.label}>
-                        <Input
-                          type="number"
-                          placeholder="0 XOF"
-                          value={(paymentDetails.find(p => p.method === m.id)?.amount || '') as any}
-                          onChange={e => {
-                            const val = parseFloat(e.target.value) || 0
-                            setPaymentDetails(prev => {
-                              const existing = prev.filter(p => p.method !== m.id)
-                              return val > 0 ? [...existing, { method: m.id as any, amount: val, paid_at: new Date().toISOString() }] : existing
-                            })
-                          }}
-                        />
-                      </Field>
-                    ))}
-                  </div>
-                  {paymentDetails.length > 0 && (
-                    <div className="mt-3 p-3 bg-white rounded-xl border border-purple-200">
-                      <p className="text-xs text-gray-500 mb-1">Total renseigné</p>
-                      <p className="font-bold text-purple-700">{paymentDetails.reduce((s, p) => s + p.amount, 0).toLocaleString('fr-FR')} XOF</p>
+            <h3 className="font-bold text-gray-900 mb-4"> Client</h3>
+            <div className="grid grid-cols-1">
+              <Field label="Client" required>
+                <div className="relative">
+                  <Input
+                    placeholder="Rechercher par nom ou téléphone..."
+                    value={clientSearch}
+                    onChange={e => { setClientSearch(e.target.value); setForm({ ...form, client_id: '' }) }}
+                  />
+                  {clientSearch && !form.client_id && (
+                    <div className="absolute z-10 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                      {filteredClients.length > 0 ? (
+                        filteredClients.map(c => (
+                          <button key={c.id} type="button"
+                            onClick={() => { setForm({ ...form, client_id: c.id }); setClientSearch(`${c.first_name} ${c.last_name} — ${c.phone}`) }}
+                            className="w-full text-left px-4 py-3 hover:bg-purple-50 border-b border-gray-100 last:border-0">
+                            <p className="font-semibold text-sm">{c.first_name} {c.last_name}</p>
+                            <p className="text-xs text-gray-400">{c.phone} — {c.loyalty_points} pts</p>
+                          </button>
+                        ))
+                      ) : null}
+                      <button type="button"
+                        onClick={() => { setShowNewClientForm(true); setNewClient({ ...newClient, first_name: clientSearch }) }}
+                        className="w-full text-left px-4 py-3 hover:bg-green-50 text-green-700 font-semibold text-sm border-t border-gray-100">
+                        ➕ Créer "{clientSearch}" comme nouveau client
+                      </button>
                     </div>
                   )}
                 </div>
+              </Field>
+              {/* Mini-formulaire nouveau client */}
+              {showNewClientForm && (
+                <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <p className="font-bold text-green-800 mb-3">➕ Nouveau client</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Prénom *">
+                      <Input value={newClient.first_name} onChange={e => setNewClient({ ...newClient, first_name: e.target.value })} placeholder="Prénom" />
+                    </Field>
+                    <Field label="Nom">
+                      <Input value={newClient.last_name} onChange={e => setNewClient({ ...newClient, last_name: e.target.value })} placeholder="Nom" />
+                    </Field>
+                    <Field label="Téléphone *">
+                      <Input value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} placeholder="+225 07..." />
+                    </Field>
+                    <Field label="Email">
+                      <Input value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} placeholder="email@..." />
+                    </Field>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <Button type="button" onClick={handleCreateClient} size="sm"> Créer le client</Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setShowNewClientForm(false)}>Annuler</Button>
+                  </div>
+                </div>
               )}
-              <Field label="Statut paiement">
-                <Select value={form.payment_status} onChange={e => {
-                  const ps = e.target.value as PaymentStatus
-                  setForm({ ...form, payment_status: ps, deposit: ps === 'paye' ? total : ps === 'non_paye' ? 0 : form.deposit })
-                }}>
-                  <option value="non_paye"> Non payé</option>
-                  <option value="acompte"> Acompte versé</option>
-                  <option value="paye"> Payé en totalité</option>
-                </Select>
-              </Field>
-              <Field label="Acompte reçu (XOF)">
-                <Input
-                  type="number" min="0"
-                  value={form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit}
-                  onChange={e => setForm({ ...form, deposit: parseFloat(e.target.value) || 0 })}
-                  disabled={isDepositDisabled}
-                  className={isDepositDisabled ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}
-                />
-                {isDepositDisabled && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    {form.payment_status === 'paye' ? ' Payé en totalité — acompte automatique' : ' Non payé — aucun acompte'}
-                  </p>
-                )}
-              </Field>
             </div>
             {selectedClient && (
               <div className="mt-3 p-3 bg-purple-100 rounded-lg flex items-center gap-3">
@@ -869,7 +789,7 @@ export const OrdersPage: React.FC = () => {
             )}
           </div>
 
-          {/* Vêtements avec photos */}
+          {/* 2. VÊTEMENTS */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-gray-900"> Vêtements ({clothes.length})</h3>
@@ -940,21 +860,112 @@ export const OrdersPage: React.FC = () => {
             </div>
           </div>
 
-          <Field label="Notes générales">
-            <Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Informations supplémentaires pour l'équipe..." />
-          </Field>
+          {/* 3. DÉLAI */}
+          <div className="bg-purple-50 rounded-xl p-4">
+            <h3 className="font-bold text-gray-900 mb-4"> Délai</h3>
+            <Field label="Date limite" required>
+              <Input required type="datetime-local" value={form.expected_at} onChange={e => setForm({ ...form, expected_at: e.target.value })} />
+              <button type="button" onClick={() => setForm({ ...form, expected_at: suggestedDate })}
+                className="mt-1.5 text-xs text-purple-600 hover:underline font-semibold flex items-center gap-1">
+                 Date suggérée : {new Date(suggestedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à 9h00
+              </button>
+            </Field>
+          </div>
 
+          {/* 4. RÉCAPITULATIF */}
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-5">
             <h3 className="font-bold text-gray-900 mb-3"> Récapitulatif</h3>
             <div className="space-y-2">
               <div className="flex justify-between text-sm"><span className="text-gray-600">Sous-total ({clothes.length} article(s))</span><span className="font-medium">{subtotal.toLocaleString('fr-FR')} XOF</span></div>
               {discount > 0 && <div className="flex justify-between text-sm text-green-600"><span>Remise client ({selectedClient?.discount_rate}%)</span><span>- {discount.toLocaleString('fr-FR')} XOF</span></div>}
-              {form.priority !== 'normal' && <div className="flex justify-between text-sm text-orange-600"><span>Supplément {form.priority} {form.priority === 'express' ? '(+20%)' : '(+50%)'}</span><span>inclus</span></div>}
               <div className="border-t border-purple-200 pt-2 flex justify-between font-bold text-xl"><span>TOTAL</span><span className="text-purple-700">{total.toLocaleString('fr-FR')} XOF</span></div>
+            </div>
+          </div>
+
+          {/* 5. PAIEMENT */}
+          <div className="bg-purple-50 rounded-xl p-4">
+            <h3 className="font-bold text-gray-900 mb-4"> Paiement</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Field label="Mode de paiement">
+                <Select value={form.payment_method} onChange={e => setForm({ ...form, payment_method: e.target.value as PaymentMethod })}>
+                  <option value="wave"> Wave</option>
+                  <option value="orange_money"> Orange Money</option>
+                  <option value="mtn"> MTN Money</option>
+                  <option value="especes"> Espèces</option>
+                  <option value="mixte"> Paiement mixte</option>
+                </Select>
+              </Field>
+
+              {/* Détail paiement mixte */}
+              {form.payment_method === 'mixte' && (
+                <div className="col-span-2 bg-purple-50 border border-purple-200 rounded-xl p-4">
+                  <p className="text-sm font-bold text-purple-800 mb-3"> Détail du paiement mixte</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { id: 'wave', label: 'Wave ' },
+                      { id: 'orange', label: 'Orange Money ' },
+                      { id: 'mtn', label: 'MTN Money ' },
+                      { id: 'especes', label: 'Espèces ' },
+                    ].map(m => (
+                      <Field key={m.id} label={m.label}>
+                        <Input
+                          type="number"
+                          placeholder="0 XOF"
+                          value={(paymentDetails.find(p => p.method === m.id)?.amount || '') as any}
+                          onChange={e => {
+                            const val = parseFloat(e.target.value) || 0
+                            setPaymentDetails(prev => {
+                              const existing = prev.filter(p => p.method !== m.id)
+                              return val > 0 ? [...existing, { method: m.id as any, amount: val, paid_at: new Date().toISOString() }] : existing
+                            })
+                          }}
+                        />
+                      </Field>
+                    ))}
+                  </div>
+                  {paymentDetails.length > 0 && (
+                    <div className="mt-3 p-3 bg-white rounded-xl border border-purple-200">
+                      <p className="text-xs text-gray-500 mb-1">Total renseigné</p>
+                      <p className="font-bold text-purple-700">{paymentDetails.reduce((s, p) => s + p.amount, 0).toLocaleString('fr-FR')} XOF</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              <Field label="Statut paiement">
+                <Select value={form.payment_status} onChange={e => {
+                  const ps = e.target.value as PaymentStatus
+                  setForm({ ...form, payment_status: ps, deposit: ps === 'paye' ? total : ps === 'non_paye' ? 0 : form.deposit })
+                }}>
+                  <option value="non_paye"> Non payé</option>
+                  <option value="acompte"> Acompte versé</option>
+                  <option value="paye"> Payé en totalité</option>
+                </Select>
+              </Field>
+              <Field label="Acompte reçu (XOF)">
+                <Input
+                  type="number" min="0"
+                  value={form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit}
+                  onChange={e => setForm({ ...form, deposit: parseFloat(e.target.value) || 0 })}
+                  disabled={isDepositDisabled}
+                  className={isDepositDisabled ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}
+                />
+                {isDepositDisabled && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    {form.payment_status === 'paye' ? ' Payé en totalité — acompte automatique' : ' Non payé — aucun acompte'}
+                  </p>
+                )}
+              </Field>
+            </div>
+            <div className="mt-3 space-y-1">
               {form.deposit > 0 && <div className="flex justify-between text-sm text-blue-600"><span>Acompte versé</span><span>- {form.deposit.toLocaleString('fr-FR')} XOF</span></div>}
               {remaining > 0 && form.payment_status !== 'paye' && <div className="flex justify-between font-bold text-red-600"><span>Restant à payer</span><span>{remaining.toLocaleString('fr-FR')} XOF</span></div>}
             </div>
           </div>
+
+          {/* 6. NOTES */}
+          <Field label="Notes générales">
+            <Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Informations supplémentaires pour l'équipe..." />
+          </Field>
 
           <div className="flex gap-3">
             <Button type="submit" className="flex-1" size="lg" icon={<Printer size={18} />}>Enregistrer & Imprimer ticket</Button>
