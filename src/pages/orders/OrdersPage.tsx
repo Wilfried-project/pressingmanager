@@ -121,6 +121,7 @@ export const OrdersPage: React.FC = () => {
     expected_at: '', payment_method: 'especes' as PaymentMethod,
     payment_status: 'non_paye' as PaymentStatus, deposit: 0, notes: ''
   })
+  const [manualDiscount, setManualDiscount] = useState(0)
   const [clothes, setClothes] = useState<Partial<Cloth>[]>([{
     type: 'chemise', color: '', brand: '', size: '', material: '',
     quantity: '' as any, service: 'lavage_simple', price: '' as any,
@@ -163,7 +164,7 @@ export const OrdersPage: React.FC = () => {
   }
 
   const suggestedDate = getSuggestedDate()
-  const discount = selectedClient?.discount_rate ? subtotal * selectedClient.discount_rate / 100 : 0
+  const discount = manualDiscount
   const totalAfterDiscount = subtotal - discount
   const expressMultiplier = form.priority === 'express' ? 1.2 : form.priority === 'vip' ? 1.5 : 1
   const total = totalAfterDiscount * expressMultiplier
@@ -376,6 +377,7 @@ export const OrdersPage: React.FC = () => {
 
   const resetForm = () => {
     setForm({ client_id: '', priority: 'normal', expected_at: '', payment_method: 'especes', payment_status: 'non_paye', deposit: 0, notes: '' })
+    setManualDiscount(0)
     setClothes([{ type: 'chemise', color: '', brand: '', size: '', material: '', quantity: '' as any, service: 'lavage_simple', price: '' as any, special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: [] }])
     setPaymentDetails([])
     setClientSearch('')
@@ -877,7 +879,10 @@ export const OrdersPage: React.FC = () => {
             <h3 className="font-bold text-gray-900 mb-3"> Récapitulatif</h3>
             <div className="space-y-2">
               <div className="flex justify-between text-sm"><span className="text-gray-600">Sous-total ({clothes.length} article(s))</span><span className="font-medium">{subtotal.toLocaleString('fr-FR')} XOF</span></div>
-              {discount > 0 && <div className="flex justify-between text-sm text-green-600"><span>Remise client ({selectedClient?.discount_rate}%)</span><span>- {discount.toLocaleString('fr-FR')} XOF</span></div>}
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Réduction (XOF)</span>
+                <Input type="number" min="0" value={manualDiscount} onChange={e => setManualDiscount(parseFloat(e.target.value) || 0)} onFocus={e => e.target.value === '0' && (e.target.value = '')} className="w-32 text-right" />
+              </div>
               <div className="border-t border-purple-200 pt-2 flex justify-between font-bold text-xl"><span>TOTAL</span><span className="text-purple-700">{total.toLocaleString('fr-FR')} XOF</span></div>
             </div>
           </div>
