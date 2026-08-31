@@ -935,43 +935,6 @@ export const OrdersPage: React.FC = () => {
                       {clothes.length > 1 && <Button type="button" variant="danger" size="sm" onClick={() => removeCloth(i)}>Retirer</Button>}
                     </div>
                   </div>
-
-                  {/* Section Photos */}
-                  <div className="mt-3 border-t border-gray-200 pt-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-bold text-gray-600"> Photos du vêtement ({(cloth.photos || []).length})</p>
-                      <div className="flex gap-2">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          ref={el => fileInputRefs.current[i] = el}
-                          onChange={e => handlePhotoUpload(i, e.target.files)}
-                          className="hidden"
-                        />
-                        <button type="button"
-                          onClick={() => fileInputRefs.current[i]?.click()}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold hover:bg-purple-200 transition">
-                          <Camera size={13} /> Ajouter photo
-                        </button>
-                      </div>
-                    </div>
-                    {(cloth.photos || []).length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {(cloth.photos || []).map((photo, pi) => (
-                          <div key={pi} className="relative">
-                            <img src={photo} alt={`Photo ${pi + 1}`} className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
-                            <button type="button" onClick={() => removePhoto(i, pi)}
-                              className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600">
-                              <X size={10} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-400 italic">Aucune photo — cliquez pour photographier l'état du vêtement</p>
-                    )}
-                  </div>
                 </div>
               ))}
             </div>
