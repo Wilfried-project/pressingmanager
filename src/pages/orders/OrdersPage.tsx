@@ -295,22 +295,26 @@ export const OrdersPage: React.FC = () => {
     }
 
     // Enregistrement automatique en caisse (Supabase — connecte a la vraie caisse)
+    // Non bloquant : ne retarde jamais la fin de la création de commande, même si
+    // la caisse met du temps à répondre ou échoue.
     if (depositFinal > 0) {
-      try {
-        const allSessions = await cashService.getSessions()
-        const openSession = allSessions.find((s: any) => s.status === 'open')
-        if (openSession) {
-          await cashService.addTransaction({
-            id: crypto.randomUUID(),
-            session_id: openSession.id,
-            type: 'entree',
-            amount: depositFinal,
-            reason: `${remainingFinal <= 0 ? 'Paiement complet' : 'Acompte'} commande #${ticket} — ${client.first_name} ${client.last_name}`,
-            created_by: user?.full_name || 'Admin',
-            created_at: new Date().toISOString()
-          })
-        }
-      } catch (err) { console.error('Erreur enregistrement caisse:', err) }
+      ;(async () => {
+        try {
+          const allSessions = await cashService.getSessions()
+          const openSession = allSessions.find((s: any) => s.status === 'open')
+          if (openSession) {
+            await cashService.addTransaction({
+              id: crypto.randomUUID(),
+              session_id: openSession.id,
+              type: 'entree',
+              amount: depositFinal,
+              reason: `${remainingFinal <= 0 ? 'Paiement complet' : 'Acompte'} commande #${ticket} — ${client.first_name} ${client.last_name}`,
+              created_by: user?.full_name || 'Admin',
+              created_at: new Date().toISOString()
+            })
+          }
+        } catch (err) { console.error('Erreur enregistrement caisse:', err) }
+      })()
     }
 
     // Enregistrement automatique en comptabilité
@@ -389,22 +393,25 @@ export const OrdersPage: React.FC = () => {
     })
 
     // Enregistrement automatique en caisse (Supabase — connecte a la vraie caisse)
+    // Non bloquant, comme pour la création de commande
     if (paymentAmount > 0) {
-      try {
-        const allSessions = await cashService.getSessions()
-        const openSession = allSessions.find((s: any) => s.status === 'open')
-        if (openSession) {
-          await cashService.addTransaction({
-            id: crypto.randomUUID(),
-            session_id: openSession.id,
-            type: 'entree',
-            amount: paymentAmount,
-            reason: `Paiement livraison #${order.ticket_number} — ${order.client?.first_name} ${order.client?.last_name}`,
-            created_by: user?.full_name || 'Admin',
-            created_at: new Date().toISOString()
-          })
-        }
-      } catch (err) { console.error('Erreur enregistrement caisse:', err) }
+      ;(async () => {
+        try {
+          const allSessions = await cashService.getSessions()
+          const openSession = allSessions.find((s: any) => s.status === 'open')
+          if (openSession) {
+            await cashService.addTransaction({
+              id: crypto.randomUUID(),
+              session_id: openSession.id,
+              type: 'entree',
+              amount: paymentAmount,
+              reason: `Paiement livraison #${order.ticket_number} — ${order.client?.first_name} ${order.client?.last_name}`,
+              created_by: user?.full_name || 'Admin',
+              created_at: new Date().toISOString()
+            })
+          }
+        } catch (err) { console.error('Erreur enregistrement caisse:', err) }
+      })()
     }
 
     // Enregistrement automatique en comptabilité
