@@ -305,7 +305,7 @@ export const OrdersPage: React.FC = () => {
             session_id: openSession.id,
             type: 'entree',
             amount: depositFinal,
-            reason: `Acompte commande #${ticket} — ${client.first_name} ${client.last_name}`,
+            reason: `${remainingFinal <= 0 ? 'Paiement complet' : 'Acompte'} commande #${ticket} — ${client.first_name} ${client.last_name}`,
             created_by: user?.full_name || 'Admin',
             created_at: new Date().toISOString()
           })
@@ -321,7 +321,7 @@ export const OrdersPage: React.FC = () => {
         type: 'recette',
         category: 'Vente pressing',
         amount: depositFinal,
-        description: `Acompte commande #${ticket} — ${client.first_name} ${client.last_name}`,
+        description: `${remainingFinal <= 0 ? 'Paiement complet' : 'Acompte'} commande #${ticket} — ${client.first_name} ${client.last_name}`,
         date: new Date().toISOString().split('T')[0],
         created_by: user?.full_name || 'Admin'
       })
