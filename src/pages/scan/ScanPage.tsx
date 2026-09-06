@@ -12,7 +12,15 @@ export const ScanPage: React.FC = () => {
     const loadOrder = async () => {
       if (!ticket) { setError('Ticket invalide'); setLoading(false); return }
       try {
-        const { data, error } = await supabase.rpc('get_order_by_ticket', { ticket_input: ticket })
+        // Retrouve le pressing (tenant) à partir du sous-domaine actuel,
+        // pour ne jamais confondre deux commandes portant le même numéro
+        // de ticket sur deux pressings différents.
+        const hostname = window.location.hostname
+        const parts = hostname.split('.')
+        const isCustomSubdomain = parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'app' && parts[0] !== 'admin' && parts[0] !== 'localhost'
+        const tenantSlug = isCustomSubdomain ? parts[0] : 'default'
+
+        const { data, error } = await supabase.rpc('get_order_by_ticket', { ticket_input: ticket, tenant_slug: tenantSlug })
         if (error || !data) { setError('Commande introuvable'); setLoading(false); return }
         setOrder(data)
       } catch { setError('Erreur de chargement') }
