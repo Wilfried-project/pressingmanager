@@ -236,16 +236,13 @@ export const OrdersPage: React.FC = () => {
     // Saisie groupée (ex: "3 chemises") mais suivi individuel : chaque
     // quantité génère sa propre pièce physique, avec son propre QR code
     // et son propre statut — pour retrouver précisément chaque vêtement.
-    const clothesFull: Cloth[] = clothes.flatMap(c => {
-      const qty = Math.max(1, Number(c.quantity) || 1)
-      return Array.from({ length: qty }, () => ({
-        ...c, id: crypto.randomUUID(), order_id: ticket, quantity: 1,
-        qr_code: `QR-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
-        status: 'recu' as const,
-        status_history: [{ status: 'recu' as const, changed_at: now, changed_by: 'system', notes: 'Réception client' }],
-        photos: c.photos || [], created_at: now
-      } as Cloth))
-    })
+    const clothesFull: Cloth[] = clothes.map(c => ({
+      ...c, id: crypto.randomUUID(), order_id: ticket,
+      qr_code: `QR-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      status: 'recu' as const,
+      status_history: [{ status: 'recu' as const, changed_at: now, changed_by: 'system', notes: 'Réception client' }],
+      photos: c.photos || [], created_at: now
+    } as Cloth))
 
     const depositFinal = form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit
     const remainingFinal = total - depositFinal
@@ -474,7 +471,6 @@ export const OrdersPage: React.FC = () => {
       .footer { border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 10px; text-align: center; background: #f9fafb; }
       .footer-note { font-size: 10px; color: #6b7280; margin: 2px 0; }
       .footer-important { font-size: 11px; font-weight: bold; color: #7c3aed; margin: 4px 0; }
-      .priority-badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; background: ${order.priority === 'vip' ? '#fef3c7' : order.priority === 'express' ? '#fee2e2' : '#f3f4f6'}; color: ${order.priority === 'vip' ? '#92400e' : order.priority === 'express' ? '#991b1b' : '#374151'}; }
       @media print { body { margin: 0; } }
     </style></head><body>
     <div class="ticket">
@@ -494,7 +490,6 @@ export const OrdersPage: React.FC = () => {
         <div class="row"><span class="label">Téléphone</span><span class="value">${order.client?.phone}</span></div>
         <div class="row"><span class="label">Date dépôt</span><span class="value">${new Date(order.received_at).toLocaleDateString('fr-FR')} à ${new Date(order.received_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
         <div class="row"><span class="label">Date prévue</span><span class="value">${order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'À définir'}</span></div>
-        <div class="row"><span class="label">Priorité</span><span class="value"><span class="priority-badge">${order.priority.toUpperCase()}</span></span></div>
       </div>
       <div class="section articles">
         <div class="section-title"> Articles (${order.clothes.length})</div>
@@ -503,7 +498,6 @@ export const OrdersPage: React.FC = () => {
             <span class="article-price">${((c.price || 0) * (c.quantity || 1)).toLocaleString('fr-FR')} XOF</span>
             <div class="article-name">${c.quantity}x ${CLOTH_TYPES.find(t => t.value === c.type)?.icon || ''} ${c.type?.charAt(0).toUpperCase() + (c.type?.slice(1) || '')}</div>
             <div class="article-detail">${c.service?.replace(/_/g, ' ')} ${c.color ? '• ' + c.color : ''} ${c.brand ? '• ' + c.brand : ''}</div>
-            <div class="article-detail">QR: ${c.qr_code}</div>
           </div>
         `).join('')}
       </div>
@@ -621,7 +615,7 @@ export const OrdersPage: React.FC = () => {
       </Card>
 
       {filtered.length > 0 ? (
-        <Table headers={['Ticket', 'Client', 'Articles', 'Total', 'Paiement', 'Statut', 'Priorité', 'Date limite', 'Actions']}>
+        <Table headers={['Ticket', 'Client', 'Articles', 'Total', 'Paiement', 'Statut', 'Date limite', 'Actions']}>
           {filtered.map(order => (
             <tr key={order.id} className="hover:bg-purple-50 transition">
               <td className="px-5 py-4 font-bold text-purple-700 text-sm">#{order.ticket_number}</td>
@@ -642,7 +636,6 @@ export const OrdersPage: React.FC = () => {
                   color={order.payment_status === 'paye' ? 'green' : order.payment_status === 'acompte' ? 'yellow' : 'red'} />
               </td>
               <td className="px-5 py-4"><Badge label={order.status.replace('_', ' ').replace(/^./, c => c.toUpperCase())} color={getOrderStatusColor(order.status)} /></td>
-              <td className="px-5 py-4"><Badge label={order.priority.replace(/^./, c => c.toUpperCase())} color={getPriorityColor(order.priority)} /></td>
               <td className="px-5 py-4 text-sm text-gray-500">{order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : '-'}</td>
               <td className="px-5 py-4">
                 <div className="flex gap-1">
@@ -987,7 +980,6 @@ export const OrdersPage: React.FC = () => {
               {[
                 { label: 'Client', value: `${viewOrder.client?.first_name} ${viewOrder.client?.last_name}` },
                 { label: 'Téléphone', value: viewOrder.client?.phone || '-' },
-                { label: 'Priorité', value: viewOrder.priority },
                 { label: 'Reçu le', value: new Date(viewOrder.received_at).toLocaleDateString('fr-FR') },
                 { label: 'Date limite', value: viewOrder.expected_at ? new Date(viewOrder.expected_at).toLocaleDateString('fr-FR') : '-' },
                 { label: 'Paiement', value: viewOrder.payment_method },
@@ -1025,7 +1017,7 @@ export const OrdersPage: React.FC = () => {
                       <div className="flex justify-between items-center mb-3">
                         <div>
                           <p className="font-bold text-sm capitalize">{cloth.type} {cloth.color ? `— ${cloth.color}` : ''} {cloth.brand ? `(${cloth.brand})` : ''}</p>
-                          <p className="text-xs text-gray-400">QR: {cloth.qr_code} | {cloth.service?.replace('_', ' ')} | {cloth.quantity}x</p>
+                          <p className="text-xs text-gray-400">{cloth.service?.replace('_', ' ')} | {cloth.quantity}x</p>
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-purple-700 text-sm">{((cloth.price || 0) * cloth.quantity).toLocaleString('fr-FR')} XOF</p>
