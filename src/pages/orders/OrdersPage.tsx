@@ -446,32 +446,33 @@ export const OrdersPage: React.FC = () => {
     win.document.write(`<!DOCTYPE html><html><head><title>Ticket ${order.ticket_number}</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: Arial, sans-serif; font-size: 12px; background: #fff; color: #000; }
-      .ticket { width: 80mm; margin: 0 auto; padding: 8px; }
-      .header { background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; text-align: center; padding: 16px 8px; border-radius: 8px 8px 0 0; }
-      .logo { width: 140px; height: auto; object-fit: contain; margin-bottom: 8px; }
-      .title { font-size: 18px; font-weight: bold; letter-spacing: 1px; }
-      .subtitle { font-size: 10px; opacity: 0.8; margin-top: 2px; }
-      .ticket-num { background: #fff; color: #7c3aed; font-size: 20px; font-weight: bold; text-align: center; padding: 10px; margin: 0; border-left: 3px solid #7c3aed; border-right: 3px solid #7c3aed; letter-spacing: 2px; }
-      .section { border: 1px solid #e5e7eb; border-top: none; padding: 10px; }
-      .section-title { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #7c3aed; letter-spacing: 1px; margin-bottom: 6px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
-      .row { display: flex; justify-content: space-between; margin: 3px 0; font-size: 11px; }
+      @page { size: 80mm auto; margin: 0; }
+      body { font-family: Arial, sans-serif; font-size: 13px; background: #fff; color: #000; }
+      .ticket { width: 100%; margin: 0; padding: 10px; }
+      .header { background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; text-align: center; padding: 18px 10px; border-radius: 8px 8px 0 0; }
+      .logo { width: 150px; height: auto; object-fit: contain; margin-bottom: 8px; }
+      .title { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+      .subtitle { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+      .ticket-num { background: #fff; color: #7c3aed; font-size: 22px; font-weight: bold; text-align: center; padding: 12px; margin: 0; border-left: 3px solid #7c3aed; border-right: 3px solid #7c3aed; letter-spacing: 2px; }
+      .section { border: 1px solid #e5e7eb; border-top: none; padding: 12px; }
+      .section-title { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #7c3aed; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+      .row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 12px; }
       .row .label { color: #6b7280; }
       .row .value { font-weight: 600; text-align: right; max-width: 60%; }
       .articles { margin: 0; }
-      .article { border-bottom: 1px dashed #e5e7eb; padding: 5px 0; font-size: 11px; }
+      .article { border-bottom: 1px dashed #e5e7eb; padding: 6px 0; font-size: 12px; }
       .article-name { font-weight: bold; color: #111; }
-      .article-detail { color: #6b7280; font-size: 10px; }
+      .article-detail { color: #6b7280; font-size: 11px; }
       .article-price { font-weight: bold; color: #7c3aed; float: right; }
-      .totals { border: 2px solid #7c3aed; border-radius: 0 0 0 0; padding: 10px; }
-      .total-line { display: flex; justify-content: space-between; margin: 2px 0; font-size: 11px; }
-      .total-main { font-size: 16px; font-weight: bold; color: #7c3aed; border-top: 2px solid #7c3aed; padding-top: 6px; margin-top: 6px; display: flex; justify-content: space-between; }
-      .remaining { background: #fef2f2; color: #dc2626; font-weight: bold; text-align: center; padding: 6px; font-size: 12px; margin-top: 4px; border-radius: 4px; }
-      .paid { background: #f0fdf4; color: #16a34a; font-weight: bold; text-align: center; padding: 6px; font-size: 12px; margin-top: 4px; border-radius: 4px; }
-      .footer { border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 10px; text-align: center; background: #f9fafb; }
-      .footer-note { font-size: 10px; color: #6b7280; margin: 2px 0; }
-      .footer-important { font-size: 11px; font-weight: bold; color: #7c3aed; margin: 4px 0; }
-      @media print { body { margin: 0; } }
+      .totals { border: 2px solid #7c3aed; border-radius: 0 0 0 0; padding: 12px; }
+      .total-line { display: flex; justify-content: space-between; margin: 3px 0; font-size: 12px; }
+      .total-main { font-size: 18px; font-weight: bold; color: #7c3aed; border-top: 2px solid #7c3aed; padding-top: 7px; margin-top: 7px; display: flex; justify-content: space-between; }
+      .remaining { background: #fef2f2; color: #dc2626; font-weight: bold; text-align: center; padding: 7px; font-size: 13px; margin-top: 5px; border-radius: 4px; }
+      .paid { background: #f0fdf4; color: #16a34a; font-weight: bold; text-align: center; padding: 7px; font-size: 13px; margin-top: 5px; border-radius: 4px; }
+      .footer { border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 12px; text-align: center; background: #f9fafb; }
+      .footer-note { font-size: 11px; color: #6b7280; margin: 2px 0; }
+      .footer-important { font-size: 12px; font-weight: bold; color: #7c3aed; margin: 4px 0; }
+      @media print { body { margin: 0; width: 80mm; } }
     </style></head><body>
     <div class="ticket">
       <div class="header">
