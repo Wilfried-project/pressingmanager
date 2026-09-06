@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Trash2, Edit2, Save, X, Key } from 'lucide-react'
+import { Plus, Trash2, Edit2, Save, X, Key, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { employeeService } from '../../lib/db'
 import { ALL_MODULES, ROLE_PERMISSIONS } from '../../components/layout/Layout'
@@ -51,6 +51,7 @@ export const UsersPage: React.FC = () => {
   const [editUser, setEditUser] = useState<AppUser | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState({
     full_name: '', email: '', phone: '', role: 'employe',
     permissions: [] as string[], is_active: true, password: ''
@@ -350,7 +351,12 @@ export const UsersPage: React.FC = () => {
                        Envoyer un email de réinitialisation
                     </button>
                   ) : (
-                    <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Minimum 6 caractères" />
+                    <div className="relative">
+                      <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="w-full px-4 py-2.5 pr-11 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Minimum 6 caractères" />
+                      <button type="button" onClick={() => setShowPassword(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   )}
                 </div>
                 <div>
