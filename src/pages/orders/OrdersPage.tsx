@@ -442,7 +442,7 @@ export const OrdersPage: React.FC = () => {
   }
 
   const printTicket = async (order: Order) => {
-    const scanUrl = `${window.location.origin}/scan/${order.ticket_number}`
+    const scanUrl = `${window.location.origin}/scan/${encodeURIComponent(order.ticket_number)}`
     const qrDataUrl = await QRCode.toDataURL(scanUrl, { width: 120, margin: 1, color: { dark: '#000000', light: '#ffffff' } })
     const win = window.open('', '_blank')
     if (!win) return
