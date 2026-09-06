@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useAuthStore, useShopConfig } from '../../lib/store'
-import { PageHeader, Button, Field, Input, Select, Textarea, Card, Tabs, Badge, Alert } from '../../components/ui'
+import { PageHeader, Button, Field, Input, Select, Textarea, Card, Tabs, Badge, Alert, Modal } from '../../components/ui'
 import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
-import { Save, Upload, X } from 'lucide-react'
+import { Save, Upload, X, AlertTriangle } from 'lucide-react'
 
 export const SettingsPage: React.FC = () => {
   const user = useAuthStore(s => s.user)
@@ -15,6 +15,10 @@ export const SettingsPage: React.FC = () => {
   const [saved, setSaved] = useState(false)
   const [cashOpenTime, setCashOpenTime] = useState('08:00')
   const [cashCloseTime, setCashCloseTime] = useState('20:00')
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [resetConfirmText, setResetConfirmText] = useState('')
+  const [resetConfirmChecked, setResetConfirmChecked] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   useEffect(() => {
     const loadCashHours = async () => {
@@ -97,6 +101,44 @@ export const SettingsPage: React.FC = () => {
     } catch (err) { console.error('Erreur sauvegarde:', err) }
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
+  }
+
+  const handleResetAllData = async () => {
+    if (resetConfirmText !== (config.name || form.name) || !resetConfirmChecked) return
+    setResetting(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Non connecté')
+      const { data: emp } = await supabase.from('employees').select('tenant_id').eq('user_id', session.user.id).single()
+      const tenantId = emp?.tenant_id
+      if (!tenantId) throw new Error('Pressing introuvable')
+
+      // Supprime toutes les données opérationnelles de CE pressing uniquement.
+      // Le pressing lui-même (tenants) et le compte admin actuel sont conservés
+      // pour ne pas se retrouver bloqué dehors après la réinitialisation.
+      await supabase.from('clothes').delete().eq('tenant_id', tenantId)
+      await supabase.from('orders').delete().eq('tenant_id', tenantId)
+      await supabase.from('clients').delete().eq('tenant_id', tenantId)
+      await supabase.from('cash_transactions').delete().eq('tenant_id', tenantId)
+      await supabase.from('cash_sessions').delete().eq('tenant_id', tenantId)
+      await supabase.from('transactions').delete().eq('tenant_id', tenantId)
+      await supabase.from('notifications').delete().eq('tenant_id', tenantId)
+      await supabase.from('agenda_events').delete().eq('tenant_id', tenantId)
+      await supabase.from('service_prices').delete().eq('tenant_id', tenantId)
+      await supabase.from('sequence_counters').delete().eq('tenant_id', tenantId)
+      // Employés : on garde uniquement le compte actuellement connecté
+      await supabase.from('employees').delete().eq('tenant_id', tenantId).neq('user_id', session.user.id)
+
+      alert('Toutes les données ont été réinitialisées.')
+      window.location.href = '/'
+    } catch (err: any) {
+      alert('Erreur lors de la réinitialisation : ' + (err.message || 'réessayez'))
+    } finally {
+      setResetting(false)
+      setShowResetModal(false)
+      setResetConfirmText('')
+      setResetConfirmChecked(false)
+    }
   }
 
   const handleLogout = async () => {
@@ -370,15 +412,49 @@ export const SettingsPage: React.FC = () => {
                 className="w-full py-2.5 bg-blue-50 text-blue-700 rounded-xl text-sm font-semibold hover:bg-blue-100 transition">
                 Exporter les données (JSON)
               </button>
-              <button
-                onClick={() => { if (confirm('⚠️ Réinitialiser TOUTES les données ? Irréversible !')) { localStorage.clear(); window.location.reload() } }}
-                className="w-full py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition">
-                Réinitialiser toutes les données
-              </button>
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => setShowResetModal(true)}
+                  className="w-full py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition">
+                  Réinitialiser toutes les données
+                </button>
+              )}
             </div>
           </Card>
         </div>
       )}
+
+      {/* CONFIRMATION RÉINITIALISATION — sécurité renforcée */}
+      <Modal open={showResetModal} onClose={() => { setShowResetModal(false); setResetConfirmText(''); setResetConfirmChecked(false) }} title="Réinitialiser toutes les données" size="sm">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <AlertTriangle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+            <p className="text-sm text-red-700">
+              Cette action supprime <strong>définitivement</strong> toutes les commandes, clients, transactions, mouvements de caisse et employés (sauf votre propre compte) de <strong>{config.name || form.name}</strong>. Impossible à annuler.
+            </p>
+          </div>
+          <Field label={`Tapez "${config.name || form.name}" pour confirmer`}>
+            <Input value={resetConfirmText} onChange={e => setResetConfirmText(e.target.value)} placeholder={config.name || form.name} />
+          </Field>
+          <label className="flex items-start gap-2.5 cursor-pointer">
+            <input type="checkbox" checked={resetConfirmChecked} onChange={e => setResetConfirmChecked(e.target.checked)} className="mt-0.5 w-4 h-4" />
+            <span className="text-sm text-gray-600">Je comprends que cette action est irréversible et que toutes les données seront perdues définitivement.</span>
+          </label>
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="danger"
+              className="flex-1"
+              loading={resetting}
+              disabled={resetConfirmText !== (config.name || form.name) || !resetConfirmChecked}
+              onClick={handleResetAllData}>
+              Confirmer la réinitialisation
+            </Button>
+            <Button variant="secondary" className="flex-1" onClick={() => { setShowResetModal(false); setResetConfirmText(''); setResetConfirmChecked(false) }}>
+              Annuler
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <button onClick={handleLogout} className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition">
         Se déconnecter
