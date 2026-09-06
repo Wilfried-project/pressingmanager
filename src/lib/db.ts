@@ -19,11 +19,12 @@ async function getTenantId(): Promise<string> {
 }
 
 // Génère un numéro de commande séquentiel PM/ANNÉE/MOIS/NUMÉRO
-// Le compteur ne redémarre jamais à zéro — il continue de s'incrémenter
+// Le compteur ne redémarre jamais à zéro — il continue de s'incrémenter.
+// Le tenant est retrouvé côté serveur (jamais envoyé par le navigateur),
+// impossible donc de manipuler le compteur d'un autre pressing.
 export async function generateTicketNumber(): Promise<string> {
-  const tenant_id = await getTenantId()
   const { data: nextNumber, error } = await supabase
-    .rpc('get_next_counter', { p_tenant_id: tenant_id, p_counter_type: 'ticket' })
+    .rpc('get_next_counter', { p_counter_type: 'ticket' })
 
   if (error || nextNumber == null) {
     // En cas d'erreur, on retombe sur l'ancien format pour ne jamais bloquer une commande
@@ -43,9 +44,8 @@ export async function generateTicketNumber(): Promise<string> {
 // Une fois attribué à une commande (colonne invoice_number), il reste
 // figé même en cas de réimpression.
 export async function generateInvoiceNumber(): Promise<string> {
-  const tenant_id = await getTenantId()
   const { data: nextNumber, error } = await supabase
-    .rpc('get_next_counter', { p_tenant_id: tenant_id, p_counter_type: 'invoice' })
+    .rpc('get_next_counter', { p_counter_type: 'invoice' })
 
   if (error || nextNumber == null) {
     return `FAC-${Date.now().toString().slice(-6)}`
