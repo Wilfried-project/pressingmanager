@@ -26,8 +26,34 @@ const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
  
 function App() {
   const [loading, setLoading] = useState(true)
+  const [suspended, setSuspended] = useState(false)
   const { user, setUser, setSession } = useAuthStore()
   const { setConfig } = useShopConfig()
+
+  // Vérifie que le pressing (tenant) n'est pas suspendu avant de laisser
+  // l'utilisateur accéder à l'application. Si suspendu, la session est
+  // fermée immédiatement, même si les identifiants étaient corrects.
+  const checkTenantStatus = async (tenantId: string): Promise<boolean> => {
+    if (!tenantId) return true
+    try {
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('subscription_status')
+        .eq('id', tenantId)
+        .single()
+      if (tenant?.subscription_status === 'suspendu') {
+        setSuspended(true)
+        await supabase.auth.signOut()
+        setUser(null)
+        setSession(null)
+        return false
+      }
+      return true
+    } catch (err) {
+      console.error('Erreur vérification statut pressing:', err)
+      return true
+    }
+  }
  
   useEffect(() => {
     const loadTenantConfig = async () => {
@@ -84,6 +110,8 @@ function App() {
             .single()
  
           if (employee) {
+            const tenantOk = await checkTenantStatus(employee.tenant_id)
+            if (!tenantOk) { setLoading(false); return }
             setUser({
               id: session.user.id,
               email: session.user.email || '',
@@ -124,6 +152,8 @@ function App() {
           .single()
  
         if (employee) {
+          const tenantOk = await checkTenantStatus(employee.tenant_id)
+          if (!tenantOk) { setLoading(false); return }
           setUser({
             id: session.user.id,
             email: session.user.email || '',
@@ -162,6 +192,17 @@ function App() {
         <div className="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         <p className="text-white text-2xl font-bold">PressingManager</p>
         <p className="text-purple-200 text-sm mt-1">Chargement en cours...</p>
+      </div>
+    </div>
+  )
+
+  if (suspended) return (
+    <div className="min-h-screen bg-gradient-to-br from-red-800 to-red-600 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">⏸️</div>
+        <h1 className="text-xl font-bold text-gray-900 mb-2">Accès suspendu</h1>
+        <p className="text-gray-600 text-sm mb-6">L'accès à ce pressing a été temporairement suspendu. Vos données restent en sécurité — contactez votre administrateur pour réactiver votre accès.</p>
+        <button onClick={() => window.location.reload()} className="text-purple-600 font-semibold hover:underline text-sm">Réessayer</button>
       </div>
     </div>
   )
