@@ -54,9 +54,8 @@ function App() {
 
       if (tenant?.subscription_expiration) {
         const expDate = new Date(tenant.subscription_expiration)
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        if (expDate < today) {
+        const now = new Date()
+        if (expDate < now) {
           setExpired(true)
           await supabase.auth.signOut()
           setUser(null)
