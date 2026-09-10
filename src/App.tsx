@@ -217,7 +217,8 @@ function App() {
       <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">⏸️</div>
         <h1 className="text-xl font-bold text-gray-900 mb-2">Accès suspendu</h1>
-        <p className="text-gray-600 text-sm mb-6">L'accès à ce pressing a été temporairement suspendu. Vos données restent en sécurité — contactez votre administrateur pour réactiver votre accès.</p>
+        <p className="text-gray-600 text-sm mb-6">L'accès à ce pressing a été temporairement suspendu. Vos données restent en sécurité — contactez-nous pour réactiver votre accès.</p>
+        <a href="https://wa.me/2250779613865?text=Bonjour%2C%20mon%20acc%C3%A8s%20PressingManager%20est%20suspendu%2C%20je%20souhaite%20le%20r%C3%A9activer." target="_blank" rel="noopener noreferrer" className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition mb-3">Contacter sur WhatsApp</a>
         <button onClick={() => window.location.reload()} className="text-purple-600 font-semibold hover:underline text-sm">Réessayer</button>
       </div>
     </div>
@@ -228,7 +229,8 @@ function App() {
       <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
         <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">⏰</div>
         <h1 className="text-xl font-bold text-gray-900 mb-2">Abonnement expiré</h1>
-        <p className="text-gray-600 text-sm mb-6">L'abonnement de ce pressing est arrivé à échéance. Vos données restent en sécurité — contactez votre administrateur pour renouveler et retrouver l'accès.</p>
+        <p className="text-gray-600 text-sm mb-6">L'abonnement de ce pressing est arrivé à échéance. Vos données restent en sécurité — contactez-nous pour renouveler et retrouver l'accès.</p>
+        <a href="https://wa.me/2250779613865?text=Bonjour%2C%20mon%20abonnement%20PressingManager%20est%20expir%C3%A9%2C%20je%20souhaite%20le%20renouveler." target="_blank" rel="noopener noreferrer" className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition mb-3">Contacter sur WhatsApp</a>
         <button onClick={() => window.location.reload()} className="text-purple-600 font-semibold hover:underline text-sm">Réessayer</button>
       </div>
     </div>
