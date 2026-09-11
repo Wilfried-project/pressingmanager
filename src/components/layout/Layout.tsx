@@ -1,11 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import {
-  Menu, X, LogOut, Bell, ChevronRight,
-  LayoutDashboard, ShoppingBag, Users, CreditCard, Wallet, Star,
-  Package, Truck, Calendar, UserCog, Wrench, Calculator,
-  BarChart3, Tag, Settings, UserCircle
-} from 'lucide-react'
+import { Menu, X, LogOut, Bell, ChevronRight } from 'lucide-react'
 import { useAuthStore, useOrderStore, useStockStore, useNotificationStore, useShopConfig } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 
@@ -28,28 +23,6 @@ export const ALL_MODULES = [
   { path: '/users', label: 'Utilisateurs', icon: '', group: 'Administration' },
   { path: '/atelier', label: 'Atelier', icon: '', group: 'Opérations' },
 ]
-
-// Icône réelle associée à chaque page — séparé de ALL_MODULES pour ne
-// jamais changer sa forme (utilisée ailleurs pour les permissions).
-const MODULE_ICONS: Record<string, React.ReactNode> = {
-  '/': <LayoutDashboard size={17} />,
-  '/orders': <ShoppingBag size={17} />,
-  '/clients': <Users size={17} />,
-  '/billing': <CreditCard size={17} />,
-  '/cashier': <Wallet size={17} />,
-  '/loyalty': <Star size={17} />,
-  '/stock': <Package size={17} />,
-  '/delivery': <Truck size={17} />,
-  '/notifications': <Bell size={17} />,
-  '/agenda': <Calendar size={17} />,
-  '/hr': <UserCog size={17} />,
-  '/accounting': <Calculator size={17} />,
-  '/reports': <BarChart3 size={17} />,
-  '/services': <Tag size={17} />,
-  '/settings': <Settings size={17} />,
-  '/users': <UserCircle size={17} />,
-  '/atelier': <Wrench size={17} />,
-}
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
   admin: ALL_MODULES.map(m => m.path),
@@ -75,12 +48,14 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const pendingNotifs = getPendingNotifications().length
   const alertCount = lateCount + lowStockCount
 
+  // Permissions de l'utilisateur connecté
   const userPermissions: string[] = user?.permissions?.length
     ? user.permissions
     : ROLE_PERMISSIONS[user?.role || 'employe'] || ['/']
 
   const allowedModules = ALL_MODULES.filter(m => userPermissions.includes(m.path))
 
+  // Grouper les modules autorisés
   const groups = allowedModules.reduce((acc, item) => {
     if (!acc[item.group]) acc[item.group] = []
     acc[item.group].push(item)
@@ -143,24 +118,24 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-64 bg-[#15132A] transition-transform duration-200 z-20 h-full overflow-y-auto flex-shrink-0 flex flex-col`}>
+        <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-64 bg-white border-r border-gray-200 transition-transform duration-200 z-20 h-full overflow-y-auto flex-shrink-0 flex flex-col`}>
           {(lateCount > 0 || lowStockCount > 0) && (
-            <div className="m-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-              {lateCount > 0 && <p className="text-xs text-red-300 font-semibold">{lateCount} retard(s)</p>}
-              {lowStockCount > 0 && <p className="text-xs text-red-300 font-semibold mt-0.5">{lowStockCount} rupture(s) stock</p>}
+            <div className="m-3 p-3 bg-red-50 border border-red-200 rounded-xl">
+              {lateCount > 0 && <p className="text-xs text-red-700 font-semibold">{lateCount} retard(s)</p>}
+              {lowStockCount > 0 && <p className="text-xs text-red-700 font-semibold mt-0.5">📦 {lowStockCount} rupture(s) stock</p>}
             </div>
           )}
           <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
             {Object.entries(groups).map(([groupLabel, items]) => (
               <div key={groupLabel}>
-                <p className="text-[10px] font-bold text-white/35 uppercase tracking-wider px-3 mb-1.5">{groupLabel}</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-1.5">{groupLabel}</p>
                 <div className="space-y-0.5">
                   {items.map((item) => {
                     const isActive = location.pathname === item.path
                     return (
                       <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm font-medium ${isActive ? 'bg-purple-600 text-white shadow-sm shadow-purple-900/40' : 'text-white/55 hover:bg-white/5 hover:text-white'}`}>
-                        <span className={isActive ? 'text-white' : 'text-white/40'}>{MODULE_ICONS[item.path]}</span>
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm font-medium ${isActive ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'}`}>
+                        <span className="text-base"></span>
                         <span className="flex-1">{item.label}</span>
                         {isActive && <ChevronRight size={14} />}
                       </Link>
@@ -170,9 +145,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               </div>
             ))}
           </nav>
-          <div className="p-4 border-t border-white/10">
-            <p className="text-xs text-white/30 text-center">PressingManager v1.0.0</p>
-            <p className="text-xs text-white/20 text-center">© 2026 — Tous droits réservés</p>
+          <div className="p-4 border-t border-gray-100">
+            <p className="text-xs text-gray-400 text-center">PressingManager v1.0.0</p>
+            <p className="text-xs text-gray-300 text-center">© 2026 — Tous droits réservés</p>
           </div>
         </aside>
 
