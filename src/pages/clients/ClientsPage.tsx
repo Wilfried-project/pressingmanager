@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { clientsService } from '../../lib/db'
-import { PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea, Badge, EmptyState, Table, Card, StatCard } from '../../components/ui'
-import { Plus, Trash2, Edit2, Users, Star, AlertTriangle, TrendingUp } from 'lucide-react'
+import { Modal, Field, Input, Select, Textarea, Button } from '../../components/ui'
 import type { Client } from '../../types'
 
+const Icon: React.FC<{ name: string; size?: number; className?: string; filled?: boolean }> = ({ name, size = 20, className = '', filled }) => (
+  <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size, fontVariationSettings: filled ? "'FILL' 1" : undefined }}>{name}</span>
+)
+
 const GROUP_COLORS: Record<string, string> = {
-  standard: 'gray', silver: 'blue', gold: 'yellow', vip: 'purple', blacklist: 'red'
+  standard: 'bg-surface-container text-on-surface-variant',
+  silver: 'bg-surface-container-high text-on-surface-variant',
+  gold: 'bg-tertiary-fixed text-on-tertiary-fixed',
+  vip: 'bg-primary-fixed text-on-primary-fixed',
 }
 
 const EMPTY_FORM = {
@@ -26,7 +32,6 @@ export const ClientsPage: React.FC = () => {
   const [form, setForm] = useState(EMPTY_FORM)
   const [error, setError] = useState('')
 
-  // Charger les clients depuis Supabase
   useEffect(() => {
     loadClients()
   }, [])
@@ -115,65 +120,183 @@ export const ClientsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Clients"
-        subtitle={`${clients.length} client(s) enregistré(s)`}
-        action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Nouveau client</Button>}
-      />
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Total clients" value={stats.total} icon={<Users size={20} />} color="purple" />
-        <StatCard label="Clients VIP" value={stats.vip} icon={<Star size={20} />} color="yellow" />
-        <StatCard label="Liste noire" value={stats.blacklisted} icon={<AlertTriangle size={20} />} color="red" />
-        <StatCard label="Total points" value={stats.totalPoints.toLocaleString('fr-FR')} icon={<TrendingUp size={20} />} color="green" />
+    <div className="flex flex-col gap-space-xl">
+      {/* En-tête */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-space-lg">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-space-sm">
+            <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Clients</h1>
+            <span className="px-space-sm py-space-2xs rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold uppercase tracking-wider">Répertoire</span>
+          </div>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-space-2xs">{clients.length} client(s) enregistré(s)</p>
+        </div>
+        <button onClick={() => setShowForm(true)} className="flex items-center justify-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-[0_4px_14px_rgba(124,58,237,0.3)] hover:bg-primary transition-all active:scale-95">
+          <Icon name="person_add" size={18} />
+          <span>Nouveau client</span>
+        </button>
       </div>
 
-      <Card className="p-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <SearchInput value={search} onChange={setSearch} placeholder="Nom, téléphone, email..." className="flex-1" />
-          <Select value={filterGroup} onChange={e => setFilterGroup(e.target.value)} className="sm:w-44">
+      {/* Statistiques */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-lg">
+        <div className="relative overflow-hidden bg-surface-container-lowest p-space-lg rounded-DEFAULT shadow-sm flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+              <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-outline">Total clients</span>
+              <span className="font-headline-xl text-headline-xl text-on-surface font-extrabold mt-space-2xs">{stats.total}</span>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary shadow-sm">
+              <Icon name="contacts" size={24} />
+            </div>
+          </div>
+        </div>
+        <div className="relative overflow-hidden bg-surface-container-lowest p-space-lg rounded-DEFAULT shadow-sm flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+              <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-outline">Clients VIP</span>
+              <span className="font-headline-xl text-headline-xl text-on-surface font-extrabold mt-space-2xs">{stats.vip}</span>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-secondary shadow-sm">
+              <Icon name="star" size={24} filled />
+            </div>
+          </div>
+        </div>
+        <div className="relative overflow-hidden bg-surface-container-lowest p-space-lg rounded-DEFAULT shadow-sm flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+              <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-outline">Liste noire</span>
+              <span className="font-headline-xl text-headline-xl text-on-surface font-extrabold mt-space-2xs">{stats.blacklisted}</span>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center text-outline shadow-sm">
+              <Icon name="verified_user" size={24} />
+            </div>
+          </div>
+        </div>
+        <div className="relative overflow-hidden bg-surface-container-lowest p-space-lg rounded-DEFAULT shadow-sm flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+              <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-outline">Points cumulés</span>
+              <div className="flex items-baseline gap-space-2xs mt-space-2xs">
+                <span className="font-headline-xl text-headline-xl text-on-surface font-extrabold">{stats.totalPoints.toLocaleString('fr-FR')}</span>
+                <span className="font-label-sm text-label-sm text-tertiary font-bold">pts</span>
+              </div>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed shadow-sm">
+              <Icon name="insights" size={24} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recherche et filtres */}
+      <div className="bg-surface-container-lowest p-space-md rounded-DEFAULT shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md">
+        <div className="relative flex-1">
+          <span className="material-symbols-outlined absolute left-space-md top-1/2 -translate-y-1/2 text-outline pointer-events-none" style={{ fontSize: 20 }}>search</span>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Nom, téléphone, email..."
+            className="w-full pl-11 pr-space-lg py-space-sm bg-surface-container-low text-on-surface font-body-md text-body-md rounded-full focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline" />
+        </div>
+        <div className="relative">
+          <select value={filterGroup} onChange={e => setFilterGroup(e.target.value)}
+            className="appearance-none pl-space-md pr-9 py-space-sm bg-surface-container-low text-on-surface font-label-md text-label-md rounded-full focus:outline-none cursor-pointer">
             <option value="">Tous les groupes</option>
             <option value="standard">Standard</option>
             <option value="silver">Silver</option>
             <option value="gold">Gold</option>
             <option value="vip">VIP</option>
-          </Select>
+          </select>
+          <span className="material-symbols-outlined absolute right-space-sm top-1/2 -translate-y-1/2 text-outline pointer-events-none" style={{ fontSize: 18 }}>expand_more</span>
         </div>
-      </Card>
+      </div>
 
+      {/* Tableau */}
       {loading ? (
-        <Card><div className="text-center py-12"><div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" /><p className="text-gray-400">Chargement des clients...</p></div></Card>
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-3xl text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-space-md" />
+          <p className="font-body-md text-body-md text-outline">Chargement des clients...</p>
+        </div>
       ) : filtered.length > 0 ? (
-        <Table headers={['Client', 'Téléphone', 'Groupe', 'Points', 'Remise', 'Statut', 'Actions']}>
-          {filtered.map(client => (
-            <tr key={client.id} className="hover:bg-purple-50 transition">
-              <td className="px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center text-purple-700 font-bold text-sm">{client.first_name.charAt(0)}</div>
-                  <div>
-                    <p className="font-semibold text-sm">{client.first_name} {client.last_name}</p>
-                    <p className="text-xs text-gray-400">{client.email || '-'}</p>
-                  </div>
-                </div>
-              </td>
-              <td className="px-5 py-4 text-sm">{client.phone}</td>
-              <td className="px-5 py-4"><Badge label={(client as any).group_name || 'standard'} color={GROUP_COLORS[(client as any).group_name || 'standard']} /></td>
-              <td className="px-5 py-4"><span className="font-bold text-yellow-600"> {client.loyalty_points || 0}</span></td>
-              <td className="px-5 py-4 text-sm">{client.discount_rate || 0}%</td>
-              <td className="px-5 py-4"><Badge label={client.is_blacklisted ? '🚫 Blacklist' : ' Actif'} color={client.is_blacklisted ? 'red' : 'green'} /></td>
-              <td className="px-5 py-4">
-                <div className="flex gap-1">
-                  <button onClick={() => setViewClient(client)} className="p-1.5 hover:bg-purple-100 text-purple-600 rounded-lg" title="Voir"><Users size={14} /></button>
-                  <button onClick={() => handleEdit(client)} className="p-1.5 hover:bg-blue-100 text-blue-600 rounded-lg" title="Modifier"><Edit2 size={14} /></button>
-                  <button onClick={() => handleDelete(client.id)} className="p-1.5 hover:bg-red-100 text-red-500 rounded-lg" title="Supprimer"><Trash2 size={14} /></button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </Table>
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm overflow-hidden flex flex-col">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container-low/60 text-on-surface-variant">
+                  <th className="py-space-md px-space-lg font-label-sm text-label-sm uppercase tracking-wider font-bold">Client</th>
+                  <th className="py-space-md px-space-md font-label-sm text-label-sm uppercase tracking-wider font-bold">Téléphone</th>
+                  <th className="py-space-md px-space-md font-label-sm text-label-sm uppercase tracking-wider font-bold">Groupe</th>
+                  <th className="py-space-md px-space-md font-label-sm text-label-sm uppercase tracking-wider font-bold">Points fidélité</th>
+                  <th className="py-space-md px-space-md font-label-sm text-label-sm uppercase tracking-wider font-bold">Remise</th>
+                  <th className="py-space-md px-space-md font-label-sm text-label-sm uppercase tracking-wider font-bold">Statut</th>
+                  <th className="py-space-md px-space-lg font-label-sm text-label-sm uppercase tracking-wider font-bold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y-0">
+                {filtered.map(client => (
+                  <tr key={client.id} className="hover:bg-surface-container-low/40 transition-colors border-t border-surface-container">
+                    <td className="py-space-md px-space-lg">
+                      <div className="flex items-center gap-space-md">
+                        <div className="w-10 h-10 rounded-full bg-primary-fixed text-primary font-title-sm text-title-sm flex items-center justify-center font-bold shadow-sm flex-shrink-0">
+                          {client.first_name.charAt(0)}{client.last_name?.charAt(0) || ''}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-title-sm text-title-sm font-bold text-on-surface truncate">{client.first_name} {client.last_name}</span>
+                          <span className="font-body-sm text-body-sm text-outline truncate">{client.email || '-'}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-space-md px-space-md whitespace-nowrap">
+                      <span className="font-body-md text-body-md text-on-surface font-medium">{client.phone}</span>
+                    </td>
+                    <td className="py-space-md px-space-md whitespace-nowrap">
+                      <span className={`inline-flex items-center px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-semibold ${GROUP_COLORS[(client as any).group_name || 'standard']}`}>
+                        {((client as any).group_name || 'standard').charAt(0).toUpperCase() + ((client as any).group_name || 'standard').slice(1)}
+                      </span>
+                    </td>
+                    <td className="py-space-md px-space-md whitespace-nowrap">
+                      <div className="flex items-center gap-space-2xs">
+                        <span className="w-2 h-2 rounded-full bg-tertiary-container" />
+                        <span className="font-numeric-currency text-numeric-currency font-bold text-on-surface">{client.loyalty_points || 0}</span>
+                        <span className="font-label-sm text-label-sm text-outline">pts</span>
+                      </div>
+                    </td>
+                    <td className="py-space-md px-space-md whitespace-nowrap">
+                      <span className="font-label-md text-label-md text-outline font-semibold">{client.discount_rate || 0}%</span>
+                    </td>
+                    <td className="py-space-md px-space-md whitespace-nowrap">
+                      {client.is_blacklisted ? (
+                        <span className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-error" /> Liste noire
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-tertiary-container" /> Actif
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-space-md px-space-lg text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-space-2xs">
+                        <button onClick={() => setViewClient(client)} className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-surface-container hover:text-primary transition-all" title="Voir">
+                          <Icon name="visibility" size={18} />
+                        </button>
+                        <button onClick={() => handleEdit(client)} className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-surface-container hover:text-primary transition-all" title="Modifier">
+                          <Icon name="edit" size={18} />
+                        </button>
+                        <button onClick={() => handleDelete(client.id)} className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-error-container hover:text-error transition-all" title="Supprimer">
+                          <Icon name="delete" size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : (
-        <Card><EmptyState icon="" message="Aucun client trouvé" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter un client</Button>} /></Card>
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-3xl text-center">
+          <p className="font-body-md text-body-md text-outline mb-space-md">Aucun client trouvé</p>
+          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full shadow-md hover:bg-primary transition-all">
+            <Icon name="person_add" size={18} /> Ajouter un client
+          </button>
+        </div>
       )}
 
       {/* FORMULAIRE */}
@@ -201,7 +324,7 @@ export const ClientsPage: React.FC = () => {
           <Field label="Notes"><Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Notes sur ce client..." /></Field>
           <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-xl">
             <input type="checkbox" id="blacklist" checked={form.is_blacklisted} onChange={e => setForm({ ...form, is_blacklisted: e.target.checked })} className="w-4 h-4" />
-            <label htmlFor="blacklist" className="text-sm font-semibold text-red-700 cursor-pointer">🚫 Mettre en liste noire</label>
+            <label htmlFor="blacklist" className="text-sm font-semibold text-red-700 cursor-pointer">Mettre en liste noire</label>
           </div>
           <div className="flex gap-3">
             <Button type="submit" className="flex-1" loading={saving}>{editClient ? 'Modifier' : 'Créer le client'}</Button>
@@ -214,22 +337,21 @@ export const ClientsPage: React.FC = () => {
       {viewClient && (
         <Modal open={!!viewClient} onClose={() => setViewClient(null)} title="Détail client">
           <div className="space-y-4">
-            <div className="flex items-center gap-4 p-4 bg-purple-50 rounded-xl">
-              <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">{viewClient.first_name.charAt(0)}</div>
+            <div className="flex items-center gap-4 p-4 bg-primary-fixed/40 rounded-xl">
+              <div className="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center text-on-primary text-2xl font-bold">{viewClient.first_name.charAt(0)}</div>
               <div>
                 <p className="text-xl font-bold">{viewClient.first_name} {viewClient.last_name}</p>
                 <p className="text-gray-500">{viewClient.phone}</p>
-                <Badge label={(viewClient as any).group_name || 'standard'} color={GROUP_COLORS[(viewClient as any).group_name || 'standard']} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { l: 'Email', v: viewClient.email || '-' },
                 { l: 'WhatsApp', v: (viewClient as any).whatsapp || '-' },
-                { l: 'Points fidélité', v: ` ${viewClient.loyalty_points || 0}` },
+                { l: 'Points fidélité', v: `${viewClient.loyalty_points || 0}` },
                 { l: 'Remise', v: `${viewClient.discount_rate || 0}%` },
                 { l: 'Adresse', v: (viewClient as any).address || '-' },
-                { l: 'Statut', v: viewClient.is_blacklisted ? '🚫 Liste noire' : ' Actif' },
+                { l: 'Statut', v: viewClient.is_blacklisted ? 'Liste noire' : 'Actif' },
               ].map((item, i) => (
                 <div key={i} className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-400">{item.l}</p>
@@ -244,7 +366,7 @@ export const ClientsPage: React.FC = () => {
               </div>
             )}
             <div className="flex gap-3">
-              <Button className="flex-1" onClick={() => { setViewClient(null); handleEdit(viewClient) }} icon={<Edit2 size={16} />}>Modifier</Button>
+              <Button className="flex-1" onClick={() => { setViewClient(null); handleEdit(viewClient) }} icon={<Icon name="edit" size={16} />}>Modifier</Button>
               <Button variant="secondary" className="flex-1" onClick={() => setViewClient(null)}>Fermer</Button>
             </div>
           </div>
