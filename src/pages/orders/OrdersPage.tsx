@@ -581,85 +581,167 @@ export const OrdersPage: React.FC = () => {
   }), [orders])
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Commandes" subtitle={`${orders.length} commande(s) au total`}
-        action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Nouvelle commande</Button>} />
-
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {[
-          { s: 'en_attente', l: 'En attente', c: 'bg-blue-50 border-blue-200 text-blue-700' },
-          { s: 'en_cours', l: 'En cours', c: 'bg-yellow-50 border-yellow-200 text-yellow-700' },
-          { s: 'pret', l: 'Prêts', c: 'bg-green-50 border-green-200 text-green-700' },
-          { s: 'livre', l: 'Livrés', c: 'bg-gray-50 border-gray-200 text-gray-600' },
-          { s: 'annule', l: 'Annulés', c: 'bg-red-50 border-red-200 text-red-700' },
-        ].map(({ s, l, c }) => (
-          <button key={s} onClick={() => setFilterStatus(filterStatus === s ? '' : s)}
-            className={`p-3 rounded-xl border-2 text-center transition ${c} ${filterStatus === s ? 'ring-2 ring-purple-400 ring-offset-1' : ''}`}>
-            <p className="text-2xl font-bold">{statusGroups[s as keyof typeof statusGroups]}</p>
-            <p className="text-xs font-semibold mt-0.5">{l}</p>
-          </button>
-        ))}
+    <div className="flex flex-col gap-space-xl">
+      {/* En-tête */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-lg">
+        <div className="flex flex-col">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Commandes</h1>
+          <p className="font-body-md text-body-md text-outline mt-space-2xs">{orders.length} commande(s) au total</p>
+        </div>
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full shadow-md hover:bg-primary active:scale-95 transition-all self-start md:self-auto">
+          <Plus size={18} /> Nouvelle commande
+        </button>
       </div>
 
-      <Card className="p-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <SearchInput value={search} onChange={setSearch} placeholder="Numéro ticket, nom client..." className="flex-1" />
-          <Select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="sm:w-44">
+      {/* Suivi des statuts */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-space-md">
+        {[
+          { s: 'en_attente', l: 'En attente', icon: 'hourglass_top', iconBg: 'bg-secondary-fixed', iconText: 'text-secondary', numText: 'text-secondary', barBg: 'bg-secondary' },
+          { s: 'en_cours', l: 'En cours', icon: 'local_laundry_service', iconBg: 'bg-[#fef3c7]', iconText: 'text-[#b45309]', numText: 'text-[#b45309]', barBg: 'bg-[#f59e0b]' },
+          { s: 'pret', l: 'Prêts', icon: 'check_circle', iconBg: 'bg-tertiary-fixed', iconText: 'text-tertiary', numText: 'text-tertiary', barBg: 'bg-tertiary-container' },
+          { s: 'livre', l: 'Livrés', icon: 'inventory', iconBg: 'bg-surface-container-highest', iconText: 'text-on-surface-variant', numText: 'text-on-surface-variant', barBg: 'bg-outline' },
+          { s: 'annule', l: 'Annulés', icon: 'cancel', iconBg: 'bg-error-container', iconText: 'text-error', numText: 'text-error', barBg: 'bg-error' },
+        ].map(({ s, l, icon, iconBg, iconText, numText, barBg }) => {
+          const count = statusGroups[s as keyof typeof statusGroups]
+          const pct = orders.length > 0 ? Math.round((count / orders.length) * 100) : 0
+          return (
+            <button key={s} onClick={() => setFilterStatus(filterStatus === s ? '' : s)}
+              className={`p-space-lg bg-surface-container-lowest rounded-lg shadow-sm flex flex-col justify-between text-left hover:shadow-md transition-all ${filterStatus === s ? 'ring-2 ring-primary ring-offset-1' : ''}`}>
+              <div className="flex items-center justify-between">
+                <span className="font-label-sm text-label-sm text-outline uppercase font-semibold">{l}</span>
+                <div className={`w-8 h-8 rounded-full ${iconBg} ${iconText} flex items-center justify-center`}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{icon}</span>
+                </div>
+              </div>
+              <div className="flex items-baseline gap-space-xs mt-space-md">
+                <span className={`font-headline-lg text-headline-lg font-bold ${numText}`}>{count}</span>
+                <span className="font-label-sm text-label-sm text-outline">commande(s)</span>
+              </div>
+              <div className="w-full bg-surface-container-high h-1.5 rounded-full mt-space-sm overflow-hidden">
+                <div className={`${barBg} h-full rounded-full`} style={{ width: `${pct}%` }} />
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Recherche et filtres */}
+      <div className="bg-surface-container-lowest p-space-md rounded-DEFAULT shadow-sm flex flex-col lg:flex-row items-center justify-between gap-space-md">
+        <div className="relative w-full lg:w-96 flex items-center">
+          <span className="material-symbols-outlined absolute left-3 text-outline pointer-events-none" style={{ fontSize: 20 }}>search</span>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Numéro ticket, nom client..."
+            className="w-full pl-10 pr-space-lg py-space-sm bg-surface-container-low text-on-surface font-body-md text-body-md rounded-full focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 placeholder:text-outline transition-all" />
+        </div>
+        <div className="relative w-full lg:w-52">
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+            className="w-full appearance-none pl-space-md pr-8 py-space-sm bg-surface-container-low text-on-surface font-label-md text-label-md rounded-full cursor-pointer focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 transition-all">
             <option value="">Tous les statuts</option>
             <option value="en_attente">En attente</option>
             <option value="en_cours">En cours</option>
             <option value="pret">Prêt</option>
             <option value="livre">Livré</option>
             <option value="annule">Annulé</option>
-          </Select>
+          </select>
+          <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-outline pointer-events-none" style={{ fontSize: 18 }}>expand_more</span>
         </div>
-      </Card>
+      </div>
 
+      {/* Tableau des commandes */}
       {filtered.length > 0 ? (
-        <Table headers={['Ticket', 'Client', 'Articles', 'Total', 'Paiement', 'Statut', 'Date limite', 'Actions']}>
-          {filtered.map(order => (
-            <tr key={order.id} className="hover:bg-purple-50 transition">
-              <td className="px-5 py-4 font-bold text-purple-700 text-sm">#{order.ticket_number}</td>
-              <td className="px-5 py-4">
-                <p className="font-semibold text-sm">{order.client?.first_name} {order.client?.last_name}</p>
-                <p className="text-xs text-gray-400">{order.client?.phone}</p>
-              </td>
-              <td className="px-5 py-4 text-center">
-                <span className="font-bold text-purple-700">{order.clothes.length}</span>
-                <p className="text-xs text-gray-400">articles</p>
-              </td>
-              <td className="px-5 py-4">
-                <p className="font-bold text-sm">{order.total.toLocaleString('fr-FR')} XOF</p>
-                {order.remaining > 0 && <p className="text-xs text-red-500">Reste: {order.remaining.toLocaleString('fr-FR')}</p>}
-              </td>
-              <td className="px-5 py-4">
-                <Badge label={order.payment_status === 'paye' ? ' Payé' : order.payment_status === 'acompte' ? ' Acompte' : ' Non payé'}
-                  color={order.payment_status === 'paye' ? 'green' : order.payment_status === 'acompte' ? 'yellow' : 'red'} />
-              </td>
-              <td className="px-5 py-4"><Badge label={order.status.replace('_', ' ').replace(/^./, c => c.toUpperCase())} color={getOrderStatusColor(order.status)} /></td>
-              <td className="px-5 py-4 text-sm text-gray-500">{order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : '-'}</td>
-              <td className="px-5 py-4">
-                <div className="flex gap-1">
-                  <button onClick={() => setViewOrder(order)} className="p-1.5 hover:bg-purple-100 text-purple-600 rounded-lg" title="Voir détails"><Eye size={15} /></button>
-                  <button onClick={() => printTicket(order).catch(console.error)} className="p-1.5 hover:bg-green-100 text-green-600 rounded-lg" title="Imprimer ticket"><Printer size={15} /></button>
-                  {order.status === 'pret' && (
-                    <button onClick={() => sendReadyNotification(order)} className="p-1.5 hover:bg-blue-100 text-blue-600 rounded-lg" title="Notifier client"><Bell size={15} /></button>
-                  )}
-                  {/* Paiement à la livraison */}
-                  {order.remaining > 0 && (
-                    <button onClick={() => { setShowPaymentModal(order); setPaymentAmount(order.remaining) }}
-                      className="p-1.5 hover:bg-yellow-100 text-yellow-600 rounded-lg" title="Encaisser paiement">
-                      <CreditCard size={15} />
-                    </button>
-                  )}
-                  <button onClick={() => { if (confirm('Supprimer cette commande ?')) deleteOrder(order.id) }} className="p-1.5 hover:bg-red-100 text-red-500 rounded-lg" title="Supprimer"><Trash2 size={15} /></button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </Table>
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider">
+                  <th className="py-space-sm px-space-md rounded-l-DEFAULT">Ticket</th>
+                  <th className="py-space-sm px-space-md">Client</th>
+                  <th className="py-space-sm px-space-md">Articles</th>
+                  <th className="py-space-sm px-space-md">Total / Paiement</th>
+                  <th className="py-space-sm px-space-md">Statut</th>
+                  <th className="py-space-sm px-space-md">Date limite</th>
+                  <th className="py-space-sm px-space-md text-right rounded-r-DEFAULT">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y-0">
+                {filtered.map(order => (
+                  <tr key={order.id} className="hover:bg-primary-fixed/20 transition-colors border-t border-surface-container">
+                    <td className="py-space-md px-space-md">
+                      <div className="flex items-center gap-space-xs">
+                        <span className="material-symbols-outlined text-primary" style={{ fontSize: 18 }}>confirmation_number</span>
+                        <span className="font-label-lg text-label-lg font-bold text-primary">#{order.ticket_number}</span>
+                      </div>
+                    </td>
+                    <td className="py-space-md px-space-md">
+                      <div className="flex flex-col">
+                        <span className="font-title-sm text-title-sm font-semibold text-on-surface">{order.client?.first_name} {order.client?.last_name}</span>
+                        <span className="font-body-sm text-body-sm text-outline">{order.client?.phone}</span>
+                      </div>
+                    </td>
+                    <td className="py-space-md px-space-md">
+                      <span className="px-space-sm py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm font-semibold text-on-surface">{order.clothes.length} article(s)</span>
+                    </td>
+                    <td className="py-space-md px-space-md">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-space-xs">
+                          <span className="font-numeric-currency text-numeric-currency text-on-surface font-bold">{order.total.toLocaleString('fr-FR')} XOF</span>
+                          <span className={`px-2 py-0.5 rounded-full font-label-sm text-label-sm font-bold ${order.payment_status === 'paye' ? 'bg-[#dcfce7] text-tertiary' : order.payment_status === 'acompte' ? 'bg-[#fef3c7] text-[#b45309]' : 'bg-error-container text-error'}`}>
+                            {order.payment_status === 'paye' ? 'Payé' : order.payment_status === 'acompte' ? 'Acompte' : 'Non payé'}
+                          </span>
+                        </div>
+                        {order.remaining > 0 && <span className="font-body-sm text-body-sm text-error">Reste: {order.remaining.toLocaleString('fr-FR')} XOF</span>}
+                      </div>
+                    </td>
+                    <td className="py-space-md px-space-md">
+                      <span className={`inline-flex items-center gap-1.5 px-space-md py-1 rounded-full font-label-sm text-label-sm font-semibold ${
+                        order.status === 'pret' ? 'bg-tertiary-fixed text-tertiary' :
+                        order.status === 'livre' ? 'bg-surface-container-high text-on-surface-variant' :
+                        order.status === 'annule' ? 'bg-error-container text-error' :
+                        order.status === 'en_cours' ? 'bg-[#fef3c7] text-[#b45309]' :
+                        'bg-secondary-fixed text-secondary'
+                      }`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        {order.status.replace('_', ' ').replace(/^./, c => c.toUpperCase())}
+                      </span>
+                    </td>
+                    <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">
+                      {order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : '-'}
+                    </td>
+                    <td className="py-space-md px-space-md text-right">
+                      <div className="flex items-center justify-end gap-space-xs">
+                        <button onClick={() => setViewOrder(order)} className="w-8 h-8 rounded-full bg-surface-container-low hover:bg-primary-container hover:text-on-primary transition-all flex items-center justify-center text-on-surface-variant" title="Voir détails">
+                          <Eye size={15} />
+                        </button>
+                        <button onClick={() => printTicket(order).catch(console.error)} className="w-8 h-8 rounded-full bg-surface-container-low hover:bg-tertiary hover:text-on-tertiary transition-all flex items-center justify-center text-on-surface-variant" title="Imprimer ticket">
+                          <Printer size={15} />
+                        </button>
+                        {order.status === 'pret' && (
+                          <button onClick={() => sendReadyNotification(order)} className="w-8 h-8 rounded-full bg-surface-container-low hover:bg-secondary hover:text-on-secondary transition-all flex items-center justify-center text-on-surface-variant" title="Notifier client">
+                            <Bell size={15} />
+                          </button>
+                        )}
+                        {order.remaining > 0 && (
+                          <button onClick={() => { setShowPaymentModal(order); setPaymentAmount(order.remaining) }} className="w-8 h-8 rounded-full bg-surface-container-low hover:bg-[#f59e0b] hover:text-white transition-all flex items-center justify-center text-on-surface-variant" title="Encaisser paiement">
+                            <CreditCard size={15} />
+                          </button>
+                        )}
+                        <button onClick={() => { if (confirm('Supprimer cette commande ?')) deleteOrder(order.id) }} className="w-8 h-8 rounded-full bg-surface-container-low text-outline hover:text-error hover:bg-error-container transition-all flex items-center justify-center" title="Supprimer">
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : (
-        <Card><EmptyState icon="" message="Aucune commande trouvée" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Créer une commande</Button>} /></Card>
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-3xl text-center">
+          <p className="font-body-md text-body-md text-outline mb-space-md">Aucune commande trouvée</p>
+          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full shadow-md hover:bg-primary transition-all">
+            <Plus size={18} /> Créer une commande
+          </button>
+        </div>
       )}
 
       {/* MODAL PAIEMENT À LA LIVRAISON */}
