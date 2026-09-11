@@ -2,8 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../lib/store'
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { ShoppingBag, Users, CheckCircle, Clock, TrendingUp, AlertTriangle, Package, DollarSign, Calendar } from 'lucide-react'
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+
+// Icône Material Symbols (Google) — celle utilisée par le design Stitch,
+// différente de la police lucide-react utilisée avant ailleurs dans l'app.
+const Icon: React.FC<{ name: string; size?: number; className?: string }> = ({ name, size = 20, className = '' }) => (
+  <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size }}>{name}</span>
+)
 
 const COLORS = ['#630ed4', '#4b41e1', '#005b3d', '#f97316', '#ba1a1a', '#8b5cf6', '#14b8a6']
 
@@ -156,7 +161,7 @@ export const DashboardPage: React.FC = () => {
           <p className="font-body-md text-body-md text-on-surface-variant capitalize">{today}</p>
         </div>
         <button onClick={() => navigate('/orders')} className="flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full shadow-md hover:bg-primary active:scale-95 transition-all self-start sm:self-auto">
-          <ShoppingBag size={18} /> Nouvelle commande
+          <Icon name="add_circle" size={18} /> Nouvelle commande
         </button>
       </div>
 
@@ -164,7 +169,7 @@ export const DashboardPage: React.FC = () => {
       {lateOrdersList.length > 0 && (
         <div onClick={() => navigate('/orders')} className="relative overflow-hidden rounded-lg bg-gradient-to-r from-error-container/80 via-error-container/40 to-surface-container-low p-space-lg shadow-sm flex items-center gap-space-md cursor-pointer hover:shadow-md transition-all">
           <div className="w-10 h-10 rounded-full bg-error text-on-error flex items-center justify-center shrink-0 shadow-sm">
-            <AlertTriangle size={20} />
+            <Icon name="notification_important" size={20} />
           </div>
           <div>
             <p className="font-label-lg text-label-lg text-on-error-container font-bold">{lateOrdersList.length} commande(s) en retard</p>
@@ -182,7 +187,7 @@ export const DashboardPage: React.FC = () => {
               <span className="font-headline-lg text-headline-lg text-on-surface font-bold mt-space-2xs">{stats.todayOrders}</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center shrink-0">
-              <ShoppingBag size={20} />
+              <Icon name="receipt_long" size={20} />
             </div>
           </div>
           <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-md">{stats.todayClothes} vêtements</p>
@@ -195,7 +200,7 @@ export const DashboardPage: React.FC = () => {
               <span className="font-headline-lg text-headline-lg text-on-surface font-bold mt-space-2xs">{stats.todayClothes}</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0">
-              <Package size={20} />
+              <Icon name="local_laundry_service" size={20} />
             </div>
           </div>
         </div>
@@ -207,7 +212,7 @@ export const DashboardPage: React.FC = () => {
               <span className="font-headline-lg text-headline-lg text-tertiary font-bold mt-space-2xs">{stats.readyOrders}</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center shrink-0">
-              <CheckCircle size={20} />
+              <Icon name="check_circle" size={20} />
             </div>
           </div>
           <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-md">À notifier</p>
@@ -220,7 +225,7 @@ export const DashboardPage: React.FC = () => {
               <span className="font-headline-lg text-headline-lg text-on-surface font-bold mt-space-2xs">{stats.todayDeliveries}</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0">
-              <Clock size={20} />
+              <Icon name="local_shipping" size={20} />
             </div>
           </div>
         </div>
@@ -238,7 +243,7 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="w-10 h-10 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center shrink-0">
-              <DollarSign size={20} />
+              <Icon name="payments" size={20} />
             </div>
           </div>
         </div>
@@ -253,7 +258,7 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="w-10 h-10 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center shrink-0">
-              <TrendingUp size={20} />
+              <Icon name="trending_up" size={20} />
             </div>
           </div>
         </div>
@@ -265,7 +270,7 @@ export const DashboardPage: React.FC = () => {
               <span className="font-headline-md text-headline-md text-on-surface font-bold mt-space-2xs">{stats.readyOrders}</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0">
-              <Users size={20} />
+              <Icon name="groups" size={20} />
             </div>
           </div>
         </div>
@@ -277,7 +282,7 @@ export const DashboardPage: React.FC = () => {
               <span className="font-headline-md text-headline-md text-error font-bold mt-space-2xs">{stats.lateOrders}</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-error-container text-on-error-container flex items-center justify-center shrink-0">
-              <AlertTriangle size={20} />
+              <Icon name="warning" size={20} />
             </div>
           </div>
           {stats.lateOrders > 0 && <p className="font-body-sm text-body-sm text-error mt-space-md font-semibold">Action requise</p>}
@@ -288,15 +293,28 @@ export const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-space-xl">
         <div className="bg-surface-container-lowest rounded-lg shadow-sm p-space-lg lg:p-space-xl">
           <h3 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-lg">CA 7 derniers jours</h3>
-          <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={caByDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eaedff" />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(v: any) => v.toLocaleString('fr-FR') + ' XOF'} />
-              <Line type="monotone" dataKey="ca" stroke="#630ed4" strokeWidth={2} dot={{ fill: '#630ed4', r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="h-56 w-full flex items-end justify-between gap-space-sm pt-space-xl pb-space-sm px-space-sm bg-surface-container-low/40 rounded-DEFAULT">
+            {(() => {
+              const maxCa = Math.max(1, ...caByDay.map(d => d.ca))
+              const peakIndex = caByDay.reduce((best, d, i) => d.ca > (caByDay[best]?.ca || 0) ? i : best, 0)
+              return caByDay.map((d, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-space-xs h-full justify-end group">
+                  <div className="w-full max-w-[32px] flex items-end justify-center h-full relative">
+                    {i === peakIndex && d.ca > 0 && (
+                      <span className="absolute -top-6 text-[10px] font-bold px-1.5 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed rounded-full shadow-xs whitespace-nowrap">Pic</span>
+                    )}
+                    <div
+                      className={`w-full rounded-t-sm transition-all ${i === peakIndex && d.ca > 0 ? 'bg-primary-container group-hover:bg-primary' : 'bg-primary group-hover:bg-primary-container'}`}
+                      style={{ height: `${Math.max(4, (d.ca / maxCa) * 100)}%` }}
+                      title={`${d.ca.toLocaleString('fr-FR')} XOF`}
+                    />
+                  </div>
+                  <span className={`font-label-sm text-label-sm font-semibold ${i === peakIndex && d.ca > 0 ? 'text-primary font-bold' : 'text-on-surface-variant'}`}>{d.name}</span>
+                  <span className={`font-body-sm text-[10px] ${i === peakIndex && d.ca > 0 ? 'text-primary font-bold' : 'text-outline'}`}>{d.ca >= 1000 ? `${Math.round(d.ca / 1000)}k` : d.ca}</span>
+                </div>
+              ))
+            })()}
+          </div>
         </div>
 
         <div className="bg-surface-container-lowest rounded-lg shadow-sm p-space-lg lg:p-space-xl">
@@ -392,7 +410,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         ) : (
           <div className="text-center py-space-xl">
-            <ShoppingBag size={32} className="mx-auto text-outline mb-space-sm" />
+            <Icon name="shopping_bag" size={32} className="mx-auto text-outline mb-space-sm" />
             <p className="font-body-md text-body-md text-outline">Aucune commande encore</p>
             <button onClick={() => navigate('/orders')} className="mt-space-sm font-label-md text-label-md text-primary hover:underline">Créer la première</button>
           </div>
