@@ -5,7 +5,7 @@ import { useAuthStore } from '../../lib/store'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { ShoppingBag, Users, CheckCircle, Clock, TrendingUp, AlertTriangle, Package, DollarSign, Calendar } from 'lucide-react'
 
-const COLORS = ['#7c3aed', '#06b6d4', '#10b981', '#f97316', '#ef4444', '#8b5cf6', '#14b8a6']
+const COLORS = ['#630ed4', '#4b41e1', '#005b3d', '#f97316', '#ba1a1a', '#8b5cf6', '#14b8a6']
 
 const STATUS_LABELS: Record<string, string> = {
   recu: 'Reçu', en_attente: 'En attente', tri: 'Tri', lavage: 'Lavage',
@@ -52,7 +52,6 @@ export const DashboardPage: React.FC = () => {
       const todayStr = today.toISOString()
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
 
-      // Charger toutes les commandes
       const { data: orders } = await supabase
         .from('orders')
         .select('*, client:clients(*), clothes(*)')
@@ -74,20 +73,17 @@ export const DashboardPage: React.FC = () => {
       const completedOrders = orders.filter(o => o.status === 'livre').length
       const cancelledOrders = orders.filter(o => o.status === 'annule').length
 
-      // Clients
       const { count: totalClients } = await supabase
         .from('clients')
         .select('*', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
 
-      // Employés
       const { count: activeEmployees } = await supabase
         .from('employees')
         .select('*', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
         .eq('is_active', true)
 
-      // Commandes par statut
       const statusMap: Record<string, number> = {}
       orders.forEach(o => {
         const s = STATUS_LABELS[o.status] || o.status
@@ -95,7 +91,6 @@ export const DashboardPage: React.FC = () => {
       })
       const ordersByStatus = Object.entries(statusMap).map(([name, value]) => ({ name, value }))
 
-      // CA 7 derniers jours
       const caByDay = []
       const clothesByDay = []
       const dayNames = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam']
@@ -115,7 +110,6 @@ export const DashboardPage: React.FC = () => {
         clothesByDay.push({ name: dayNames[d.getDay()], habits: clothes })
       }
 
-      // Top clients
       const clientMap: Record<string, { name: string, total: number, count: number }> = {}
       orders.forEach(o => {
         if (!o.client) return
@@ -149,94 +143,164 @@ export const DashboardPage: React.FC = () => {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-space-xl">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tableau de Bord</h1>
-          <p className="text-sm text-gray-500 capitalize">{today}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+        <div className="flex flex-col gap-space-2xs">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Tableau de Bord</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant capitalize">{today}</p>
         </div>
-        <button onClick={() => navigate('/orders')} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-xl transition text-sm">
-          <ShoppingBag size={16} /> Nouvelle commande
+        <button onClick={() => navigate('/orders')} className="flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full shadow-md hover:bg-primary active:scale-95 transition-all self-start sm:self-auto">
+          <ShoppingBag size={18} /> Nouvelle commande
         </button>
       </div>
 
       {/* Alerte retards */}
       {lateOrdersList.length > 0 && (
-        <div onClick={() => navigate('/orders')} className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:bg-red-100 transition">
-          <AlertTriangle size={20} className="text-red-500 flex-shrink-0" />
+        <div onClick={() => navigate('/orders')} className="relative overflow-hidden rounded-lg bg-gradient-to-r from-error-container/80 via-error-container/40 to-surface-container-low p-space-lg shadow-sm flex items-center gap-space-md cursor-pointer hover:shadow-md transition-all">
+          <div className="w-10 h-10 rounded-full bg-error text-on-error flex items-center justify-center shrink-0 shadow-sm">
+            <AlertTriangle size={20} />
+          </div>
           <div>
-            <p className="text-sm font-semibold text-red-700">{lateOrdersList.length} commande(s) en retard !</p>
-            <p className="text-xs text-red-500">Clients à contacter immédiatement — cliquez pour voir</p>
+            <p className="font-label-lg text-label-lg text-on-error-container font-bold">{lateOrdersList.length} commande(s) en retard</p>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">Clients à contacter immédiatement — cliquez pour voir</p>
           </div>
         </div>
       )}
 
       {/* Stats principales */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><ShoppingBag size={16} className="text-purple-600" /><span className="text-xs text-gray-500">Commandes Aujourd'hui</span></div>
-          <p className="text-3xl font-bold text-gray-900">{stats.todayOrders}</p>
-          <p className="text-xs text-gray-400 mt-1">{stats.todayClothes} vêtements</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-space-md lg:gap-space-lg">
+        <div className="p-space-lg bg-surface-container-lowest rounded-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-space-2xs">
+              <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-semibold">Commandes Aujourd'hui</span>
+              <span className="font-headline-lg text-headline-lg text-on-surface font-bold mt-space-2xs">{stats.todayOrders}</span>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center shrink-0">
+              <ShoppingBag size={20} />
+            </div>
+          </div>
+          <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-md">{stats.todayClothes} vêtements</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><Package size={16} className="text-blue-600" /><span className="text-xs text-gray-500">Vêtements Reçus</span></div>
-          <p className="text-3xl font-bold text-gray-900">{stats.todayClothes}</p>
+
+        <div className="p-space-lg bg-surface-container-lowest rounded-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-space-2xs">
+              <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-semibold">Vêtements Reçus</span>
+              <span className="font-headline-lg text-headline-lg text-on-surface font-bold mt-space-2xs">{stats.todayClothes}</span>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0">
+              <Package size={20} />
+            </div>
+          </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><CheckCircle size={16} className="text-green-600" /><span className="text-xs text-gray-500">Prêts à Récupérer</span></div>
-          <p className="text-3xl font-bold text-gray-900">{stats.readyOrders}</p>
-          <p className="text-xs text-gray-400 mt-1">À notifier</p>
+
+        <div className="p-space-lg bg-surface-container-lowest rounded-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-space-2xs">
+              <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-semibold">Prêts à Récupérer</span>
+              <span className="font-headline-lg text-headline-lg text-tertiary font-bold mt-space-2xs">{stats.readyOrders}</span>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center shrink-0">
+              <CheckCircle size={20} />
+            </div>
+          </div>
+          <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-md">À notifier</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><Clock size={16} className="text-orange-600" /><span className="text-xs text-gray-500">Livrés Aujourd'hui</span></div>
-          <p className="text-3xl font-bold text-gray-900">{stats.todayDeliveries}</p>
+
+        <div className="p-space-lg bg-surface-container-lowest rounded-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-space-2xs">
+              <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-semibold">Livrés Aujourd'hui</span>
+              <span className="font-headline-lg text-headline-lg text-on-surface font-bold mt-space-2xs">{stats.todayDeliveries}</span>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0">
+              <Clock size={20} />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Stats financières */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><DollarSign size={16} className="text-green-600" /><span className="text-xs text-gray-500">CA Aujourd'hui</span></div>
-          <p className="text-2xl font-bold text-gray-900">{stats.todayCA.toLocaleString('fr-FR')} XOF</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-space-md lg:gap-space-lg">
+        <div className="p-space-lg bg-surface-container-lowest rounded-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-space-2xs">
+              <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-semibold">CA Aujourd'hui</span>
+              <div className="flex items-baseline gap-space-xs mt-space-2xs">
+                <span className="font-headline-md text-headline-md text-on-surface font-bold">{stats.todayCA.toLocaleString('fr-FR')}</span>
+                <span className="font-label-md text-label-md text-outline font-bold">XOF</span>
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center shrink-0">
+              <DollarSign size={20} />
+            </div>
+          </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><TrendingUp size={16} className="text-purple-600" /><span className="text-xs text-gray-500">CA du Mois</span></div>
-          <p className="text-2xl font-bold text-gray-900">{stats.monthCA.toLocaleString('fr-FR')} XOF</p>
+
+        <div className="p-space-lg bg-surface-container-lowest rounded-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-space-2xs">
+              <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-semibold">CA du Mois</span>
+              <div className="flex items-baseline gap-space-xs mt-space-2xs">
+                <span className="font-headline-md text-headline-md text-on-surface font-bold">{stats.monthCA.toLocaleString('fr-FR')}</span>
+                <span className="font-label-md text-label-md text-outline font-bold">XOF</span>
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center shrink-0">
+              <TrendingUp size={20} />
+            </div>
+          </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><Users size={16} className="text-blue-600" /><span className="text-xs text-gray-500">Clients en Attente</span></div>
-          <p className="text-2xl font-bold text-gray-900">{stats.readyOrders}</p>
+
+        <div className="p-space-lg bg-surface-container-lowest rounded-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-space-2xs">
+              <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-semibold">Clients en Attente</span>
+              <span className="font-headline-md text-headline-md text-on-surface font-bold mt-space-2xs">{stats.readyOrders}</span>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0">
+              <Users size={20} />
+            </div>
+          </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><AlertTriangle size={16} className="text-red-600" /><span className="text-xs text-gray-500">Retards</span></div>
-          <p className="text-2xl font-bold text-gray-900">{stats.lateOrders}</p>
-          {stats.lateOrders > 0 && <p className="text-xs text-red-500 mt-1">Action requise</p>}
+
+        <div className="p-space-lg bg-surface-container-lowest rounded-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-space-2xs">
+              <span className="font-label-md text-label-md text-outline uppercase tracking-wider font-semibold">Retards</span>
+              <span className="font-headline-md text-headline-md text-error font-bold mt-space-2xs">{stats.lateOrders}</span>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-error-container text-on-error-container flex items-center justify-center shrink-0">
+              <AlertTriangle size={20} />
+            </div>
+          </div>
+          {stats.lateOrders > 0 && <p className="font-body-sm text-body-sm text-error mt-space-md font-semibold">Action requise</p>}
         </div>
       </div>
 
       {/* Graphiques */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">CA 7 derniers jours</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-space-xl">
+        <div className="bg-surface-container-lowest rounded-lg shadow-sm p-space-lg lg:p-space-xl">
+          <h3 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-lg">CA 7 derniers jours</h3>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={caByDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#eaedff" />
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip formatter={(v: any) => v.toLocaleString('fr-FR') + ' XOF'} />
-              <Line type="monotone" dataKey="ca" stroke="#7c3aed" strokeWidth={2} dot={{ fill: '#7c3aed', r: 4 }} />
+              <Line type="monotone" dataKey="ca" stroke="#630ed4" strokeWidth={2} dot={{ fill: '#630ed4', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Commandes par Statut</h3>
+        <div className="bg-surface-container-lowest rounded-lg shadow-sm p-space-lg lg:p-space-xl">
+          <h3 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-lg">Commandes par Statut</h3>
           {ordersByStatus.length > 0 ? (
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>
@@ -246,49 +310,49 @@ export const DashboardPage: React.FC = () => {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          ) : <p className="text-sm text-gray-400 text-center py-8">Aucune commande</p>}
+          ) : <p className="font-body-md text-body-md text-outline text-center py-8">Aucune commande</p>}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Vêtements reçus (7 jours)</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-space-xl">
+        <div className="bg-surface-container-lowest rounded-lg shadow-sm p-space-lg lg:p-space-xl">
+          <h3 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-lg">Vêtements reçus (7 jours)</h3>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={clothesByDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#eaedff" />
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Bar dataKey="habits" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="habits" fill="#630ed4" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Top Clients</h3>
+        <div className="bg-surface-container-lowest rounded-lg shadow-sm p-space-lg lg:p-space-xl">
+          <h3 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-lg">Top Clients</h3>
           {topClients.length > 0 ? (
-            <div className="space-y-3">
+            <div className="flex flex-col gap-space-md">
               {topClients.map((c, i) => (
                 <div key={i} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-700 font-bold text-sm">{c.name.charAt(0)}</div>
+                  <div className="flex items-center gap-space-sm">
+                    <div className="w-9 h-9 bg-primary-fixed rounded-full flex items-center justify-center text-on-primary-fixed font-bold text-sm">{c.name.charAt(0)}</div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-800">{c.name}</p>
-                      <p className="text-xs text-gray-400">{c.count} commande(s)</p>
+                      <p className="font-label-md text-label-md text-on-surface font-semibold">{c.name}</p>
+                      <p className="font-body-sm text-body-sm text-outline">{c.count} commande(s)</p>
                     </div>
                   </div>
-                  <p className="text-sm font-bold text-purple-600">{c.total.toLocaleString('fr-FR')} XOF</p>
+                  <p className="font-numeric-currency text-numeric-currency text-primary font-bold">{c.total.toLocaleString('fr-FR')} XOF</p>
                 </div>
               ))}
             </div>
-          ) : <p className="text-sm text-gray-400 text-center py-8">Aucune vente</p>}
+          ) : <p className="font-body-md text-body-md text-outline text-center py-8">Aucune vente</p>}
         </div>
       </div>
 
       {/* Stats rapides */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">Statistiques Rapides</h3>
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 text-center">
+      <div className="bg-surface-container-lowest rounded-lg shadow-sm p-space-lg lg:p-space-xl">
+        <h3 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-lg">Statistiques Rapides</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-space-md text-center">
           {[
             { label: 'Total commandes', value: recentOrders.length > 0 ? (recentOrders.length + 1) : 0 },
             { label: 'Total clients', value: stats.totalClients },
@@ -297,45 +361,45 @@ export const DashboardPage: React.FC = () => {
             { label: 'Commandes terminées', value: stats.completedOrders },
             { label: 'Annulations', value: stats.cancelledOrders },
           ].map((s, i) => (
-            <div key={i} className="bg-gray-50 rounded-xl p-3">
-              <p className="text-xs text-gray-500 mb-1">{s.label}</p>
-              <p className="text-2xl font-bold text-gray-900">{s.value}</p>
+            <div key={i} className="bg-surface-container-low rounded-DEFAULT p-space-md">
+              <p className="font-body-sm text-body-sm text-outline mb-space-2xs">{s.label}</p>
+              <p className="font-headline-md text-headline-md text-on-surface font-bold">{s.value}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Commandes récentes */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-700">Commandes Récentes</h3>
-          <button onClick={() => navigate('/orders')} className="text-xs text-purple-600 hover:underline font-medium">Voir tout</button>
+      <div className="bg-surface-container-lowest rounded-lg shadow-sm p-space-lg lg:p-space-xl">
+        <div className="flex items-center justify-between mb-space-lg">
+          <h3 className="font-headline-md text-headline-md font-bold text-on-surface">Commandes Récentes</h3>
+          <button onClick={() => navigate('/orders')} className="font-label-md text-label-md text-primary hover:underline font-semibold">Voir tout</button>
         </div>
         {recentOrders.length > 0 ? (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-space-sm">
             {recentOrders.map(o => (
-              <div key={o.id} onClick={() => navigate('/orders')} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition">
+              <div key={o.id} onClick={() => navigate('/orders')} className="flex items-center justify-between p-space-md bg-surface-container-low rounded-DEFAULT cursor-pointer hover:bg-surface-container transition-all">
                 <div>
-                  <p className="text-sm font-bold text-gray-900">#{o.ticket_number}</p>
-                  <p className="text-xs text-gray-500">{o.client?.first_name} {o.client?.last_name} — {o.clothes?.length || 0} vêtement(s) — {new Date(o.created_at).toLocaleDateString('fr-FR')}</p>
+                  <p className="font-numeric-currency text-numeric-currency text-primary font-bold">#{o.ticket_number}</p>
+                  <p className="font-body-sm text-body-sm text-outline mt-space-2xs">{o.client?.first_name} {o.client?.last_name} — {o.clothes?.length || 0} vêtement(s) — {new Date(o.created_at).toLocaleDateString('fr-FR')}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-purple-600">{(o.total || 0).toLocaleString('fr-FR')} XOF</p>
-                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{STATUS_LABELS[o.status] || o.status}</span>
+                  <p className="font-numeric-currency text-numeric-currency text-on-surface font-bold">{(o.total || 0).toLocaleString('fr-FR')} XOF</p>
+                  <span className="font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed px-space-sm py-0.5 rounded-full mt-space-2xs inline-block">{STATUS_LABELS[o.status] || o.status}</span>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <ShoppingBag size={32} className="mx-auto text-gray-300 mb-2" />
-            <p className="text-sm text-gray-400">Aucune commande encore</p>
-            <button onClick={() => navigate('/orders')} className="mt-2 text-xs text-purple-600 hover:underline">Créer la première</button>
+          <div className="text-center py-space-xl">
+            <ShoppingBag size={32} className="mx-auto text-outline mb-space-sm" />
+            <p className="font-body-md text-body-md text-outline">Aucune commande encore</p>
+            <button onClick={() => navigate('/orders')} className="mt-space-sm font-label-md text-label-md text-primary hover:underline">Créer la première</button>
           </div>
         )}
       </div>
 
-      <p className="text-center text-xs text-gray-400">© 2026 — PressingManager. Tous droits réservés.</p>
+      <p className="text-center font-body-sm text-body-sm text-outline">© 2026 — PressingManager. Tous droits réservés.</p>
     </div>
   )
 }
