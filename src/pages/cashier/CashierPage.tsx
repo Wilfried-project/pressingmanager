@@ -128,97 +128,214 @@ export const CashierPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Caisse" subtitle={currentSession ? `Session ouverte depuis ${new Date(currentSession.opened_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : 'Caisse fermée'} action={
-        <div className="flex gap-2">
-          {currentSession
-            ? <><Button icon={<Plus size={18} />} onClick={() => setShowTx(true)} variant="ghost">Mouvement</Button><Button icon={<Lock size={18} />} onClick={() => setShowClose(true)} variant="danger">Fermer la caisse</Button></>
-            : <Button icon={<Unlock size={18} />} onClick={() => setShowOpen(true)}>Ouvrir la caisse</Button>}
+    <div className="flex flex-col gap-space-xl">
+      {/* En-tête */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+        <div className="flex flex-col">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Caisse</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-space-2xs">
+            {currentSession ? `Session ouverte depuis ${new Date(currentSession.opened_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : 'Caisse fermée'}
+          </p>
         </div>
-      } />
+        <div className="flex items-center flex-wrap gap-space-sm">
+          {currentSession ? (
+            <>
+              <button onClick={() => setShowTx(true)} className="flex items-center gap-space-xs px-space-lg py-space-xs bg-surface-container-highest text-on-surface font-label-md text-label-md rounded-full shadow-sm hover:bg-surface-container-high transition-all active:scale-95">
+                <span className="material-symbols-outlined text-primary" style={{ fontSize: 18 }}>swap_horiz</span>
+                <span>Mouvement</span>
+              </button>
+              <button onClick={() => setShowClose(true)} className="flex items-center gap-space-xs px-space-xl py-space-xs bg-error text-on-error font-label-md text-label-md rounded-full shadow-md hover:opacity-90 transition-all active:scale-95">
+                <Lock size={18} />
+                <span>Fermer la caisse</span>
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setShowOpen(true)} className="flex items-center gap-space-xs px-space-xl py-space-xs bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-md hover:bg-primary transition-all active:scale-95">
+              <Unlock size={18} />
+              <span>Ouvrir la caisse</span>
+            </button>
+          )}
+        </div>
+      </div>
 
       {showUnclosedAlert && currentSession && (
-        <div className="bg-red-50 border-2 border-red-300 rounded-xl p-5">
-          <h3 className="font-bold text-red-800 mb-2"> Caisse non fermée !</h3>
-          <p className="text-sm text-red-700 mb-4">La caisse du <strong>{new Date(currentSession.opened_at).toLocaleDateString('fr-FR')}</strong> n'a pas été fermée.</p>
-          <Button onClick={() => { setShowUnclosedAlert(false); setShowClose(true) }} variant="danger" icon={<Lock size={16} />}>Clôturer maintenant</Button>
+        <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-error-container/80 via-error-container/40 to-surface-container-low p-space-lg shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+          <div>
+            <p className="font-label-lg text-label-lg text-on-error-container font-bold">Caisse non fermée !</p>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">La caisse du <strong>{new Date(currentSession.opened_at).toLocaleDateString('fr-FR')}</strong> n'a pas été fermée.</p>
+          </div>
+          <button onClick={() => { setShowUnclosedAlert(false); setShowClose(true) }} className="px-space-lg py-space-xs bg-error text-on-error font-label-md text-label-md rounded-full shadow-sm hover:opacity-90 active:scale-95 transition-all shrink-0">
+            Clôturer maintenant
+          </button>
         </div>
       )}
 
       {showReminder && currentSession && (
-        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-5">
-          <h3 className="font-bold text-yellow-800 mb-2"> Il est 18h00 — N'oubliez pas de fermer la caisse !</h3>
-          <p className="text-sm text-yellow-700 mb-4">Solde attendu : <strong>{soldeAttendu.toLocaleString('fr-FR')} XOF</strong></p>
-          <div className="flex gap-3">
-            <Button onClick={() => { setShowReminder(false); setShowClose(true) }} variant="danger" icon={<Lock size={16} />}>Fermer la caisse</Button>
-            <Button onClick={() => setShowReminder(false)} variant="secondary">Plus tard</Button>
+        <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-tertiary-fixed/80 via-tertiary-fixed/40 to-surface-container-low p-space-lg shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+          <div>
+            <p className="font-label-lg text-label-lg text-on-tertiary-fixed font-bold">Il est 18h00 — N'oubliez pas de fermer la caisse</p>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">Solde attendu : <strong>{soldeAttendu.toLocaleString('fr-FR')} XOF</strong></p>
+          </div>
+          <div className="flex gap-space-sm shrink-0">
+            <button onClick={() => { setShowReminder(false); setShowClose(true) }} className="px-space-lg py-space-xs bg-error text-on-error font-label-md text-label-md rounded-full shadow-sm hover:opacity-90 active:scale-95 transition-all">Fermer la caisse</button>
+            <button onClick={() => setShowReminder(false)} className="px-space-lg py-space-xs bg-surface-container-lowest text-on-surface font-label-md text-label-md rounded-full shadow-sm hover:bg-surface-container transition-all">Plus tard</button>
           </div>
         </div>
       )}
 
-      {!currentSession && <Alert type="warning" message=" La caisse est fermée. Ouvrez-la avant d'enregistrer des paiements." />}
+      {!currentSession && (
+        <div className="bg-[#fef3c7] border border-[#fde68a] rounded-lg p-space-lg flex items-center gap-space-md">
+          <span className="material-symbols-outlined text-[#b45309]" style={{ fontSize: 22 }}>warning</span>
+          <p className="font-label-md text-label-md text-[#b45309] font-semibold">La caisse est fermée. Ouvrez-la avant d'enregistrer des paiements.</p>
+        </div>
+      )}
 
       {!currentSession && lastClosedSession && (
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5">
-          <h3 className="font-bold text-blue-800 mb-2"> Vérification du solde avant ouverture</h3>
-          <p className="text-sm text-blue-700 mb-4">Dernière clôture : <strong>{(lastClosedSession.closing_amount || 0).toLocaleString('fr-FR')} XOF</strong></p>
-          <Field label="Solde physique compté (XOF)">
-            <Input type="number" value={confirmedSolde} onChange={e => setConfirmedSolde(e.target.value)} placeholder="Comptez votre caisse..." />
-          </Field>
+        <div className="bg-surface-container-lowest rounded-lg shadow-sm p-space-lg flex flex-col gap-space-md">
+          <div className="flex items-center gap-space-xs">
+            <span className="material-symbols-outlined text-primary" style={{ fontSize: 20 }}>point_of_sale</span>
+            <h3 className="font-headline-md text-headline-md font-bold text-on-surface">Vérification du solde avant ouverture</h3>
+          </div>
+          <p className="font-body-md text-body-md text-on-surface-variant">Dernière clôture : <strong className="text-on-surface">{(lastClosedSession.closing_amount || 0).toLocaleString('fr-FR')} XOF</strong></p>
+          <div className="flex flex-col gap-space-xs">
+            <label className="font-label-sm text-label-sm text-on-surface-variant">Solde physique compté (XOF)</label>
+            <input type="number" value={confirmedSolde} onChange={e => setConfirmedSolde(e.target.value)} placeholder="Comptez votre caisse..."
+              className="w-full px-space-lg py-space-sm bg-surface-container-low text-on-surface font-numeric-currency text-headline-md rounded-full focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-right font-bold" />
+          </div>
           {confirmedSolde && parseFloat(confirmedSolde) !== (lastClosedSession.closing_amount || 0) && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-sm font-bold text-red-700"> Écart : {(parseFloat(confirmedSolde) - (lastClosedSession.closing_amount || 0)).toLocaleString('fr-FR')} XOF</p>
+            <div className="px-space-md py-space-xs bg-error-container text-on-error-container rounded-full flex items-center justify-between font-label-sm text-label-sm font-bold">
+              <span>Écart</span>
+              <span>{(parseFloat(confirmedSolde) - (lastClosedSession.closing_amount || 0)).toLocaleString('fr-FR')} XOF</span>
             </div>
           )}
-          <div className="mt-4">
-            <Button onClick={() => { setOpenAmount(confirmedSolde || String(lastClosedSession.closing_amount || 0)); handleOpenSession() }} disabled={!confirmedSolde} className="w-full">
-              Confirmer et ouvrir la caisse
-            </Button>
+          <button onClick={() => { setOpenAmount(confirmedSolde || String(lastClosedSession.closing_amount || 0)); handleOpenSession() }} disabled={!confirmedSolde}
+            className="w-full py-space-sm bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full shadow-md hover:bg-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+            Confirmer et ouvrir la caisse
+          </button>
+        </div>
+      )}
+
+      {/* 4 cartes financières */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+        <div className="rounded-lg bg-surface-container-lowest p-space-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="font-label-sm text-label-sm text-outline uppercase font-bold tracking-wider">Fond de caisse</span>
+            <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary shadow-sm">
+              <DollarSign size={20} />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-space-xs mt-space-md">
+            <span className="font-numeric-currency text-headline-xl text-on-surface font-bold">{(currentSession?.opening_amount || 0).toLocaleString('fr-FR')}</span>
+            <span className="font-label-md text-label-md text-outline font-bold">XOF</span>
+          </div>
+        </div>
+        <div className="rounded-lg bg-surface-container-lowest p-space-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="font-label-sm text-label-sm text-outline uppercase font-bold tracking-wider">Entrées du jour</span>
+            <div className="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed shadow-sm">
+              <TrendingUp size={20} />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-space-xs mt-space-md">
+            <span className="font-numeric-currency text-headline-xl text-on-surface font-bold">{totalEntrees.toLocaleString('fr-FR')}</span>
+            <span className="font-label-md text-label-md text-outline font-bold">XOF</span>
+          </div>
+          <span className="font-body-sm text-body-sm text-outline mt-space-2xs">{sessionTx.filter((t: any) => t.type === 'entree').length} entrée(s)</span>
+        </div>
+        <div className="rounded-lg bg-surface-container-lowest p-space-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="font-label-sm text-label-sm text-outline uppercase font-bold tracking-wider">Sorties / Dépenses</span>
+            <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-error shadow-sm">
+              <TrendingDown size={20} />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-space-xs mt-space-md">
+            <span className="font-numeric-currency text-headline-xl text-error font-bold">{totalSorties.toLocaleString('fr-FR')}</span>
+            <span className="font-label-md text-label-md text-outline font-bold">XOF</span>
+          </div>
+        </div>
+        <div className="rounded-lg bg-primary text-on-primary p-space-lg shadow-md flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="font-label-sm text-label-sm text-on-primary-container uppercase font-bold tracking-wider">Solde théorique</span>
+            <div className="w-10 h-10 rounded-full bg-surface-container-lowest/15 flex items-center justify-center text-on-primary shadow-sm">
+              <DollarSign size={20} />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-space-xs mt-space-md">
+            <span className="font-numeric-currency text-headline-xl text-on-primary font-bold">{soldeAttendu.toLocaleString('fr-FR')}</span>
+            <span className="font-label-md text-label-md text-primary-fixed-dim font-bold">XOF</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Mouvements de caisse */}
+      <div className="bg-surface-container-lowest rounded-lg shadow-sm p-space-lg lg:p-space-xl">
+        <h2 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-lg">Mouvements de caisse ({sessionTx.length})</h2>
+        {loading ? (
+          <div className="text-center py-space-xl"><div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></div>
+        ) : sessionTx.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider">
+                  <th className="py-space-sm px-space-md rounded-l-DEFAULT">Heure</th>
+                  <th className="py-space-sm px-space-md">Type</th>
+                  <th className="py-space-sm px-space-md">Raison</th>
+                  <th className="py-space-sm px-space-md">Montant</th>
+                  <th className="py-space-sm px-space-md rounded-r-DEFAULT">Par</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...sessionTx].reverse().map((tx: any) => (
+                  <tr key={tx.id} className="hover:bg-surface-container-low/40 transition-colors border-t border-surface-container">
+                    <td className="py-space-md px-space-md font-body-md text-body-md text-outline">{new Date(tx.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</td>
+                    <td className="py-space-md px-space-md">
+                      <span className={`inline-flex items-center gap-1.5 px-space-md py-1 rounded-full font-label-sm text-label-sm font-bold ${tx.type === 'entree' ? 'bg-tertiary-fixed text-tertiary' : 'bg-error-container text-error'}`}>
+                        {tx.type === 'entree' ? '↑ Entrée' : '↓ Sortie'}
+                      </span>
+                    </td>
+                    <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface max-w-xs truncate">{tx.reason}</td>
+                    <td className={`py-space-md px-space-md font-numeric-currency text-numeric-currency font-bold ${tx.type === 'entree' ? 'text-tertiary' : 'text-error'}`}>{tx.type === 'entree' ? '+' : '-'}{tx.amount.toLocaleString('fr-FR')} XOF</td>
+                    <td className="py-space-md px-space-md font-body-sm text-body-sm text-outline">{tx.created_by}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : <p className="text-center py-space-xl font-body-md text-body-md text-outline">Aucune vente aujourd'hui</p>}
+      </div>
+
+      {/* Historique */}
+      {sessions.filter(s => s.status === 'closed').length > 0 && (
+        <div className="bg-surface-container-lowest rounded-lg shadow-sm p-space-lg lg:p-space-xl">
+          <h2 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-lg">Historique des caisses</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider">
+                  <th className="py-space-sm px-space-md rounded-l-DEFAULT">Date ouverture</th>
+                  <th className="py-space-sm px-space-md">Fond initial</th>
+                  <th className="py-space-sm px-space-md">Clôture</th>
+                  <th className="py-space-sm px-space-md">Solde final</th>
+                  <th className="py-space-sm px-space-md rounded-r-DEFAULT">Par</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sessions.filter(s => s.status === 'closed').slice(0, 10).map((s: any) => (
+                  <tr key={s.id} className="hover:bg-surface-container-low/40 transition-colors border-t border-surface-container">
+                    <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">{new Date(s.opened_at).toLocaleDateString('fr-FR')}</td>
+                    <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">{s.opening_amount.toLocaleString('fr-FR')} XOF</td>
+                    <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">{s.closed_at ? new Date(s.closed_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                    <td className="py-space-md px-space-md font-numeric-currency text-numeric-currency font-bold text-primary">{(s.closing_amount || 0).toLocaleString('fr-FR')} XOF</td>
+                    <td className="py-space-md px-space-md font-body-sm text-body-sm text-outline">{s.opened_by}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-5"><div className="flex items-center justify-between"><div><p className="text-xs text-gray-500 font-medium">Fond de caisse</p><p className="text-2xl font-bold mt-1">{(currentSession?.opening_amount || 0).toLocaleString('fr-FR')} XOF</p></div><div className="bg-purple-100 text-purple-600 p-3 rounded-full"><DollarSign size={20} /></div></div></Card>
-        <Card className="p-5"><div className="flex items-center justify-between"><div><p className="text-xs text-gray-500 font-medium">Entrées du jour</p><p className="text-2xl font-bold mt-1">{totalEntrees.toLocaleString('fr-FR')} XOF</p><p className="text-xs text-gray-400 mt-0.5">{sessionTx.filter((t: any) => t.type === 'entree').length} entrée(s)</p></div><div className="bg-green-100 text-green-600 p-3 rounded-full"><TrendingUp size={20} /></div></div></Card>
-        <Card className="p-5"><div className="flex items-center justify-between"><div><p className="text-xs text-gray-500 font-medium">Sorties caisse</p><p className="text-2xl font-bold mt-1">{totalSorties.toLocaleString('fr-FR')} XOF</p></div><div className="bg-red-100 text-red-600 p-3 rounded-full"><TrendingDown size={20} /></div></div></Card>
-        <Card className="p-5"><div className="flex items-center justify-between"><div><p className="text-xs text-gray-500 font-medium">Solde attendu</p><p className="text-2xl font-bold text-purple-700 mt-1">{soldeAttendu.toLocaleString('fr-FR')} XOF</p></div><div className="bg-blue-100 text-blue-600 p-3 rounded-full"><DollarSign size={20} /></div></div></Card>
-      </div>
-
-      <Card>
-        <h2 className="font-bold mb-4">Mouvements de caisse ({sessionTx.length})</h2>
-        {loading ? <div className="text-center py-8"><div className="w-6 h-6 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto" /></div> :
-        sessionTx.length > 0 ? (
-          <Table headers={['Heure', 'Type', 'Raison', 'Montant', 'Par']}>
-            {[...sessionTx].reverse().map((tx: any) => (
-              <tr key={tx.id} className="hover:bg-gray-50">
-                <td className="px-5 py-4 text-sm text-gray-500">{new Date(tx.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</td>
-                <td className="px-5 py-4"><Badge label={tx.type === 'entree' ? '↑ Entrée' : '↓ Sortie'} color={tx.type === 'entree' ? 'green' : 'red'} /></td>
-                <td className="px-5 py-4 text-sm max-w-xs truncate">{tx.reason}</td>
-                <td className={`px-5 py-4 font-bold text-sm ${tx.type === 'entree' ? 'text-green-600' : 'text-red-600'}`}>{tx.type === 'entree' ? '+' : '-'}{tx.amount.toLocaleString('fr-FR')} XOF</td>
-                <td className="px-5 py-4 text-xs text-gray-400">{tx.created_by}</td>
-              </tr>
-            ))}
-          </Table>
-        ) : <div className="text-center py-12"><p className="text-4xl mb-3"></p><p className="text-gray-400">Aucune vente aujourd'hui</p></div>}
-      </Card>
-
-      {sessions.filter(s => s.status === 'closed').length > 0 && (
-        <Card>
-          <h2 className="font-bold mb-4">Historique des caisses</h2>
-          <Table headers={['Date ouverture', 'Fond initial', 'Clôture', 'Solde final', 'Par']}>
-            {sessions.filter(s => s.status === 'closed').slice(0, 10).map((s: any) => (
-              <tr key={s.id} className="hover:bg-gray-50">
-                <td className="px-5 py-4 text-sm">{new Date(s.opened_at).toLocaleDateString('fr-FR')}</td>
-                <td className="px-5 py-4 text-sm">{s.opening_amount.toLocaleString('fr-FR')} XOF</td>
-                <td className="px-5 py-4 text-sm">{s.closed_at ? new Date(s.closed_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
-                <td className="px-5 py-4 font-bold text-purple-700">{(s.closing_amount || 0).toLocaleString('fr-FR')} XOF</td>
-                <td className="px-5 py-4 text-xs text-gray-400">{s.opened_by}</td>
-              </tr>
-            ))}
-          </Table>
-        </Card>
-      )}
 
       <Modal open={showOpen} onClose={() => setShowOpen(false)} title="Ouvrir la caisse" size="sm">
         <div className="space-y-4">
