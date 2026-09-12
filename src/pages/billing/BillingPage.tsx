@@ -181,80 +181,138 @@ export const BillingPage: React.FC = () => {
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Facturation</h1>
-          <p className="text-sm text-gray-500">{orders.length} facture(s)</p>
+    <div className="flex flex-col gap-space-xl">
+      {/* En-tête */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-space-sm">
+            <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Facturation</h1>
+            <span className="inline-flex items-center px-space-sm py-space-2xs rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm uppercase tracking-wider">Comptabilité</span>
+          </div>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-space-2xs">{orders.length} facture(s) enregistrée(s)</p>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-500 mb-1">CA Encaissé</p>
-          <p className="text-2xl font-bold text-green-600">{totalCA.toLocaleString('fr-FR')} XOF</p>
+      {/* Cartes financières */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+        <div className="bg-surface-container-lowest p-space-xl rounded-DEFAULT shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+              <span className="font-label-sm text-label-sm text-outline uppercase font-bold tracking-wider">Trésorerie</span>
+              <span className="font-label-lg text-label-lg text-on-surface mt-space-2xs">CA Encaissé</span>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-tertiary-fixed/50 flex items-center justify-center text-tertiary">
+              <span className="material-symbols-outlined" style={{ fontSize: 24 }}>payments</span>
+            </div>
+          </div>
+          <div className="mt-space-lg">
+            <span className="font-headline-xl text-headline-xl font-numeric-currency text-tertiary tracking-tight">{totalCA.toLocaleString('fr-FR')} <span className="font-label-md text-label-md font-semibold">XOF</span></span>
+          </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-500 mb-1">Acomptes restants</p>
-          <p className="text-2xl font-bold text-orange-600">{totalAcomptes.toLocaleString('fr-FR')} XOF</p>
+        <div className="bg-surface-container-lowest p-space-xl rounded-DEFAULT shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+              <span className="font-label-sm text-label-sm text-outline uppercase font-bold tracking-wider">En cours</span>
+              <span className="font-label-lg text-label-lg text-on-surface mt-space-2xs">Acomptes restants</span>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
+              <span className="material-symbols-outlined" style={{ fontSize: 24 }}>pending_actions</span>
+            </div>
+          </div>
+          <div className="mt-space-lg">
+            <span className="font-headline-xl text-headline-xl font-numeric-currency text-secondary tracking-tight">{totalAcomptes.toLocaleString('fr-FR')} <span className="font-label-md text-label-md font-semibold">XOF</span></span>
+          </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-500 mb-1">Impayés</p>
-          <p className="text-2xl font-bold text-red-600">{totalImpayes.toLocaleString('fr-FR')} XOF</p>
+        <div className="bg-surface-container-lowest p-space-xl rounded-DEFAULT shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+              <span className="font-label-sm text-label-sm text-error uppercase font-bold tracking-wider">Alerte recouvrement</span>
+              <span className="font-label-lg text-label-lg text-on-surface mt-space-2xs">Impayés</span>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-error-container flex items-center justify-center text-error">
+              <span className="material-symbols-outlined" style={{ fontSize: 24 }}>gavel</span>
+            </div>
+          </div>
+          <div className="mt-space-lg">
+            <span className="font-headline-xl text-headline-xl font-numeric-currency text-error tracking-tight">{totalImpayes.toLocaleString('fr-FR')} <span className="font-label-md text-label-md font-semibold">XOF</span></span>
+          </div>
         </div>
       </div>
 
       {/* Filtres */}
-      <div className="flex gap-2">
-        {['tous', 'paye', 'partiel', 'impaye'].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg text-sm font-600 transition ${filter === f ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-400'}`}>
-            {f === 'tous' ? 'Tous' : f === 'paye' ? 'Payés' : f === 'partiel' ? 'Partiels' : 'Impayés'}
-          </button>
-        ))}
+      <div className="bg-surface-container-lowest p-space-md rounded-DEFAULT shadow-sm flex flex-wrap items-center gap-space-xs">
+        {['tous', 'paye', 'partiel', 'impaye'].map(f => {
+          const label = f === 'tous' ? 'Tous' : f === 'paye' ? 'Payés' : f === 'partiel' ? 'Partiels' : 'Impayés'
+          const count = f === 'tous' ? orders.length : orders.filter(o => f === 'paye' ? o.remaining <= 0 : f === 'partiel' ? (o.remaining > 0 && o.deposit > 0) : (o.remaining > 0 && o.deposit === 0)).length
+          return (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-space-md py-space-xs rounded-full font-label-md text-label-md whitespace-nowrap transition-all ${filter === f ? 'bg-primary text-on-primary shadow-sm' : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'}`}>
+              {label} <span className="ml-1 opacity-80 text-label-sm">({count})</span>
+            </button>
+          )
+        })}
       </div>
 
-      {/* Table */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-700 text-gray-500 uppercase">N° Facture</th>
-              <th className="px-4 py-3 text-left text-xs font-700 text-gray-500 uppercase">Ticket</th>
-              <th className="px-4 py-3 text-left text-xs font-700 text-gray-500 uppercase">Client</th>
-              <th className="px-4 py-3 text-left text-xs font-700 text-gray-500 uppercase">Date</th>
-              <th className="px-4 py-3 text-right text-xs font-700 text-gray-500 uppercase">Total</th>
-              <th className="px-4 py-3 text-right text-xs font-700 text-gray-500 uppercase">Reste</th>
-              <th className="px-4 py-3 text-left text-xs font-700 text-gray-500 uppercase">Statut</th>
-              <th className="px-4 py-3 text-left text-xs font-700 text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((order, index) => {
-              const invoiceNum = getInvoiceNumber(order, index)
-              const status = getPaymentStatus(order)
-              return (
-                <tr key={order.id} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="px-4 py-3 font-700 text-purple-600 text-sm">{invoiceNum}</td>
-                  <td className="px-4 py-3 text-sm">#{order.ticket_number}</td>
-                  <td className="px-4 py-3 text-sm font-600">{order.client?.first_name} {order.client?.last_name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{new Date(order.created_at).toLocaleDateString('fr-FR')}</td>
-                  <td className="px-4 py-3 text-sm font-700 text-right">{(order.total || 0).toLocaleString('fr-FR')} XOF</td>
-                  <td className="px-4 py-3 text-sm text-right">{(order.remaining || 0).toLocaleString('fr-FR')} XOF</td>
-                  <td className="px-4 py-3"><span className={`text-xs font-700 px-2 py-1 rounded-full ${status.color}`}>{status.label}</span></td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button onClick={() => setViewOrder({ ...order, invoiceNum })} className="p-1.5 hover:bg-blue-100 text-blue-600 rounded-lg" title="Voir"><Eye size={15} /></button>
-                      <button onClick={() => printInvoice(order, invoiceNum)} className="p-1.5 hover:bg-purple-100 text-purple-600 rounded-lg" title="Imprimer"><Printer size={15} /></button>
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && <div className="text-center py-12 text-gray-400">Aucune facture</div>}
+      {/* Tableau */}
+      <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider">
+                <th className="py-space-md px-space-lg">N° Facture</th>
+                <th className="py-space-md px-space-md">Ticket</th>
+                <th className="py-space-md px-space-md">Client</th>
+                <th className="py-space-md px-space-md">Émission</th>
+                <th className="py-space-md px-space-md text-right">Total TTC</th>
+                <th className="py-space-md px-space-md text-right">Reste à payer</th>
+                <th className="py-space-md px-space-lg text-center">Statut</th>
+                <th className="py-space-md px-space-lg text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="font-body-md text-body-md">
+              {filtered.map((order, index) => {
+                const invoiceNum = getInvoiceNumber(order, index)
+                const status = getPaymentStatus(order)
+                const statusStyle = status.label === 'Payé' ? 'bg-tertiary-fixed text-tertiary' : status.label === 'Partiel' ? 'bg-secondary-fixed text-secondary' : 'bg-error-container text-error'
+                return (
+                  <tr key={order.id} className="hover:bg-surface-container-low transition-colors border-t border-surface-container">
+                    <td className="py-space-md px-space-lg">
+                      <span className="font-label-md text-label-md font-bold text-primary">{invoiceNum}</span>
+                    </td>
+                    <td className="py-space-md px-space-md">
+                      <span className="font-label-sm text-label-sm font-semibold text-secondary">#{order.ticket_number}</span>
+                    </td>
+                    <td className="py-space-md px-space-md">
+                      <div className="flex items-center gap-space-sm">
+                        <div className="w-8 h-8 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-label-sm flex-shrink-0">
+                          {order.client?.first_name?.charAt(0)}{order.client?.last_name?.charAt(0) || ''}
+                        </div>
+                        <span className="font-label-md text-label-md text-on-surface font-semibold">{order.client?.first_name} {order.client?.last_name}</span>
+                      </div>
+                    </td>
+                    <td className="py-space-md px-space-md font-body-sm text-body-sm text-outline">{new Date(order.created_at).toLocaleDateString('fr-FR')}</td>
+                    <td className="py-space-md px-space-md text-right font-numeric-currency text-numeric-currency font-bold text-on-surface">{(order.total || 0).toLocaleString('fr-FR')} XOF</td>
+                    <td className="py-space-md px-space-md text-right font-numeric-currency text-numeric-currency text-on-surface">{(order.remaining || 0).toLocaleString('fr-FR')} XOF</td>
+                    <td className="py-space-md px-space-lg text-center">
+                      <span className={`inline-flex px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-bold ${statusStyle}`}>{status.label}</span>
+                    </td>
+                    <td className="py-space-md px-space-lg text-right">
+                      <div className="flex items-center justify-end gap-space-2xs">
+                        <button onClick={() => setViewOrder({ ...order, invoiceNum })} className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-surface-container hover:text-primary transition-all" title="Voir">
+                          <Eye size={15} />
+                        </button>
+                        <button onClick={() => printInvoice(order, invoiceNum)} className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-surface-container hover:text-primary transition-all" title="Imprimer">
+                          <Printer size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        {filtered.length === 0 && <div className="text-center py-space-3xl font-body-md text-body-md text-outline">Aucune facture</div>}
       </div>
 
       {/* Modal apercu */}
