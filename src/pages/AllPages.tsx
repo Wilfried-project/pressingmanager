@@ -52,31 +52,164 @@ export const StockPage: React.FC = () => {
     setMvt({ type: 'entree', quantity: 0, reason: '' })
   }
 
+  const stockValue = items.reduce((s, i) => s + (i.quantity * (i.purchase_price || 0)), 0)
+  const categoriesCount = new Set(items.map(i => i.category)).size
+
   return (
-    <div className="space-y-6">
-      <PageHeader title="Gestion des Stocks" subtitle={`${items.length} produit(s) — ${lowStock.length} en rupture`} action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter produit</Button>} />
-      {lowStock.length > 0 && <Alert type="error" message={` Rupture: ${lowStock.map(i => `${i.name} (${i.quantity} ${i.unit})`).join(', ')}`} />}
-      <Card className="p-4"><SearchInput value={search} onChange={setSearch} placeholder="Rechercher un produit..." /></Card>
+    <div className="flex flex-col gap-space-xl">
+      {/* En-tête */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg">
+        <div className="flex flex-col gap-space-2xs">
+          <span className="w-fit px-space-sm py-space-2xs rounded-full bg-primary/10 text-primary font-label-sm uppercase tracking-wider">Atelier &amp; Logistique</span>
+          <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Gestion des Stocks &amp; Consommables</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant">Suivi en temps réel de vos produits et déclenchement d'alertes de réapprovisionnement.</p>
+        </div>
+        <div className="flex items-center flex-wrap gap-space-md">
+          <button onClick={() => setShowForm(true)} className="flex items-center gap-space-xs px-space-xl py-space-sm rounded-full bg-primary-container text-on-primary font-label-md text-label-md shadow-[0_4px_16px_rgba(124,58,237,0.25)] hover:bg-primary transition-all active:scale-95">
+            <Plus size={18} />
+            <span>Ajouter un produit</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Cartes KPI */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-lg">
+        <div className="bg-surface-container-lowest p-space-lg rounded-DEFAULT shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="font-label-md text-label-md text-on-surface-variant font-medium">Total Références</span>
+            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+              <Package size={20} />
+            </div>
+          </div>
+          <div className="mt-space-md flex items-baseline gap-space-xs">
+            <span className="font-headline-xl text-headline-xl font-bold text-on-surface">{items.length}</span>
+            <span className="font-label-sm text-label-sm text-outline">articles</span>
+          </div>
+        </div>
+        <div className="bg-surface-container-lowest p-space-lg rounded-DEFAULT shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="font-label-md text-label-md text-on-surface-variant font-medium">Alertes Rupture</span>
+            {lowStock.length > 0 && <span className="px-space-sm py-space-2xs bg-error-container text-on-error-container font-label-sm text-label-sm rounded-full">Urgent</span>}
+          </div>
+          <div className="mt-space-md flex items-baseline gap-space-xs">
+            <span className={`font-headline-xl text-headline-xl font-bold ${lowStock.length > 0 ? 'text-error' : 'text-on-surface'}`}>{lowStock.length}</span>
+            <span className="font-label-sm text-label-sm text-outline">produit(s) critique(s)</span>
+          </div>
+        </div>
+        <div className="bg-surface-container-lowest p-space-lg rounded-DEFAULT shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="font-label-md text-label-md text-on-surface-variant font-medium">Valeur Stock</span>
+            <div className="w-10 h-10 rounded-full bg-tertiary-fixed text-tertiary flex items-center justify-center">
+              <span className="material-symbols-outlined" style={{ fontSize: 20 }}>account_balance_wallet</span>
+            </div>
+          </div>
+          <div className="mt-space-md flex items-baseline gap-space-xs">
+            <span className="font-headline-xl text-headline-xl font-bold text-on-surface">{stockValue.toLocaleString('fr-FR')}</span>
+            <span className="font-numeric-currency text-numeric-currency text-on-surface-variant">XOF</span>
+          </div>
+        </div>
+        <div className="bg-surface-container-lowest p-space-lg rounded-DEFAULT shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="font-label-md text-label-md text-on-surface-variant font-medium">Catégories suivies</span>
+            <div className="w-10 h-10 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center">
+              <span className="material-symbols-outlined" style={{ fontSize: 20 }}>category</span>
+            </div>
+          </div>
+          <div className="mt-space-md flex items-baseline gap-space-xs">
+            <span className="font-headline-xl text-headline-xl font-bold text-on-surface">{categoriesCount}</span>
+            <span className="font-label-sm text-label-sm text-outline">famille(s)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Recherche */}
+      <div className="bg-surface-container-lowest p-space-md rounded-DEFAULT shadow-sm flex items-center">
+        <div className="relative flex-1">
+          <span className="material-symbols-outlined absolute left-space-md top-1/2 -translate-y-1/2 text-outline pointer-events-none" style={{ fontSize: 20 }}>search</span>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un produit..."
+            className="w-full pl-11 pr-space-lg py-space-sm bg-surface-container text-on-surface font-body-md text-body-md rounded-full focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline" />
+        </div>
+      </div>
+
+      {/* Tableau */}
       {filtered.length > 0 ? (
-        <Table headers={['Produit', 'Catégorie', 'Quantité', 'Seuil min', 'Prix achat', 'Fournisseur', 'Actions']}>
-          {filtered.map(item => (
-            <tr key={item.id} className="hover:bg-purple-50">
-              <td className="px-5 py-4 font-semibold text-sm">{item.name}</td>
-              <td className="px-5 py-4 text-sm capitalize">{item.category.replace('_', ' ')}</td>
-              <td className="px-5 py-4"><span className={`font-bold text-sm ${item.quantity <= item.min_threshold ? 'text-red-600' : 'text-green-600'}`}>{item.quantity} {item.unit}</span>{item.quantity <= item.min_threshold && <span className="ml-1 text-xs text-red-500"></span>}</td>
-              <td className="px-5 py-4 text-sm text-gray-500">{item.min_threshold} {item.unit}</td>
-              <td className="px-5 py-4 text-sm">{item.purchase_price.toLocaleString('fr-FR')} XOF</td>
-              <td className="px-5 py-4 text-sm">{item.supplier || '-'}</td>
-              <td className="px-5 py-4">
-                <div className="flex gap-1">
-                  <button onClick={() => setShowMovement(item)} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold">Mouvement</button>
-                  <button onClick={async () => { if (confirm('Supprimer ?')) { try { await stockService.delete(item.id); setItems(items.filter(i => i.id !== item.id)) } catch { deleteItem(item.id) } } }} className="p-1.5 hover:bg-red-100 text-red-500 rounded-lg"><Trash2 size={14} /></button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </Table>
-      ) : <Card><EmptyState icon="" message="Aucun produit en stock" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter</Button>} /></Card>}
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+                  <th className="py-space-md px-space-lg font-bold">Produit</th>
+                  <th className="py-space-md px-space-md font-bold">Catégorie</th>
+                  <th className="py-space-md px-space-md font-bold min-w-[160px]">Disponibilité</th>
+                  <th className="py-space-md px-space-md font-bold text-center">Seuil min</th>
+                  <th className="py-space-md px-space-md font-bold text-right">Prix achat</th>
+                  <th className="py-space-md px-space-md font-bold">Fournisseur</th>
+                  <th className="py-space-md px-space-md font-bold text-center">Statut</th>
+                  <th className="py-space-md px-space-lg font-bold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="font-body-md text-body-md divide-y divide-surface-container">
+                {filtered.map(item => {
+                  const isCritical = item.quantity <= item.min_threshold
+                  const gaugePct = Math.min(100, Math.round((item.quantity / Math.max(1, item.min_threshold * 3)) * 100))
+                  return (
+                    <tr key={item.id} className="hover:bg-surface-container-low/40 transition-colors">
+                      <td className="py-space-md px-space-lg">
+                        <div className="flex items-center gap-space-md">
+                          <div className="w-10 h-10 rounded-DEFAULT bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <Package size={20} />
+                          </div>
+                          <span className="font-title-sm text-title-sm text-on-surface font-semibold truncate">{item.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-space-md px-space-md">
+                        <span className="px-space-sm py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm capitalize">{item.category.replace('_', ' ')}</span>
+                      </td>
+                      <td className="py-space-md px-space-md">
+                        <div className="flex flex-col gap-space-2xs">
+                          <span className={`font-label-md text-label-md font-bold ${isCritical ? 'text-error' : 'text-tertiary'}`}>{item.quantity} {item.unit}</span>
+                          <div className="w-full h-1.5 rounded-full bg-surface-container overflow-hidden">
+                            <div className={`h-full rounded-full ${isCritical ? 'bg-error' : 'bg-tertiary'}`} style={{ width: `${gaugePct}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-space-md px-space-md text-center font-label-md text-label-md text-on-surface font-medium">{item.min_threshold} {item.unit}</td>
+                      <td className="py-space-md px-space-md text-right font-numeric-currency text-numeric-currency text-on-surface">{item.purchase_price.toLocaleString('fr-FR')} XOF</td>
+                      <td className="py-space-md px-space-md">
+                        <span className="font-body-sm text-body-sm text-on-surface">{item.supplier || '-'}</span>
+                      </td>
+                      <td className="py-space-md px-space-md text-center">
+                        {isCritical ? (
+                          <span className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-error-container text-error font-label-sm text-label-sm font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-error" /> Rupture
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-tertiary-fixed text-tertiary font-label-sm text-label-sm font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-tertiary-container" /> En stock
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-space-md px-space-lg text-right">
+                        <div className="flex items-center justify-end gap-space-2xs">
+                          <button onClick={() => setShowMovement(item)} className="px-space-md py-space-2xs bg-surface-container text-primary rounded-full font-label-sm text-label-sm font-semibold hover:bg-primary-fixed transition-all">Mouvement</button>
+                          <button onClick={async () => { if (confirm('Supprimer ?')) { try { await stockService.delete(item.id); setItems(items.filter(i => i.id !== item.id)) } catch { deleteItem(item.id) } } }} className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-error-container hover:text-error transition-all"><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-3xl text-center">
+          <p className="font-body-md text-body-md text-outline mb-space-md">Aucun produit en stock</p>
+          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full shadow-md hover:bg-primary transition-all">
+            <Plus size={18} /> Ajouter
+          </button>
+        </div>
+      )}
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nouveau produit en stock">
         <form onSubmit={handleSubmit} className="space-y-4">
