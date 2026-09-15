@@ -310,76 +310,229 @@ export const HRPage: React.FC = () => {
   const roleColors: Record<string, string> = { admin: 'purple', manager: 'blue', caissier: 'green', reception: 'cyan', laveur: 'orange', repasseur: 'yellow', livreur: 'indigo' }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Employés & RH" subtitle={`${activeEmployees.length} employé(s) actif(s)`} action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter employé</Button>} />
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Employés actifs" value={activeEmployees.length} icon={<Users size={20} />} color="purple" />
-        <StatCard label="Présents aujourd'hui" value={todayAtt.filter(a => a.status === 'present').length} icon={<CheckCircle size={20} />} color="green" />
-        <StatCard label="Congés en attente" value={pendingLeaves.length} icon={<Calendar size={20} />} color="yellow" />
-        <StatCard label="Masse salariale" value={`${totalSalaries.toLocaleString('fr-FR')} XOF`} icon={<DollarSign size={20} />} color="blue" />
+    <div className="flex flex-col gap-space-xl">
+      {/* En-tête */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+        <div className="flex flex-col gap-space-xs">
+          <div className="flex items-center gap-space-sm flex-wrap">
+            <span className="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">Employés &amp; RH</span>
+            <span className="px-3 py-1 bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm rounded-full flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              Équipe &amp; Présences
+            </span>
+          </div>
+          <p className="font-body-md text-body-md text-on-surface-variant">Gestion du personnel, suivi des pointages, congés et salaires.</p>
+        </div>
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-space-xs px-space-xl py-2.5 bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-md hover:bg-primary transition-all active:scale-95 self-start md:self-auto">
+          <Plus size={18} />
+          <span>Nouvel employé</span>
+        </button>
       </div>
-      <Tabs tabs={[{ key: 'employees', label: 'Employés', icon: '' }, { key: 'attendance', label: 'Pointage', icon: '️' }, { key: 'leaves', label: 'Congés', icon: '' }]} active={activeTab} onChange={setActiveTab} />
+
+      {/* Cartes KPI */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+        <div className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">Employés actifs</span>
+            <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+              <Users size={20} />
+            </div>
+          </div>
+          <div className="mt-space-md">
+            <span className="font-headline-xl text-headline-xl font-bold text-on-surface">{activeEmployees.length}</span>
+            <span className="font-body-sm text-body-sm text-on-surface-variant block mt-1">Équipe enregistrée</span>
+          </div>
+        </div>
+        <div className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">Présents aujourd'hui</span>
+            <div className="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary">
+              <CheckCircle size={20} />
+            </div>
+          </div>
+          <div className="mt-space-md flex items-baseline gap-space-xs">
+            <span className="font-headline-xl text-headline-xl font-bold text-on-surface">{todayAtt.filter(a => a.status === 'present').length} <span className="text-outline text-title-sm font-normal">/ {activeEmployees.length}</span></span>
+          </div>
+        </div>
+        <div className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">Congés en attente</span>
+            <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-secondary">
+              <Calendar size={20} />
+            </div>
+          </div>
+          <div className="mt-space-md">
+            <span className="font-headline-xl text-headline-xl font-bold text-on-surface">{pendingLeaves.length}</span>
+            <span className="font-body-sm text-body-sm text-on-surface-variant block mt-1">demande(s) à traiter</span>
+          </div>
+        </div>
+        <div className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">Masse salariale</span>
+            <div className="w-10 h-10 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed">
+              <DollarSign size={20} />
+            </div>
+          </div>
+          <div className="mt-space-md flex items-baseline gap-space-xs">
+            <span className="font-numeric-currency text-headline-lg font-bold text-primary">{totalSalaries.toLocaleString('fr-FR')}</span>
+            <span className="font-label-sm text-label-sm text-on-surface-variant">XOF/mois</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Onglets */}
+      <div className="bg-surface-container-low p-1.5 rounded-full flex items-center gap-1 self-start shadow-sm max-w-full overflow-x-auto">
+        {[
+          { key: 'employees', label: `Équipe (${employees.length})` },
+          { key: 'attendance', label: 'Pointage' },
+          { key: 'leaves', label: `Congés${pendingLeaves.length > 0 ? ` (${pendingLeaves.length})` : ''}` },
+        ].map(tab => (
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+            className={`px-space-xl py-2 font-label-md text-label-md rounded-full transition-all whitespace-nowrap ${activeTab === tab.key ? 'bg-surface-container-lowest text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {activeTab === 'employees' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {loadingEmployees && <p className="text-gray-500 col-span-3">Chargement...</p>}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-space-lg">
+          {loadingEmployees && <p className="text-outline col-span-3">Chargement...</p>}
           {!loadingEmployees && employees.map(emp => (
-            <Card key={emp.id}>
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-700 font-bold text-lg">{emp.full_name.charAt(0)}</div>
-                <div className="flex gap-1">
-                  <button onClick={() => toggleActive(emp)} className={`px-2 py-1 rounded text-xs font-medium ${emp.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{emp.is_active ? 'Actif' : 'Inactif'}</button>
-                  <button onClick={() => { if (confirm('Supprimer ?')) deleteEmployeeHandler(emp.id) }} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+            <div key={emp.id} className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-start justify-between gap-space-sm">
+                  <div className="flex items-center gap-space-md">
+                    <div className="w-12 h-12 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-headline-md font-bold text-headline-md shadow-sm">
+                      {emp.full_name.charAt(0)}
+                    </div>
+                    <div className="flex flex-col">
+                      <h3 className="font-headline-md text-headline-md font-bold text-on-surface">{emp.full_name}</h3>
+                      <span className="font-body-sm text-body-sm text-outline">#{emp.id.slice(0, 8).toUpperCase()}</span>
+                    </div>
+                  </div>
+                  <button onClick={() => toggleActive(emp)} className={`px-2.5 py-1 font-label-sm text-label-sm rounded-full flex items-center gap-1 font-semibold ${emp.is_active ? 'bg-tertiary-fixed text-tertiary' : 'bg-surface-container text-on-surface-variant'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${emp.is_active ? 'bg-tertiary' : 'bg-outline'}`} />
+                    {emp.is_active ? 'Actif' : 'Inactif'}
+                  </button>
+                </div>
+                <div className="mt-space-md flex flex-col gap-2">
+                  <span className="inline-flex self-start px-2.5 py-0.5 rounded-full bg-surface-container text-primary font-label-sm text-label-sm font-semibold capitalize">{emp.role}</span>
+                </div>
+                <div className="mt-space-lg p-space-md bg-surface-container-low rounded-xl flex flex-col gap-2">
+                  {emp.phone && (
+                    <div className="flex items-center justify-between font-body-sm text-body-sm">
+                      <span className="text-outline flex items-center gap-1"><span className="material-symbols-outlined" style={{ fontSize: 16 }}>call</span> {emp.phone}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="font-label-sm text-label-sm text-outline">Salaire fixe :</span>
+                    <span className="font-numeric-currency text-body-md font-bold text-on-surface">{Number(emp.salary).toLocaleString('fr-FR')} XOF<span className="font-normal text-outline text-body-sm">/mois</span></span>
+                  </div>
+                  {emp.hire_date && (
+                    <div className="flex items-center justify-between">
+                      <span className="font-label-sm text-label-sm text-outline">Depuis</span>
+                      <span className="font-label-sm text-label-sm text-on-surface-variant">{new Date(emp.hire_date).toLocaleDateString('fr-FR')}</span>
+                    </div>
+                  )}
                 </div>
               </div>
-              <h3 className="font-bold text-gray-900">{emp.full_name}</h3>
-              <Badge label={emp.role} color={roleColors[emp.role] || 'gray'} />
-              <div className="mt-4 space-y-1.5">
-                {emp.phone && <p className="text-sm text-gray-500"> {emp.phone}</p>}
-                <p className="text-sm font-semibold text-gray-700"> {Number(emp.salary).toLocaleString('fr-FR')} XOF/mois</p>
-                {emp.hire_date && <p className="text-xs text-gray-400"> Depuis {new Date(emp.hire_date).toLocaleDateString('fr-FR')}</p>}
+              <div className="mt-space-lg pt-space-sm flex items-center justify-end">
+                <button onClick={() => { if (confirm('Supprimer ?')) deleteEmployeeHandler(emp.id) }} className="w-8 h-8 rounded-full bg-surface-container-low hover:bg-error-container flex items-center justify-center text-outline hover:text-error transition-all"><Trash2 size={15} /></button>
               </div>
-            </Card>
+            </div>
           ))}
-          {!loadingEmployees && employees.length === 0 && <div className="col-span-3 bg-white rounded-xl shadow-sm border"><EmptyState icon="" message="Aucun employé" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter</Button>} /></div>}
+          {!loadingEmployees && employees.length === 0 && (
+            <div className="col-span-3 bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-3xl text-center">
+              <p className="font-body-md text-body-md text-outline mb-space-md">Aucun employé</p>
+              <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full shadow-md hover:bg-primary transition-all">
+                <Plus size={18} /> Ajouter
+              </button>
+            </div>
+          )}
         </div>
       )}
+
       {activeTab === 'attendance' && (
-        <div className="space-y-4">
-          <div className="flex justify-end"><Button icon={<Plus size={18} />} onClick={() => setShowAttendance(true)}>Enregistrer présence</Button></div>
+        <div className="flex flex-col gap-space-md">
+          <div className="flex justify-end">
+            <button onClick={() => setShowAttendance(true)} className="flex items-center gap-space-xs px-space-lg py-space-sm bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-md hover:bg-primary transition-all">
+              <Plus size={18} /> Enregistrer présence
+            </button>
+          </div>
           {todayAtt.length > 0 ? (
-            <Table headers={['Employé', 'Statut', 'Heure arrivée', 'Heure départ', 'Actions']}>
-              {todayAtt.map(att => { const emp = employees.find(e => e.id === att.employee_id); return (
-                <tr key={att.id} className="hover:bg-gray-50">
-                  <td className="px-5 py-4 font-medium text-sm">{emp?.full_name || 'Inconnu'}</td>
-                  <td className="px-5 py-4"><Badge label={att.status} color={att.status === 'present' ? 'green' : att.status === 'absent' ? 'red' : 'yellow'} /></td>
-                  <td className="px-5 py-4 text-sm">{new Date(att.check_in).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</td>
-                  <td className="px-5 py-4 text-sm">{att.check_out ? new Date(att.check_out).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
-                  <td className="px-5 py-4">{!att.check_out && <button onClick={async () => { await attendanceService.update(att.id, { check_out: new Date().toISOString() }); refreshAttendances() }} className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-semibold">Enregistrer le départ</button>}</td>
-                </tr>
-              )})}
-            </Table>
-          ) : <Card><EmptyState icon="️" message="Aucun pointage aujourd'hui" /></Card>}
+            <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider">
+                    <th className="py-space-md px-space-lg">Employé</th>
+                    <th className="py-space-md px-space-md">Statut</th>
+                    <th className="py-space-md px-space-md">Arrivée</th>
+                    <th className="py-space-md px-space-md">Départ</th>
+                    <th className="py-space-md px-space-lg text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {todayAtt.map(att => { const emp = employees.find(e => e.id === att.employee_id); return (
+                    <tr key={att.id} className="hover:bg-surface-container-low/40 transition-colors border-t border-surface-container">
+                      <td className="py-space-md px-space-lg font-label-md text-label-md text-on-surface font-semibold">{emp?.full_name || 'Inconnu'}</td>
+                      <td className="py-space-md px-space-md">
+                        <span className={`inline-flex px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-bold ${att.status === 'present' ? 'bg-tertiary-fixed text-tertiary' : att.status === 'absent' ? 'bg-error-container text-error' : 'bg-[#fef3c7] text-[#b45309]'}`}>{att.status}</span>
+                      </td>
+                      <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">{new Date(att.check_in).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</td>
+                      <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">{att.check_out ? new Date(att.check_out).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                      <td className="py-space-md px-space-lg text-right">{!att.check_out && <button onClick={async () => { await attendanceService.update(att.id, { check_out: new Date().toISOString() }); refreshAttendances() }} className="px-space-md py-space-2xs bg-surface-container text-primary rounded-full font-label-sm text-label-sm font-semibold hover:bg-primary-fixed transition-all">Enregistrer le départ</button>}</td>
+                    </tr>
+                  )})}
+                </tbody>
+              </table>
+            </div>
+          ) : <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-3xl text-center font-body-md text-body-md text-outline">Aucun pointage aujourd'hui</div>}
         </div>
       )}
+
       {activeTab === 'leaves' && (
-        <div className="space-y-4">
-          <div className="flex justify-end"><Button icon={<Plus size={18} />} onClick={() => setShowLeave(true)}>Demande de congé</Button></div>
+        <div className="flex flex-col gap-space-md">
+          <div className="flex justify-end">
+            <button onClick={() => setShowLeave(true)} className="flex items-center gap-space-xs px-space-lg py-space-sm bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-md hover:bg-primary transition-all">
+              <Plus size={18} /> Demande de congé
+            </button>
+          </div>
           {leaves.length > 0 ? (
-            <Table headers={['Employé', 'Type', 'Du', 'Au', 'Statut', 'Actions']}>
-              {leaves.map(leave => { const emp = employees.find(e => e.id === leave.employee_id); return (
-                <tr key={leave.id} className="hover:bg-gray-50">
-                  <td className="px-5 py-4 font-medium text-sm">{emp?.full_name || 'Inconnu'}</td>
-                  <td className="px-5 py-4"><Badge label={leave.type} color="blue" /></td>
-                  <td className="px-5 py-4 text-sm">{new Date(leave.start_date).toLocaleDateString('fr-FR')}</td>
-                  <td className="px-5 py-4 text-sm">{new Date(leave.end_date).toLocaleDateString('fr-FR')}</td>
-                  <td className="px-5 py-4"><Badge label={leave.status} color={leave.status === 'approved' ? 'green' : leave.status === 'rejected' ? 'red' : 'yellow'} /></td>
-                  <td className="px-5 py-4">{leave.status === 'pending' && <div className="flex gap-1"><button onClick={() => handleApproveLeave(leave)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs"></button><button onClick={() => updateLeave(leave.id, { status: 'rejected' })} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs"></button></div>}</td>
-                </tr>
-              )})}
-            </Table>
-          ) : <Card><EmptyState icon="" message="Aucune demande" /></Card>}
+            <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider">
+                    <th className="py-space-md px-space-lg">Employé</th>
+                    <th className="py-space-md px-space-md">Type</th>
+                    <th className="py-space-md px-space-md">Du</th>
+                    <th className="py-space-md px-space-md">Au</th>
+                    <th className="py-space-md px-space-md">Statut</th>
+                    <th className="py-space-md px-space-lg text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaves.map(leave => { const emp = employees.find(e => e.id === leave.employee_id); return (
+                    <tr key={leave.id} className="hover:bg-surface-container-low/40 transition-colors border-t border-surface-container">
+                      <td className="py-space-md px-space-lg font-label-md text-label-md text-on-surface font-semibold">{emp?.full_name || 'Inconnu'}</td>
+                      <td className="py-space-md px-space-md"><span className="inline-flex px-space-sm py-space-2xs rounded-full bg-secondary-fixed text-secondary font-label-sm text-label-sm font-bold capitalize">{leave.type}</span></td>
+                      <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">{new Date(leave.start_date).toLocaleDateString('fr-FR')}</td>
+                      <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">{new Date(leave.end_date).toLocaleDateString('fr-FR')}</td>
+                      <td className="py-space-md px-space-md"><span className={`inline-flex px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-bold ${leave.status === 'approved' ? 'bg-tertiary-fixed text-tertiary' : leave.status === 'rejected' ? 'bg-error-container text-error' : 'bg-[#fef3c7] text-[#b45309]'}`}>{leave.status}</span></td>
+                      <td className="py-space-md px-space-lg text-right">{leave.status === 'pending' && (
+                        <div className="flex justify-end gap-space-2xs">
+                          <button onClick={() => handleApproveLeave(leave)} className="w-8 h-8 rounded-full bg-tertiary-fixed text-tertiary flex items-center justify-center hover:opacity-80 transition-all"><CheckCircle size={15} /></button>
+                          <button onClick={() => updateLeave(leave.id, { status: 'rejected' })} className="w-8 h-8 rounded-full bg-error-container text-error flex items-center justify-center hover:opacity-80 transition-all"><Trash2 size={15} /></button>
+                        </div>
+                      )}</td>
+                    </tr>
+                  )})}
+                </tbody>
+              </table>
+            </div>
+          ) : <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-3xl text-center font-body-md text-body-md text-outline">Aucune demande</div>}
         </div>
       )}
+
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nouvel employé">
         <form onSubmit={async e => { e.preventDefault(); await employeeService.create({ ...form, salary: Number(form.salary), is_active: true }); refreshEmployees(); setShowForm(false); setForm({ full_name: '', role: 'laveur', phone: '', salary: 0, hire_date: '' }) }} className="space-y-4">
           <Field label="Nom complet" required><Input required value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} placeholder="Prénom et Nom" /></Field>
@@ -440,27 +593,75 @@ export const NotificationsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Notifications" subtitle={`${pendingCount} en attente, ${sentCount} envoyées`} action={<div className="flex gap-2">{readyOrders.length > 0 && <Button variant="success" icon={<Bell size={18} />} onClick={sendBulkReady}>Notifier {readyOrders.length} client(s)</Button>}<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Nouvelle</Button></div>} />
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="p-4 text-center"><p className="text-2xl font-bold text-yellow-600">{pendingCount}</p><p className="text-xs text-gray-500 mt-1">En attente</p></Card>
-        <Card className="p-4 text-center"><p className="text-2xl font-bold text-green-600">{sentCount}</p><p className="text-xs text-gray-500 mt-1">Envoyées</p></Card>
-        <Card className="p-4 text-center"><p className="text-2xl font-bold text-red-600">{notifications.filter(n => n.status === 'failed').length}</p><p className="text-xs text-gray-500 mt-1">Échouées</p></Card>
+    <div className="flex flex-col gap-space-xl">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+        <div className="flex flex-col">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Notifications</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-space-2xs">{pendingCount} en attente, {sentCount} envoyée(s)</p>
+        </div>
+        <div className="flex items-center gap-space-sm">
+          {readyOrders.length > 0 && (
+            <button onClick={sendBulkReady} className="flex items-center gap-space-xs px-space-lg py-space-xs bg-tertiary-fixed text-tertiary font-label-md text-label-md rounded-full shadow-sm hover:opacity-90 transition-all">
+              <Bell size={18} /> Notifier {readyOrders.length} client(s)
+            </button>
+          )}
+          <button onClick={() => setShowForm(true)} className="flex items-center gap-space-xs px-space-xl py-space-xs bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-md hover:bg-primary transition-all active:scale-95">
+            <Plus size={18} /> Nouvelle
+          </button>
+        </div>
       </div>
+
+      <div className="grid grid-cols-3 gap-space-md">
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg text-center">
+          <p className="font-headline-xl text-headline-xl font-bold text-[#b45309]">{pendingCount}</p>
+          <p className="font-label-sm text-label-sm text-outline mt-space-2xs">En attente</p>
+        </div>
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg text-center">
+          <p className="font-headline-xl text-headline-xl font-bold text-tertiary">{sentCount}</p>
+          <p className="font-label-sm text-label-sm text-outline mt-space-2xs">Envoyées</p>
+        </div>
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg text-center">
+          <p className="font-headline-xl text-headline-xl font-bold text-error">{notifications.filter(n => n.status === 'failed').length}</p>
+          <p className="font-label-sm text-label-sm text-outline mt-space-2xs">Échouées</p>
+        </div>
+      </div>
+
       {notifications.length > 0 ? (
-        <Table headers={['Client', 'Téléphone', 'Type', 'Message', 'Statut', 'Actions']}>
-          {notifications.slice().reverse().map(n => (
-            <tr key={n.id} className="hover:bg-gray-50">
-              <td className="px-5 py-4 font-medium text-sm">{n.client_name}</td>
-              <td className="px-5 py-4 text-sm">{n.client_phone}</td>
-              <td className="px-5 py-4"><Badge label={n.type === 'whatsapp' ? ' WhatsApp' : n.type === 'sms' ? ' SMS' : '📧 Email'} color={n.type === 'whatsapp' ? 'green' : 'blue'} /></td>
-              <td className="px-5 py-4 text-sm max-w-xs truncate">{n.message}</td>
-              <td className="px-5 py-4"><Badge label={n.status} color={n.status === 'sent' ? 'green' : n.status === 'failed' ? 'red' : 'yellow'} /></td>
-              <td className="px-5 py-4">{n.status === 'pending' && <button onClick={() => { window.open(n.type === 'whatsapp' ? `https://wa.me/${n.client_phone.replace(/\s/g,'')}?text=${encodeURIComponent(n.message)}` : `sms:${n.client_phone}`, '_blank'); updateNotification(n.id, { status: 'sent', sent_at: new Date().toISOString() }) }} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Envoyer</button>}</td>
-            </tr>
-          ))}
-        </Table>
-      ) : <Card><EmptyState icon="" message="Aucune notification" /></Card>}
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider">
+                  <th className="py-space-md px-space-lg">Client</th>
+                  <th className="py-space-md px-space-md">Téléphone</th>
+                  <th className="py-space-md px-space-md">Canal</th>
+                  <th className="py-space-md px-space-md">Message</th>
+                  <th className="py-space-md px-space-md">Statut</th>
+                  <th className="py-space-md px-space-lg text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {notifications.slice().reverse().map(n => (
+                  <tr key={n.id} className="hover:bg-surface-container-low/40 transition-colors border-t border-surface-container">
+                    <td className="py-space-md px-space-lg font-label-md text-label-md text-on-surface font-semibold">{n.client_name}</td>
+                    <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">{n.client_phone}</td>
+                    <td className="py-space-md px-space-md">
+                      <span className={`inline-flex px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-bold ${n.type === 'whatsapp' ? 'bg-tertiary-fixed text-tertiary' : 'bg-secondary-fixed text-secondary'}`}>
+                        {n.type === 'whatsapp' ? 'WhatsApp' : n.type === 'sms' ? 'SMS' : 'Email'}
+                      </span>
+                    </td>
+                    <td className="py-space-md px-space-md font-body-sm text-body-sm text-on-surface max-w-xs truncate">{n.message}</td>
+                    <td className="py-space-md px-space-md">
+                      <span className={`inline-flex px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-bold ${n.status === 'sent' ? 'bg-tertiary-fixed text-tertiary' : n.status === 'failed' ? 'bg-error-container text-error' : 'bg-[#fef3c7] text-[#b45309]'}`}>{n.status}</span>
+                    </td>
+                    <td className="py-space-md px-space-lg text-right">{n.status === 'pending' && <button onClick={() => { window.open(n.type === 'whatsapp' ? `https://wa.me/${n.client_phone.replace(/\s/g,'')}?text=${encodeURIComponent(n.message)}` : `sms:${n.client_phone}`, '_blank'); updateNotification(n.id, { status: 'sent', sent_at: new Date().toISOString() }) }} className="px-space-md py-space-2xs bg-surface-container text-primary rounded-full font-label-sm text-label-sm font-semibold hover:bg-primary-fixed transition-all">Envoyer</button>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-3xl text-center font-body-md text-body-md text-outline">Aucune notification</div>}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nouvelle notification">
         <form onSubmit={e => { e.preventDefault(); const c = clients.find(cl => cl.id === form.client_id); if (!c) return; addNotification({ id: crypto.randomUUID(), client_id: c.id, client_name: `${c.first_name} ${c.last_name}`, client_phone: c.phone, type: form.type, message: form.message, status: 'pending', created_at: new Date().toISOString() }); setShowForm(false); setForm({ client_id: '', type: 'whatsapp', message: '' }) }} className="space-y-4">
           <Field label="Client" required><Select required value={form.client_id} onChange={e => setForm({ ...form, client_id: e.target.value })}><option value="">Sélectionner...</option>{clients.map(c => <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}</Select></Field>
@@ -486,47 +687,81 @@ export const LoyaltyPage: React.FC = () => {
   const topByPoints = [...clients].sort((a, b) => b.loyalty_points - a.loyalty_points).slice(0, 10)
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Programme de Fidélité" subtitle="Points, niveaux et coupons" action={<Button icon={<Plus size={18} />} onClick={() => setShowCoupon(true)}>Créer un coupon</Button>} />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="flex flex-col gap-space-xl">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Programme de Fidélité</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-space-2xs">Points, niveaux et coupons</p>
+        </div>
+        <button onClick={() => setShowCoupon(true)} className="flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-md hover:bg-primary transition-all active:scale-95">
+          <Plus size={18} /> Créer un coupon
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-space-md">
         {Object.entries(levelConfig).map(([level, config]) => (
-          <div key={level} className={`bg-gradient-to-br ${config.color} rounded-2xl p-5 text-white`}>
-            <div className="flex items-center justify-between mb-3"><span className="text-3xl">{config.icon}</span><span className="text-2xl font-bold">{clientsByLevel[level as keyof typeof clientsByLevel]}</span></div>
-            <p className="font-bold capitalize text-lg">{level}</p>
-            <p className="text-xs opacity-70">{config.min === 0 ? '0' : config.min.toLocaleString()} — {config.max === Infinity ? '∞' : config.max.toLocaleString()} pts</p>
+          <div key={level} className={`bg-gradient-to-br ${config.color} rounded-2xl p-space-lg text-white shadow-sm`}>
+            <div className="flex items-center justify-between mb-space-sm">
+              <span className="font-headline-xl text-headline-xl font-bold">{clientsByLevel[level as keyof typeof clientsByLevel]}</span>
+            </div>
+            <p className="font-label-lg text-label-lg font-bold capitalize">{level}</p>
+            <p className="font-label-sm text-label-sm opacity-75 mt-space-2xs">{config.min === 0 ? '0' : config.min.toLocaleString()} — {config.max === Infinity ? '∞' : config.max.toLocaleString()} pts</p>
           </div>
         ))}
       </div>
-      <Card>
-        <h2 className="text-base font-bold mb-4"> Classement fidélité</h2>
+
+      <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg lg:p-space-xl">
+        <h2 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-lg">Classement fidélité</h2>
         {topByPoints.filter(c => c.loyalty_points > 0).length > 0 ? (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-space-sm">
             {topByPoints.filter(c => c.loyalty_points > 0).map((c, i) => {
               const level = getLevelFromPoints(c.loyalty_points)
-              const icons: Record<string,string> = { bronze: '', silver: '', gold: '', platinum: '' }
               return (
-                <div key={c.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                  <div className="flex items-center gap-3"><span className="w-7 h-7 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs font-bold">{i+1}</span><div><p className="font-semibold text-sm">{c.first_name} {c.last_name}</p><p className="text-xs text-gray-400">{c.phone}</p></div></div>
-                  <div className="flex items-center gap-2"><span className="text-lg">{icons[level]}</span><div><p className="font-bold text-sm text-purple-700">{c.loyalty_points} pts</p><p className="text-xs text-gray-400 capitalize">{level}</p></div></div>
+                <div key={c.id} className="flex items-center justify-between p-space-md bg-surface-container-low rounded-DEFAULT">
+                  <div className="flex items-center gap-space-sm">
+                    <span className="w-8 h-8 bg-primary-fixed text-primary rounded-full flex items-center justify-center font-label-sm text-label-sm font-bold">{i + 1}</span>
+                    <div>
+                      <p className="font-label-md text-label-md text-on-surface font-semibold">{c.first_name} {c.last_name}</p>
+                      <p className="font-body-sm text-body-sm text-outline">{c.phone}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-numeric-currency text-numeric-currency font-bold text-primary">{c.loyalty_points} pts</p>
+                    <p className="font-label-sm text-label-sm text-outline capitalize">{level}</p>
+                  </div>
                 </div>
               )
             })}
           </div>
-        ) : <EmptyState icon="" message="Aucun point attribué" />}
-      </Card>
-      <Card>
-        <h2 className="text-base font-bold mb-4"> Coupons</h2>
+        ) : <p className="text-center py-space-xl font-body-md text-body-md text-outline">Aucun point attribué</p>}
+      </div>
+
+      <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg lg:p-space-xl">
+        <h2 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-lg">Coupons</h2>
         {coupons.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-space-md">
             {coupons.map(coupon => (
-              <div key={coupon.id} className={`rounded-xl p-4 border-2 border-dashed ${coupon.is_used ? 'border-gray-200 bg-gray-50 opacity-60' : 'border-purple-300 bg-purple-50'}`}>
-                <div className="flex justify-between items-start"><div><p className="font-bold text-lg text-purple-700">{coupon.discount_percent}% OFF</p><p className="font-mono text-sm font-bold">{coupon.code}</p></div><Badge label={coupon.is_used ? 'Utilisé' : 'Actif'} color={coupon.is_used ? 'gray' : 'green'} /></div>
-                <p className="text-xs text-gray-400 mt-2">Expire: {new Date(coupon.valid_until).toLocaleDateString('fr-FR')}</p>
+              <div key={coupon.id} className={`rounded-DEFAULT p-space-lg border-2 border-dashed ${coupon.is_used ? 'border-outline-variant bg-surface-container-low opacity-60' : 'border-primary bg-primary-fixed/30'}`}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-headline-md text-headline-md font-bold text-primary">{coupon.discount_percent}% OFF</p>
+                    <p className="font-mono font-body-sm text-body-sm font-bold text-on-surface">{coupon.code}</p>
+                  </div>
+                  <span className={`px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-bold ${coupon.is_used ? 'bg-surface-container text-outline' : 'bg-tertiary-fixed text-tertiary'}`}>{coupon.is_used ? 'Utilisé' : 'Actif'}</span>
+                </div>
+                <p className="font-body-sm text-body-sm text-outline mt-space-sm">Expire : {new Date(coupon.valid_until).toLocaleDateString('fr-FR')}</p>
               </div>
             ))}
           </div>
-        ) : <EmptyState icon="" message="Aucun coupon" action={<Button icon={<Plus size={18} />} onClick={() => setShowCoupon(true)}>Créer</Button>} />}
-      </Card>
+        ) : (
+          <div className="text-center py-space-xl">
+            <p className="font-body-md text-body-md text-outline mb-space-md">Aucun coupon</p>
+            <button onClick={() => setShowCoupon(true)} className="inline-flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full shadow-md hover:bg-primary transition-all">
+              <Plus size={18} /> Créer
+            </button>
+          </div>
+        )}
+      </div>
       <Modal open={showCoupon} onClose={() => setShowCoupon(false)} title="Créer un coupon">
         <form onSubmit={e => { e.preventDefault(); addCoupon({ id: crypto.randomUUID(), ...couponForm, discount_percent: Number(couponForm.discount_percent), is_used: false, created_at: new Date().toISOString() }); setShowCoupon(false); setCouponForm({ code: '', discount_percent: 10, valid_until: '', client_id: '' }) }} className="space-y-4">
           <Field label="Code" required><Input required value={couponForm.code} onChange={e => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })} placeholder="Ex: FIDELITE20" /></Field>
