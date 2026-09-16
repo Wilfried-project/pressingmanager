@@ -1100,18 +1100,86 @@ export const ReportsPage: React.FC = () => {
   const exportCSV = () => { const headers = ['Ticket','Client','Date','Total','Statut','Paiement']; const rows = orders.map(o => [o.ticket_number,`${o.client?.first_name} ${o.client?.last_name}`,new Date(o.created_at).toLocaleDateString('fr-FR'),o.total,o.status,o.payment_status]); const csv = [headers,...rows].map(r => r.join(',')).join('\n'); const blob = new Blob([csv],{type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `rapport_${new Date().toISOString().split('T')[0]}.csv`; a.click() }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Rapports & Statistiques" subtitle="Vue complète des performances" action={<Button variant="ghost" onClick={exportCSV}> Exporter CSV</Button>} />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Commandes ce mois" value={stats.monthOrders} icon={<Package size={20} />} color="purple" />
-        <StatCard label="CA ce mois" value={`${stats.monthRevenue.toLocaleString('fr-FR')} XOF`} icon={<DollarSign size={20} />} color="green" />
-        <StatCard label="Ticket moyen" value={`${Math.round(stats.avgTicket).toLocaleString('fr-FR')} XOF`} icon={<TrendingUp size={20} />} color="blue" />
-        <StatCard label="Taux annulation" value={`${stats.cancelRate.toFixed(1)}%`} icon={<TrendingDown size={20} />} color={stats.cancelRate > 10 ? 'red' : 'green'} />
+    <div className="flex flex-col gap-space-xl">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Rapports &amp; Statistiques</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-space-2xs">Vue complète des performances</p>
+        </div>
+        <button onClick={exportCSV} className="flex items-center gap-space-xs px-space-lg py-space-sm bg-surface-container-lowest text-on-surface font-label-md text-label-md rounded-full shadow-sm hover:bg-surface-container transition-all">
+          <span className="material-symbols-outlined" style={{ fontSize: 18 }}>file_download</span>
+          Exporter CSV
+        </button>
       </div>
-      <Tabs tabs={[{ key: 'overview', label: 'Vue globale', icon: '' }, { key: 'clients', label: 'Clients', icon: '' }, { key: 'orders', label: 'Commandes', icon: '' }]} active={activeTab} onChange={setActiveTab} />
-      {activeTab === 'overview' && <Card><h2 className="text-base font-bold mb-4">CA 30 derniers jours</h2><ResponsiveContainer width="100%" height={250}><LineChart data={revenueTrend}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" tick={{ fontSize: 11 }} /><YAxis tick={{ fontSize: 11 }} /><Tooltip formatter={(v) => `${Number(v).toLocaleString('fr-FR')} XOF`} /><Line type="monotone" dataKey="CA" stroke="#7c3aed" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer></Card>}
-      {activeTab === 'clients' && <Card><h2 className="text-base font-bold mb-4">Top 10 clients</h2>{topClients.length > 0 ? <div className="space-y-2">{topClients.map((c,i) => <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl"><span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${i === 0 ? 'bg-yellow-500' : i === 1 ? 'bg-gray-400' : i === 2 ? 'bg-amber-700' : 'bg-purple-400'}`}>{i+1}</span><div className="flex-1"><p className="font-semibold text-sm">{c.name}</p><p className="text-xs text-gray-400">{c.count} commande(s)</p></div><p className="font-bold text-purple-700 text-sm">{c.total.toLocaleString('fr-FR')} XOF</p></div>)}</div> : <EmptyState icon="" message="Aucune vente" />}</Card>}
-      {activeTab === 'orders' && (orders.length > 0 ? <Table headers={['Ticket','Client','Date','Total','Statut','Paiement']}>{orders.slice().reverse().map(o => <tr key={o.id} className="hover:bg-gray-50"><td className="px-5 py-4 font-bold text-purple-700 text-sm">#{o.ticket_number}</td><td className="px-5 py-4 text-sm">{o.client?.first_name} {o.client?.last_name}</td><td className="px-5 py-4 text-sm text-gray-500">{new Date(o.created_at).toLocaleDateString('fr-FR')}</td><td className="px-5 py-4 font-bold text-sm">{o.total.toLocaleString('fr-FR')} XOF</td><td className="px-5 py-4"><Badge label={o.status.replace('_',' ').replace(/^./, c => c.toUpperCase())} color={o.status === 'pret' ? 'green' : o.status === 'livre' ? 'gray' : 'yellow'} /></td><td className="px-5 py-4"><Badge label={o.payment_status.replace('_',' ').replace(/^./, c => c.toUpperCase())} color={o.payment_status === 'paye' ? 'green' : o.payment_status === 'acompte' ? 'yellow' : 'red'} /></td></tr>)}</Table> : <Card><EmptyState icon="" message="Aucune commande" /></Card>)}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-space-md">
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg flex flex-col justify-between">
+          <div className="flex items-center justify-between"><span className="font-label-sm text-label-sm text-outline uppercase font-bold tracking-wider">Commandes ce mois</span><div className="w-10 h-10 rounded-full bg-primary-fixed text-primary flex items-center justify-center"><Package size={20} /></div></div>
+          <p className="font-headline-xl text-headline-xl font-bold text-on-surface mt-space-md">{stats.monthOrders}</p>
+        </div>
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg flex flex-col justify-between">
+          <div className="flex items-center justify-between"><span className="font-label-sm text-label-sm text-outline uppercase font-bold tracking-wider">CA ce mois</span><div className="w-10 h-10 rounded-full bg-tertiary-fixed text-tertiary flex items-center justify-center"><DollarSign size={20} /></div></div>
+          <p className="font-headline-xl text-headline-xl font-bold text-tertiary mt-space-md">{stats.monthRevenue.toLocaleString('fr-FR')} <span className="font-label-md text-label-md">XOF</span></p>
+        </div>
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg flex flex-col justify-between">
+          <div className="flex items-center justify-between"><span className="font-label-sm text-label-sm text-outline uppercase font-bold tracking-wider">Ticket moyen</span><div className="w-10 h-10 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center"><TrendingUp size={20} /></div></div>
+          <p className="font-headline-xl text-headline-xl font-bold text-on-surface mt-space-md">{Math.round(stats.avgTicket).toLocaleString('fr-FR')} <span className="font-label-md text-label-md">XOF</span></p>
+        </div>
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg flex flex-col justify-between">
+          <div className="flex items-center justify-between"><span className="font-label-sm text-label-sm text-outline uppercase font-bold tracking-wider">Taux annulation</span><div className={`w-10 h-10 rounded-full flex items-center justify-center ${stats.cancelRate > 10 ? 'bg-error-container text-error' : 'bg-tertiary-fixed text-tertiary'}`}><TrendingDown size={20} /></div></div>
+          <p className={`font-headline-xl text-headline-xl font-bold mt-space-md ${stats.cancelRate > 10 ? 'text-error' : 'text-tertiary'}`}>{stats.cancelRate.toFixed(1)}%</p>
+        </div>
+      </div>
+      <div className="bg-surface-container-low p-1.5 rounded-full flex items-center gap-1 self-start shadow-sm">
+        {[{ key: 'overview', label: 'Vue globale' }, { key: 'clients', label: 'Clients' }, { key: 'orders', label: 'Commandes' }].map(tab => (
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-space-xl py-2 font-label-md text-label-md rounded-full transition-all ${activeTab === tab.key ? 'bg-surface-container-lowest text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}>{tab.label}</button>
+        ))}
+      </div>
+      {activeTab === 'overview' && (
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg">
+          <h2 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-md">CA 30 derniers jours</h2>
+          <ResponsiveContainer width="100%" height={250}><LineChart data={revenueTrend}><CartesianGrid strokeDasharray="3 3" stroke="#eaedff" /><XAxis dataKey="date" tick={{ fontSize: 11 }} /><YAxis tick={{ fontSize: 11 }} /><Tooltip formatter={(v) => `${Number(v).toLocaleString('fr-FR')} XOF`} /><Line type="monotone" dataKey="CA" stroke="#630ed4" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer>
+        </div>
+      )}
+      {activeTab === 'clients' && (
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg">
+          <h2 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-md">Top 10 clients</h2>
+          {topClients.length > 0 ? (
+            <div className="flex flex-col gap-space-sm">
+              {topClients.map((c, i) => (
+                <div key={i} className="flex items-center gap-space-md p-space-md bg-surface-container-low rounded-DEFAULT">
+                  <span className={`w-8 h-8 rounded-full flex items-center justify-center font-label-sm text-label-sm font-bold text-white ${i === 0 ? 'bg-[#eab308]' : i === 1 ? 'bg-outline' : i === 2 ? 'bg-[#b45309]' : 'bg-primary-container'}`}>{i + 1}</span>
+                  <div className="flex-1">
+                    <p className="font-label-md text-label-md text-on-surface font-semibold">{c.name}</p>
+                    <p className="font-body-sm text-body-sm text-outline">{c.count} commande(s)</p>
+                  </div>
+                  <p className="font-numeric-currency text-numeric-currency font-bold text-primary">{c.total.toLocaleString('fr-FR')} XOF</p>
+                </div>
+              ))}
+            </div>
+          ) : <p className="text-center py-space-xl font-body-md text-body-md text-outline">Aucune vente</p>}
+        </div>
+      )}
+      {activeTab === 'orders' && (orders.length > 0 ? (
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead><tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider"><th className="py-space-md px-space-lg">Ticket</th><th className="py-space-md px-space-md">Client</th><th className="py-space-md px-space-md">Date</th><th className="py-space-md px-space-md">Total</th><th className="py-space-md px-space-md">Statut</th><th className="py-space-md px-space-lg">Paiement</th></tr></thead>
+              <tbody>
+                {orders.slice().reverse().map(o => (
+                  <tr key={o.id} className="hover:bg-surface-container-low/40 transition-colors border-t border-surface-container">
+                    <td className="py-space-md px-space-lg font-label-md text-label-md font-bold text-primary">#{o.ticket_number}</td>
+                    <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">{o.client?.first_name} {o.client?.last_name}</td>
+                    <td className="py-space-md px-space-md font-body-sm text-body-sm text-outline">{new Date(o.created_at).toLocaleDateString('fr-FR')}</td>
+                    <td className="py-space-md px-space-md font-numeric-currency text-numeric-currency font-bold text-on-surface">{o.total.toLocaleString('fr-FR')} XOF</td>
+                    <td className="py-space-md px-space-md"><span className={`inline-flex px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-bold ${o.status === 'pret' ? 'bg-tertiary-fixed text-tertiary' : o.status === 'livre' ? 'bg-surface-container-high text-on-surface-variant' : 'bg-[#fef3c7] text-[#b45309]'}`}>{o.status.replace('_',' ').replace(/^./, c => c.toUpperCase())}</span></td>
+                    <td className="py-space-md px-space-lg"><span className={`inline-flex px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-bold ${o.payment_status === 'paye' ? 'bg-tertiary-fixed text-tertiary' : o.payment_status === 'acompte' ? 'bg-[#fef3c7] text-[#b45309]' : 'bg-error-container text-error'}`}>{o.payment_status.replace('_',' ').replace(/^./, c => c.toUpperCase())}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-3xl text-center font-body-md text-body-md text-outline">Aucune commande</div>)}
     </div>
   )
 }
