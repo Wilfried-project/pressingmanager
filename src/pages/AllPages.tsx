@@ -1364,27 +1364,83 @@ export const DeliveryPage: React.FC = () => {
   const statusColors: Record<string,string> = { planifie: 'yellow', en_route: 'blue', livre: 'green', echec: 'red' }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Livraisons" subtitle={`${deliveries.length} livraison(s) — ${todayDeliveries.length} aujourd'hui`} action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Planifier livraison</Button>} />
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[{ l:'Planifiées', s:'planifie', c:'yellow' },{ l:'En route', s:'en_route', c:'blue' },{ l:'Livrées', s:'livre', c:'green' },{ l:'Échouées', s:'echec', c:'red' }].map(({ l, s, c }) => <Card key={s} className="p-4 text-center"><p className="text-2xl font-bold">{deliveries.filter(d => d.status === s).length}</p><Badge label={l} color={c} /></Card>)}
+    <div className="flex flex-col gap-space-xl">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Livraisons</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-space-2xs">{deliveries.length} livraison(s) — {todayDeliveries.length} aujourd'hui</p>
+        </div>
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-md hover:bg-primary transition-all active:scale-95">
+          <Plus size={18} /> Planifier livraison
+        </button>
       </div>
-      {readyOrders.length > 0 && <Alert type="info" message={` ${readyOrders.length} commande(s) prête(s) à livrer`} />}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-space-md">
+        {[
+          { l: 'Planifiées', s: 'planifie', bg: 'bg-[#fef3c7]', text: 'text-[#b45309]' },
+          { l: 'En route', s: 'en_route', bg: 'bg-secondary-fixed', text: 'text-secondary' },
+          { l: 'Livrées', s: 'livre', bg: 'bg-tertiary-fixed', text: 'text-tertiary' },
+          { l: 'Échouées', s: 'echec', bg: 'bg-error-container', text: 'text-error' },
+        ].map(({ l, s, bg, text }) => (
+          <div key={s} className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg text-center">
+            <p className="font-headline-xl text-headline-xl font-bold text-on-surface">{deliveries.filter(d => d.status === s).length}</p>
+            <span className={`inline-flex mt-space-sm px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-bold ${bg} ${text}`}>{l}</span>
+          </div>
+        ))}
+      </div>
+      {readyOrders.length > 0 && (
+        <div className="p-space-lg bg-primary/10 rounded-DEFAULT font-body-sm text-body-sm text-primary">
+          {readyOrders.length} commande(s) prête(s) à livrer
+        </div>
+      )}
       {deliveries.length > 0 ? (
-        <Table headers={['Commande','Client','Adresse','Livreur','Date/Heure','Statut','Actions']}>
-          {deliveries.slice().reverse().map(d => { const order = orders.find(o => o.id === d.order_id); const driver = employees.find(e => e.id === d.driver_id); return (
-            <tr key={d.id} className="hover:bg-purple-50">
-              <td className="px-5 py-4 font-bold text-purple-700 text-sm">{order ? `#${order.ticket_number}` : '-'}</td>
-              <td className="px-5 py-4 text-sm">{order ? `${order.client?.first_name} ${order.client?.last_name}` : '-'}</td>
-              <td className="px-5 py-4 text-sm max-w-32 truncate">{d.address}</td>
-              <td className="px-5 py-4 text-sm">{driver?.full_name || '-'}</td>
-              <td className="px-5 py-4 text-sm">{new Date(d.scheduled_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</td>
-              <td className="px-5 py-4"><Badge label={d.status.replace('_',' ').replace(/^./, c => c.toUpperCase())} color={statusColors[d.status]} /></td>
-              <td className="px-5 py-4"><Select value={d.status} onChange={e => updateDelivery(d.id, { status: e.target.value as any, ...(e.target.value === 'livre' ? { delivered_at: new Date().toISOString() } : {}) })} className="text-xs py-1 w-32"><option value="planifie">Planifié</option><option value="en_route">En route</option><option value="livre">Livré </option><option value="echec">Échec </option></Select></td>
-            </tr>
-          )})}
-        </Table>
-      ) : <Card><EmptyState icon="" message="Aucune livraison" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Planifier</Button>} /></Card>}
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider">
+                  <th className="py-space-md px-space-lg">Commande</th>
+                  <th className="py-space-md px-space-md">Client</th>
+                  <th className="py-space-md px-space-md">Adresse</th>
+                  <th className="py-space-md px-space-md">Livreur</th>
+                  <th className="py-space-md px-space-md">Date/Heure</th>
+                  <th className="py-space-md px-space-md">Statut</th>
+                  <th className="py-space-md px-space-lg">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deliveries.slice().reverse().map(d => { const order = orders.find(o => o.id === d.order_id); const driver = employees.find(e => e.id === d.driver_id); return (
+                  <tr key={d.id} className="hover:bg-surface-container-low/40 transition-colors border-t border-surface-container">
+                    <td className="py-space-md px-space-lg font-label-md text-label-md font-bold text-primary">{order ? `#${order.ticket_number}` : '-'}</td>
+                    <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">{order ? `${order.client?.first_name} ${order.client?.last_name}` : '-'}</td>
+                    <td className="py-space-md px-space-md font-body-sm text-body-sm text-outline max-w-32 truncate">{d.address}</td>
+                    <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface">{driver?.full_name || '-'}</td>
+                    <td className="py-space-md px-space-md font-body-sm text-body-sm text-outline">{new Date(d.scheduled_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</td>
+                    <td className="py-space-md px-space-md">
+                      <span className={`inline-flex px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-bold ${d.status === 'livre' ? 'bg-tertiary-fixed text-tertiary' : d.status === 'echec' ? 'bg-error-container text-error' : d.status === 'en_route' ? 'bg-secondary-fixed text-secondary' : 'bg-[#fef3c7] text-[#b45309]'}`}>
+                        {d.status.replace('_',' ').replace(/^./, c => c.toUpperCase())}
+                      </span>
+                    </td>
+                    <td className="py-space-md px-space-lg">
+                      <select value={d.status} onChange={e => updateDelivery(d.id, { status: e.target.value as any, ...(e.target.value === 'livre' ? { delivered_at: new Date().toISOString() } : {}) })}
+                        className="text-xs py-1.5 px-space-sm bg-surface-container-low rounded-full font-label-sm text-label-sm text-on-surface focus:outline-none">
+                        <option value="planifie">Planifié</option>
+                        <option value="en_route">En route</option>
+                        <option value="livre">Livré</option>
+                        <option value="echec">Échec</option>
+                      </select>
+                    </td>
+                  </tr>
+                )})}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-3xl text-center">
+          <p className="font-body-md text-body-md text-outline mb-space-md">Aucune livraison</p>
+          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full shadow-md hover:bg-primary transition-all"><Plus size={18} /> Planifier</button>
+        </div>
+      )}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Planifier une livraison">
         <form onSubmit={e => { e.preventDefault(); addDelivery({ id: crypto.randomUUID(), ...form, status: 'planifie', created_at: new Date().toISOString() } as Delivery); setShowForm(false); setForm({ order_id: '', driver_id: '', address: '', scheduled_at: '', notes: '' }) }} className="space-y-4">
           <Field label="Commande prête" required><Select required value={form.order_id} onChange={e => { const o = orders.find(ord => ord.id === e.target.value); setForm({ ...form, order_id: e.target.value, address: o?.client?.address || '' }) }}><option value="">Sélectionner...</option>{readyOrders.map(o => <option key={o.id} value={o.id}>#{o.ticket_number} — {o.client?.first_name} {o.client?.last_name}</option>)}</Select></Field>
