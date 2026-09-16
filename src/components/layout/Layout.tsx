@@ -20,12 +20,12 @@ export const ALL_MODULES = [
   { path: '/notifications', label: 'Notifications', icon: 'notifications', group: 'Opérations' },
   { path: '/agenda', label: 'Agenda', icon: 'calendar_month', group: 'Opérations' },
   { path: '/atelier', label: 'Atelier', icon: 'qr_code_scanner', group: 'Opérations' },
-  { path: '/hr', label: 'Employés & RH', icon: 'badge', group: 'Équipe' },
-  { path: '/accounting', label: 'Comptabilité', icon: 'account_balance_wallet', group: 'Finance' },
-  { path: '/reports', label: 'Rapports', icon: 'monitoring', group: 'Finance' },
-  { path: '/services', label: 'Services & Tarifs', icon: 'sell', group: 'Administration' },
-  { path: '/settings', label: 'Paramètres', icon: 'settings', group: 'Administration' },
-  { path: '/users', label: 'Utilisateurs', icon: 'manage_accounts', group: 'Administration' },
+  { path: '/hr', label: 'Employés & RH', icon: 'badge', group: 'Équipe & Finance' },
+  { path: '/accounting', label: 'Comptabilité', icon: 'account_balance_wallet', group: 'Équipe & Finance' },
+  { path: '/reports', label: 'Rapports', icon: 'monitoring', group: 'Équipe & Finance' },
+  { path: '/services', label: 'Services & Tarifs', icon: 'sell', group: 'Configuration' },
+  { path: '/settings', label: 'Paramètres', icon: 'settings', group: 'Configuration' },
+  { path: '/users', label: 'Utilisateurs', icon: 'manage_accounts', group: 'Configuration' },
 ]
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -101,6 +101,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               </div>
             ))}
           </nav>
+        </div>
+        <div className="p-space-md bg-surface-container-low mx-space-md mb-space-lg rounded-DEFAULT flex items-center justify-between">
+          <div className="flex items-center gap-space-sm">
+            <span className="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse" />
+            <span className="font-label-sm text-label-sm text-on-surface font-semibold">Atelier en ligne</span>
+          </div>
+          <span className="font-label-sm text-label-sm text-outline font-numeric-currency">v1.0.0</span>
         </div>
       </aside>
 
