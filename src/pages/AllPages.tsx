@@ -1270,11 +1270,21 @@ export const ServicesPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Services & Tarifs" subtitle="Configurez vos prix — appliqués directement dans les commandes" action={<Button onClick={() => setShowAdd(true)}>+ Ajouter un tarif</Button>} />
-      <Alert type="info" message="Cliquez sur l'icône pour modifier un prix. Ajoutez vos propres types de vêtements et services — ils apparaîtront automatiquement dans les commandes." />
+    <div className="flex flex-col gap-space-xl">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Services &amp; Tarifs</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-space-2xs">Configurez vos prix — appliqués directement dans les commandes</p>
+        </div>
+        <button onClick={() => setShowAdd(true)} className="flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-md hover:bg-primary transition-all active:scale-95">
+          <Plus size={18} /> Ajouter un tarif
+        </button>
+      </div>
+      <div className="p-space-lg bg-primary/10 rounded-DEFAULT font-body-sm text-body-sm text-primary">
+        Cliquez sur l'icône pour modifier un prix. Ajoutez vos propres types de vêtements et services — ils apparaîtront automatiquement dans les commandes.
+      </div>
       {showAdd && (
-        <div className="bg-white rounded-xl shadow-sm border p-5 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg grid grid-cols-1 sm:grid-cols-4 gap-space-md items-end">
           <Field label="Type de vêtement">
             <Input value={newEntry.cloth_type} onChange={e => setNewEntry({ ...newEntry, cloth_type: e.target.value })} placeholder="Ex: ensemble militaire" />
           </Field>
@@ -1282,34 +1292,55 @@ export const ServicesPage: React.FC = () => {
             <Input value={newEntry.service_type} onChange={e => setNewEntry({ ...newEntry, service_type: e.target.value })} placeholder="Ex: nettoyage sec" />
           </Field>
           <Field label="Prix (XOF)">
-            <Input type="number" value={newEntry.price} onChange={e => setNewEntry({ ...newEntry, price: parseInt(e.target.value) || 0 })} />
+            <Input type="number" min="0" value={newEntry.price} onChange={e => setNewEntry({ ...newEntry, price: Math.max(0, parseInt(e.target.value) || 0) })} />
           </Field>
-          <div className="flex gap-2">
+          <div className="flex gap-space-sm">
             <Button onClick={handleAdd} className="flex-1">Ajouter</Button>
             <Button variant="secondary" onClick={() => setShowAdd(false)}>Annuler</Button>
           </div>
         </div>
       )}
-      {loading ? <p className="text-gray-500 text-sm">Chargement...</p> : (
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b">
-              <tr>{['Type', 'Service', 'Prix (XOF)', 'Actions'].map(h => <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-purple-700 uppercase whitespace-nowrap">{h}</th>)}</tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {prices.map(p => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-5 py-4 font-semibold capitalize text-sm">{p.cloth_type}</td>
-                  <td className="px-5 py-4 text-sm capitalize text-gray-600">{p.service_type.replace(/_/g,' ')}</td>
-                  <td className="px-5 py-4">{editId === p.id ? <Input type="number" value={editData.price} onChange={e => setEditData({ price: parseInt(e.target.value) })} className="w-24" /> : <span className="font-bold text-purple-700">{p.price.toLocaleString('fr-FR')}</span>}</td>
-                  <td className="px-5 py-4">{editId === p.id ? <div className="flex gap-2"><button onClick={() => handleSave(p)} className="px-3 py-1 bg-green-600 text-white rounded-lg text-xs">Sauver</button><button onClick={() => setEditId(null)} className="px-3 py-1 bg-gray-300 rounded-lg text-xs">Annuler</button></div> : <div className="flex gap-1"><button onClick={() => { setEditId(p.id); setEditData({ price: p.price }) }} className="p-1.5 hover:bg-purple-100 text-purple-600 rounded-lg"><Edit2 size={16} /></button><button onClick={() => handleDelete(p)} className="p-1.5 hover:bg-red-100 text-red-500 rounded-lg"><Trash2 size={16} /></button></div>}</td>
+      {loading ? <p className="font-body-md text-body-md text-outline">Chargement...</p> : (
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider">
+                  <th className="py-space-md px-space-lg">Type</th>
+                  <th className="py-space-md px-space-md">Service</th>
+                  <th className="py-space-md px-space-md">Prix (XOF)</th>
+                  <th className="py-space-md px-space-lg text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {prices.map(p => (
+                  <tr key={p.id} className="hover:bg-surface-container-low/40 transition-colors border-t border-surface-container">
+                    <td className="py-space-md px-space-lg font-label-md text-label-md text-on-surface font-semibold capitalize">{p.cloth_type}</td>
+                    <td className="py-space-md px-space-md font-body-md text-body-md text-on-surface-variant capitalize">{p.service_type.replace(/_/g,' ')}</td>
+                    <td className="py-space-md px-space-md">
+                      {editId === p.id
+                        ? <Input type="number" min="0" value={editData.price} onChange={e => setEditData({ price: Math.max(0, parseInt(e.target.value) || 0) })} className="w-28" />
+                        : <span className="font-numeric-currency text-numeric-currency font-bold text-primary">{p.price.toLocaleString('fr-FR')}</span>}
+                    </td>
+                    <td className="py-space-md px-space-lg text-right">
+                      {editId === p.id ? (
+                        <div className="flex justify-end gap-space-2xs">
+                          <button onClick={() => handleSave(p)} className="px-space-md py-space-2xs bg-tertiary-fixed text-tertiary rounded-full font-label-sm text-label-sm font-semibold">Sauver</button>
+                          <button onClick={() => setEditId(null)} className="px-space-md py-space-2xs bg-surface-container text-on-surface-variant rounded-full font-label-sm text-label-sm font-semibold">Annuler</button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end gap-space-2xs">
+                          <button onClick={() => { setEditId(p.id); setEditData({ price: p.price }) }} className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-surface-container hover:text-primary transition-all"><Edit2 size={15} /></button>
+                          <button onClick={() => handleDelete(p)} className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-error-container hover:text-error transition-all"><Trash2 size={15} /></button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
       )}
     </div>
   )
