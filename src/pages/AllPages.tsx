@@ -811,12 +811,20 @@ export const AgendaPage: React.FC = () => {
   const daysWithEvents = new Set(events.map(e => e.date))
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Agenda & Planning" subtitle={`${events.length} événement(s) — ${orders.filter(o => o.expected_at && o.status !== 'annule').length} livraison(s) planifiée(s)`} action={<Button icon={<Plus size={18} />} onClick={() => { setForm({ ...form, date: selectedDate }); setShowForm(true) }}>Nouvel événement</Button>} />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card>
-          <h2 className="font-bold text-center mb-4">{today.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</h2>
-          <div className="grid grid-cols-7 gap-1 mb-2">{['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'].map(d => <p key={d} className="text-center text-xs font-semibold text-gray-400">{d}</p>)}</div>
+    <div className="flex flex-col gap-space-xl">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Agenda &amp; Planning</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-space-2xs">{events.length} événement(s) — {orders.filter(o => o.expected_at && o.status !== 'annule').length} livraison(s) planifiée(s)</p>
+        </div>
+        <button onClick={() => { setForm({ ...form, date: selectedDate }); setShowForm(true) }} className="flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-md hover:bg-primary transition-all active:scale-95">
+          <Plus size={18} /> Nouvel événement
+        </button>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-space-xl">
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg">
+          <h2 className="font-headline-md text-headline-md font-bold text-on-surface text-center mb-space-md capitalize">{today.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</h2>
+          <div className="grid grid-cols-7 gap-1 mb-space-sm">{['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'].map(d => <p key={d} className="text-center font-label-sm text-label-sm font-semibold text-outline">{d}</p>)}</div>
           <div className="grid grid-cols-7 gap-1">
             {days.map((day, i) => {
               if (!day) return <div key={i} />
@@ -826,35 +834,35 @@ export const AgendaPage: React.FC = () => {
               const hasOrders = daysWithOrders.has(dateStr)
               const hasEvents = daysWithEvents.has(dateStr)
               return (
-                <button key={i} onClick={() => setSelectedDate(dateStr)} className={`aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium transition ${isSelected ? 'bg-purple-600 text-white' : isToday ? 'bg-purple-50 text-purple-700 font-bold' : 'hover:bg-gray-100'}`}>
+                <button key={i} onClick={() => setSelectedDate(dateStr)} className={`aspect-square flex flex-col items-center justify-center rounded-xl font-label-sm text-label-sm font-medium transition-all ${isSelected ? 'bg-primary text-on-primary' : isToday ? 'bg-primary-fixed text-primary font-bold' : 'hover:bg-surface-container'}`}>
                   {day}
                   <div className="flex gap-0.5 mt-0.5">
-                    {hasOrders && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-blue-500'}`} />}
-                    {hasEvents && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-yellow-500'}`} />}
+                    {hasOrders && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-secondary'}`} />}
+                    {hasEvents && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#f59e0b]'}`} />}
                   </div>
                 </button>
               )
             })}
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 space-y-1.5">
-            <div className="flex items-center gap-2 text-xs text-gray-500"><div className="w-2 h-2 rounded-full bg-blue-500" /> Livraisons</div>
-            <div className="flex items-center gap-2 text-xs text-gray-500"><div className="w-2 h-2 rounded-full bg-yellow-500" /> Événements</div>
+          <div className="mt-space-md pt-space-md border-t border-surface-container flex flex-col gap-space-2xs">
+            <div className="flex items-center gap-space-xs font-label-sm text-label-sm text-outline"><div className="w-2 h-2 rounded-full bg-secondary" /> Livraisons</div>
+            <div className="flex items-center gap-space-xs font-label-sm text-label-sm text-outline"><div className="w-2 h-2 rounded-full bg-[#f59e0b]" /> Événements</div>
           </div>
-        </Card>
-        <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <h2 className="font-bold mb-4">{new Date(selectedDate+'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
+        </div>
+        <div className="lg:col-span-2 flex flex-col gap-space-lg">
+          <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg">
+            <h2 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-md capitalize">{new Date(selectedDate+'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
             {dayOrders.length > 0 && (
-              <div className="mb-4">
-                <p className="text-xs font-bold text-blue-600 uppercase mb-2">Livraisons prévues ({dayOrders.length})</p>
-                <div className="space-y-2">
+              <div className="mb-space-md">
+                <p className="font-label-sm text-label-sm font-bold text-secondary uppercase mb-space-sm">Livraisons prévues ({dayOrders.length})</p>
+                <div className="flex flex-col gap-space-sm">
                   {dayOrders.map(order => (
-                    <div key={order.id} className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                    <div key={order.id} className="flex items-center gap-space-sm p-space-md bg-secondary-fixed rounded-xl">
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-blue-900 truncate">#{order.ticket_number} — {order.client?.first_name} {order.client?.last_name}</p>
-                        <p className="text-xs text-blue-600">{order.clothes.length} article(s) • {order.total.toLocaleString('fr-FR')} XOF {order.remaining > 0 ? `• Reste: ${order.remaining.toLocaleString('fr-FR')} XOF` : ' Soldé'}</p>
+                        <p className="font-label-md text-label-md font-semibold text-secondary truncate">#{order.ticket_number} — {order.client?.first_name} {order.client?.last_name}</p>
+                        <p className="font-body-sm text-body-sm text-secondary/80">{order.clothes.length} article(s) • {order.total.toLocaleString('fr-FR')} XOF {order.remaining > 0 ? `• Reste: ${order.remaining.toLocaleString('fr-FR')} XOF` : '• Soldé'}</p>
                       </div>
-                      <span className={`px-2 py-1 rounded-lg text-xs font-semibold flex-shrink-0 ${order.status === 'pret' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{order.status.replace('_',' ')}</span>
+                      <span className={`px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-semibold flex-shrink-0 ${order.status === 'pret' ? 'bg-tertiary-fixed text-tertiary' : 'bg-[#fef3c7] text-[#b45309]'}`}>{order.status.replace('_',' ')}</span>
                     </div>
                   ))}
                 </div>
@@ -862,22 +870,34 @@ export const AgendaPage: React.FC = () => {
             )}
             {dayEvents.length > 0 && (
               <div>
-                <p className="text-xs font-bold text-gray-500 uppercase mb-2">Événements ({dayEvents.length})</p>
-                <div className="space-y-2">
+                <p className="font-label-sm text-label-sm font-bold text-outline uppercase mb-space-sm">Événements ({dayEvents.length})</p>
+                <div className="flex flex-col gap-space-sm">
                   {dayEvents.sort((a,b) => a.time.localeCompare(b.time)).map(event => (
-                    <div key={event.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                      <div className="text-center flex-shrink-0"><p className="text-xl">{typeIcons[event.type]}</p><p className="text-xs font-bold text-gray-600">{event.time}</p></div>
-                      <div className="flex-1"><div className="flex justify-between"><p className="font-semibold">{event.title}</p><button onClick={() => deleteEvent(event.id)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button></div><Badge label={event.type} color={typeColors[event.type]} />{event.description && <p className="text-xs text-gray-500 mt-1">{event.description}</p>}</div>
+                    <div key={event.id} className="flex items-start gap-space-md p-space-md bg-surface-container-low rounded-xl">
+                      <div className="text-center flex-shrink-0"><p className="font-label-sm text-label-sm font-bold text-on-surface">{event.time}</p></div>
+                      <div className="flex-1">
+                        <div className="flex justify-between">
+                          <p className="font-label-md text-label-md font-semibold text-on-surface">{event.title}</p>
+                          <button onClick={() => deleteEvent(event.id)} className="text-outline hover:text-error"><Trash2 size={14} /></button>
+                        </div>
+                        <span className="inline-flex px-space-sm py-space-2xs rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-bold mt-space-2xs capitalize">{event.type}</span>
+                        {event.description && <p className="font-body-sm text-body-sm text-outline mt-space-2xs">{event.description}</p>}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            {dayOrders.length === 0 && dayEvents.length === 0 && <EmptyState icon="" message="Aucune livraison ni événement ce jour" action={<Button size="sm" icon={<Plus size={14} />} onClick={() => setShowForm(true)}>Ajouter</Button>} />}
-          </Card>
-          <Card>
-            <h2 className="font-bold mb-4">Charge de travail — 7 prochains jours</h2>
-            <div className="grid grid-cols-7 gap-2">
+            {dayOrders.length === 0 && dayEvents.length === 0 && (
+              <div className="text-center py-space-xl">
+                <p className="font-body-md text-body-md text-outline mb-space-md">Aucune livraison ni événement ce jour</p>
+                <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-space-xs px-space-lg py-space-2xs bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-sm hover:bg-primary transition-all"><Plus size={14} /> Ajouter</button>
+              </div>
+            )}
+          </div>
+          <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg">
+            <h2 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-md">Charge de travail — 7 prochains jours</h2>
+            <div className="grid grid-cols-7 gap-space-sm">
               {Array.from({ length: 7 }, (_, i) => {
                 const d = new Date(); d.setDate(d.getDate() + i)
                 const ds = d.toISOString().split('T')[0]
@@ -885,18 +905,18 @@ export const AgendaPage: React.FC = () => {
                 const isSelected = ds === selectedDate
                 const isSunday = d.getDay() === 0
                 const level = isSunday ? 'ferme' : count === 0 ? 'libre' : count <= 3 ? 'calme' : count <= 7 ? 'charge' : 'plein'
-                const colors: Record<string,string> = { ferme: 'bg-gray-200 text-gray-400', libre: 'bg-gray-100 text-gray-500', calme: 'bg-green-100 text-green-700', charge: 'bg-yellow-100 text-yellow-700', plein: 'bg-red-100 text-red-700' }
+                const colors: Record<string,string> = { ferme: 'bg-surface-container-high text-outline', libre: 'bg-surface-container text-on-surface-variant', calme: 'bg-tertiary-fixed text-tertiary', charge: 'bg-[#fef3c7] text-[#b45309]', plein: 'bg-error-container text-error' }
                 return (
-                  <button key={i} onClick={() => setSelectedDate(ds)} className={`p-2 rounded-xl text-center transition ${colors[level]} ${isSelected ? 'ring-2 ring-purple-500' : ''}`}>
-                    <p className="text-xs font-semibold">{d.toLocaleDateString('fr-FR', { weekday: 'short' })}</p>
-                    <p className="text-xs">{d.getDate()}</p>
-                    <p className="text-lg font-bold">{count}</p>
-                    <p className="text-xs">{level}</p>
+                  <button key={i} onClick={() => setSelectedDate(ds)} className={`p-space-sm rounded-xl text-center transition-all ${colors[level]} ${isSelected ? 'ring-2 ring-primary' : ''}`}>
+                    <p className="font-label-sm text-label-sm font-semibold capitalize">{d.toLocaleDateString('fr-FR', { weekday: 'short' })}</p>
+                    <p className="font-body-sm text-body-sm">{d.getDate()}</p>
+                    <p className="font-headline-md text-headline-md font-bold">{count}</p>
+                    <p className="font-label-sm text-label-sm capitalize">{level}</p>
                   </button>
                 )
               })}
             </div>
-          </Card>
+          </div>
         </div>
       </div>
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nouvel événement">
@@ -984,21 +1004,73 @@ export const AccountingPage: React.FC = () => {
   const byCategory = useMemo(() => { const map = new Map<string,number>(); transactions.filter(t => t.type === 'depense').forEach(t => map.set(t.category, (map.get(t.category)||0)+t.amount)); return Array.from(map.entries()).map(([name,value]) => ({ name, value })) }, [transactions])
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Comptabilité" subtitle="Journal des recettes et dépenses" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Nouvelle transaction</Button>} />
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white"><TrendingUp size={28} className="mb-3 opacity-80" /><p className="text-sm opacity-80">Total Recettes</p><p className="text-2xl font-bold mt-1">{getTotalRecettes().toLocaleString('fr-FR')} XOF</p></div>
-        <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-6 text-white"><TrendingDown size={28} className="mb-3 opacity-80" /><p className="text-sm opacity-80">Total Dépenses</p><p className="text-2xl font-bold mt-1">{getTotalDepenses().toLocaleString('fr-FR')} XOF</p></div>
-        <div className={`bg-gradient-to-br ${benefice >= 0 ? 'from-purple-600 to-indigo-600' : 'from-red-600 to-rose-700'} rounded-2xl p-6 text-white`}><DollarSign size={28} className="mb-3 opacity-80" /><p className="text-sm opacity-80">Bénéfice Net</p><p className="text-2xl font-bold mt-1">{benefice >= 0 ? '+' : ''}{benefice.toLocaleString('fr-FR')} XOF</p></div>
+    <div className="flex flex-col gap-space-xl">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <h1 className="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">Comptabilité</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-space-2xs">Journal des recettes et dépenses</p>
+        </div>
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-md hover:bg-primary transition-all active:scale-95">
+          <Plus size={18} /> Nouvelle transaction
+        </button>
       </div>
-      <Tabs tabs={[{ key: 'overview', label: "Vue d'ensemble", icon: '' }, { key: 'journal', label: 'Journal', icon: '' }]} active={activeTab} onChange={setActiveTab} />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-lg">
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg flex flex-col justify-between">
+          <div className="flex items-center justify-between"><span className="font-label-sm text-label-sm text-outline uppercase font-bold tracking-wider">Total Recettes</span><div className="w-10 h-10 rounded-full bg-tertiary-fixed text-tertiary flex items-center justify-center"><TrendingUp size={20} /></div></div>
+          <p className="font-headline-xl text-headline-xl font-bold text-tertiary mt-space-md">{getTotalRecettes().toLocaleString('fr-FR')} <span className="font-label-md text-label-md">XOF</span></p>
+        </div>
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg flex flex-col justify-between">
+          <div className="flex items-center justify-between"><span className="font-label-sm text-label-sm text-outline uppercase font-bold tracking-wider">Total Dépenses</span><div className="w-10 h-10 rounded-full bg-error-container text-error flex items-center justify-center"><TrendingDown size={20} /></div></div>
+          <p className="font-headline-xl text-headline-xl font-bold text-error mt-space-md">{getTotalDepenses().toLocaleString('fr-FR')} <span className="font-label-md text-label-md">XOF</span></p>
+        </div>
+        <div className="bg-primary text-on-primary rounded-DEFAULT shadow-md p-space-lg flex flex-col justify-between">
+          <div className="flex items-center justify-between"><span className="font-label-sm text-label-sm uppercase font-bold tracking-wider opacity-80">Bénéfice Net</span><div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center"><DollarSign size={20} /></div></div>
+          <p className="font-headline-xl text-headline-xl font-bold mt-space-md">{benefice >= 0 ? '+' : ''}{benefice.toLocaleString('fr-FR')} <span className="font-label-md text-label-md">XOF</span></p>
+        </div>
+      </div>
+      <div className="bg-surface-container-low p-1.5 rounded-full flex items-center gap-1 self-start shadow-sm">
+        {[{ key: 'overview', label: "Vue d'ensemble" }, { key: 'journal', label: 'Journal' }].map(tab => (
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-space-xl py-2 font-label-md text-label-md rounded-full transition-all ${activeTab === tab.key ? 'bg-surface-container-lowest text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}>{tab.label}</button>
+        ))}
+      </div>
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <Card><h2 className="text-base font-bold mb-4">Tendance 7 jours</h2><ResponsiveContainer width="100%" height={220}><BarChart data={trend}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" tick={{ fontSize: 11 }} /><YAxis tick={{ fontSize: 11 }} /><Tooltip formatter={(v) => `${Number(v).toLocaleString('fr-FR')} XOF`} /><Bar dataKey="Recettes" fill="#10b981" radius={[4,4,0,0]} /><Bar dataKey="Dépenses" fill="#ef4444" radius={[4,4,0,0]} /></BarChart></ResponsiveContainer></Card>
-          <Card><h2 className="text-base font-bold mb-4">Dépenses par catégorie</h2>{byCategory.length > 0 ? <ResponsiveContainer width="100%" height={220}><PieChart><Pie data={byCategory} cx="50%" cy="50%" outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`} labelLine={false}>{byCategory.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]} />)}</Pie><Tooltip formatter={(v) => `${Number(v).toLocaleString('fr-FR')} XOF`} /></PieChart></ResponsiveContainer> : <EmptyState icon="" message="Aucune dépense" />}</Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-space-lg">
+          <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg">
+            <h2 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-md">Tendance 7 jours</h2>
+            <ResponsiveContainer width="100%" height={220}><BarChart data={trend}><CartesianGrid strokeDasharray="3 3" stroke="#eaedff" /><XAxis dataKey="date" tick={{ fontSize: 11 }} /><YAxis tick={{ fontSize: 11 }} /><Tooltip formatter={(v) => `${Number(v).toLocaleString('fr-FR')} XOF`} /><Bar dataKey="Recettes" fill="#009368" radius={[4,4,0,0]} /><Bar dataKey="Dépenses" fill="#ba1a1a" radius={[4,4,0,0]} /></BarChart></ResponsiveContainer>
+          </div>
+          <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-lg">
+            <h2 className="font-headline-md text-headline-md font-bold text-on-surface mb-space-md">Dépenses par catégorie</h2>
+            {byCategory.length > 0 ? <ResponsiveContainer width="100%" height={220}><PieChart><Pie data={byCategory} cx="50%" cy="50%" outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`} labelLine={false}>{byCategory.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]} />)}</Pie><Tooltip formatter={(v) => `${Number(v).toLocaleString('fr-FR')} XOF`} /></PieChart></ResponsiveContainer> : <p className="text-center py-space-xl font-body-md text-body-md text-outline">Aucune dépense</p>}
+          </div>
         </div>
       )}
-      {activeTab === 'journal' && (transactions.length > 0 ? <Table headers={['Date','Type','Catégorie','Description','Montant','Par']}>{transactions.slice().reverse().map(t => <tr key={t.id} className="hover:bg-gray-50"><td className="px-5 py-4 text-sm">{new Date(t.date).toLocaleDateString('fr-FR')}</td><td className="px-5 py-4"><Badge label={t.type === 'recette' ? ' Recette' : '📉 Dépense'} color={t.type === 'recette' ? 'green' : 'red'} /></td><td className="px-5 py-4 text-sm capitalize">{t.category}</td><td className="px-5 py-4 text-sm">{t.description}</td><td className={`px-5 py-4 font-bold text-sm ${t.type === 'recette' ? 'text-green-600' : 'text-red-600'}`}>{t.type === 'depense' ? '-' : '+'}{t.amount.toLocaleString('fr-FR')} XOF</td><td className="px-5 py-4 text-xs text-gray-400">{t.created_by}</td></tr>)}</Table> : <Card><EmptyState icon="" message="Aucune transaction" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter</Button>} /></Card>)}
+      {activeTab === 'journal' && (transactions.length > 0 ? (
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead><tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider"><th className="py-space-md px-space-lg">Date</th><th className="py-space-md px-space-md">Type</th><th className="py-space-md px-space-md">Catégorie</th><th className="py-space-md px-space-md">Description</th><th className="py-space-md px-space-md">Montant</th><th className="py-space-md px-space-lg">Par</th></tr></thead>
+              <tbody>
+                {transactions.slice().reverse().map(t => (
+                  <tr key={t.id} className="hover:bg-surface-container-low/40 transition-colors border-t border-surface-container">
+                    <td className="py-space-md px-space-lg font-body-md text-body-md text-on-surface">{new Date(t.date).toLocaleDateString('fr-FR')}</td>
+                    <td className="py-space-md px-space-md"><span className={`inline-flex px-space-sm py-space-2xs rounded-full font-label-sm text-label-sm font-bold ${t.type === 'recette' ? 'bg-tertiary-fixed text-tertiary' : 'bg-error-container text-error'}`}>{t.type === 'recette' ? 'Recette' : 'Dépense'}</span></td>
+                    <td className="py-space-md px-space-md font-body-sm text-body-sm text-on-surface capitalize">{t.category}</td>
+                    <td className="py-space-md px-space-md font-body-sm text-body-sm text-outline">{t.description}</td>
+                    <td className={`py-space-md px-space-md font-numeric-currency text-numeric-currency font-bold ${t.type === 'recette' ? 'text-tertiary' : 'text-error'}`}>{t.type === 'depense' ? '-' : '+'}{t.amount.toLocaleString('fr-FR')} XOF</td>
+                    <td className="py-space-md px-space-lg font-body-sm text-body-sm text-outline">{t.created_by}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-surface-container-lowest rounded-DEFAULT shadow-sm p-space-3xl text-center">
+          <p className="font-body-md text-body-md text-outline mb-space-md">Aucune transaction</p>
+          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-space-xs px-space-xl py-space-sm bg-primary-container text-on-primary font-label-lg text-label-lg rounded-full shadow-md hover:bg-primary transition-all"><Plus size={18} /> Ajouter</button>
+        </div>
+      ))}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nouvelle transaction">
         <form onSubmit={e => { e.preventDefault(); transactionService.create({ id: crypto.randomUUID(), ...form, amount: Number(form.amount), created_by: 'system' }).then(tx => setTransactions([tx as Transaction, ...transactions])).catch(() => addTransaction({ id: crypto.randomUUID(), ...form, amount: Number(form.amount), created_by: 'system' })); setShowForm(false); setForm({ type: 'recette', category: '', amount: 0, description: '', date: new Date().toISOString().split('T')[0] }) }} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
