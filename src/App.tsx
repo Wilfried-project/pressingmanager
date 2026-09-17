@@ -14,10 +14,11 @@ import { UsersPage } from './pages/users/UsersPage'
 import { ScanPage } from './pages/scan/ScanPage'
 import { AtelierPageModern } from './pages/atelier/AtelierPageModern'
 import {
-  StockPage, HRPage, NotificationsPage, LoyaltyPage,
+  StockPage, HRPage, NotificationsPage,
   AgendaPage, MultiAgencyPage, AccountingPage, ReportsPage,
   ServicesPage, DeliveryPage, SettingsPage
 } from './pages/AllPages'
+import { LoyaltyPageModern } from './pages/loyalty/LoyaltyPageModern'
  
 const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const user = useAuthStore(s => s.user)
@@ -250,7 +251,7 @@ function App() {
         <Route path="/stock" element={<Protected><StockPage /></Protected>} />
         <Route path="/hr" element={<Protected><HRPage /></Protected>} />
         <Route path="/notifications" element={<Protected><NotificationsPage /></Protected>} />
-        <Route path="/loyalty" element={<Protected><LoyaltyPage /></Protected>} />
+        <Route path="/loyalty" element={<Protected><LoyaltyPageModern /></Protected>} />
         <Route path="/agenda" element={<Protected><AgendaPage /></Protected>} />
         <Route path="/multiagency" element={<Protected><MultiAgencyPage /></Protected>} />
         <Route path="/accounting" element={<Protected><AccountingPage /></Protected>} />
@@ -267,6 +268,7 @@ function App() {
 }
  
 export default App
+
 
 
 
