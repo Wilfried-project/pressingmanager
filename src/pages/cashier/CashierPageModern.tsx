@@ -142,14 +142,14 @@ export const CashierPageModern: React.FC = () => {
   }
 
   const handleAddTx = async () => {
-    if (!currentSession) { alert('Ouvrez la caisse d\'abord'); setShowOpen(true); return }
+    if (!currentSession) { alert('Ouvrez la caisse d abord'); setShowOpen(true); return }
     const amount = parseFloat(txForm.amount) || 0
     if (!amount || !txForm.reason) { alert('Montant et raison requis'); return }
     try {
       const tx = await cashService.addTransaction({
         id: crypto.randomUUID(), session_id: currentSession.id,
         type: txForm.type, amount,
-        reason: `[${txForm.method.toUpperCase()}] ${txForm.reason}`,
+        reason: '[' + txForm.method.toUpperCase() + '] ' + txForm.reason,
         created_by: user?.full_name || 'Admin',
         created_at: new Date().toISOString()
       })
@@ -190,15 +190,10 @@ export const CashierPageModern: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
-
-      {/* HEADER */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1
-              className="text-3xl font-extrabold text-on-surface tracking-tight"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-            >
+            <h1 className="text-3xl font-extrabold text-on-surface tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               Caisse & Point de Vente
             </h1>
             {currentSession ? (
@@ -215,33 +210,24 @@ export const CashierPageModern: React.FC = () => {
           </div>
           <p className="text-sm text-on-surface-variant mt-1">
             {currentSession
-              ? `Ouverte depuis ${new Date(currentSession.opened_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} par ${currentSession.opened_by}`
+              ? 'Ouverte depuis ' + new Date(currentSession.opened_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ' par ' + currentSession.opened_by
               : 'La caisse est actuellement fermee'}
           </p>
         </div>
         <div className="flex items-center flex-wrap gap-2">
           {currentSession ? (
             <>
-              <button
-                onClick={() => setShowTx(true)}
-                className="btn-modern-ghost bg-surface-container-low"
-              >
+              <button onClick={() => setShowTx(true)} className="btn-modern-ghost bg-surface-container-low">
                 <Plus size={16} />
                 Mouvement
               </button>
-              <button
-                onClick={() => setShowClose(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-all shadow-sm"
-              >
+              <button onClick={() => setShowClose(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-all shadow-sm">
                 <Lock size={16} />
                 Fermer la caisse
               </button>
             </>
           ) : (
-            <button
-              onClick={() => setShowOpen(true)}
-              className="btn-modern-primary"
-            >
+            <button onClick={() => setShowOpen(true)} className="btn-modern-primary">
               <Unlock size={16} />
               Ouvrir la caisse
             </button>
@@ -249,7 +235,6 @@ export const CashierPageModern: React.FC = () => {
         </div>
       </div>
 
-      {/* ALERTE CAISSE NON FERMEE */}
       {showUnclosedAlert && currentSession && (
         <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-red-50 to-white border border-red-100 animate-fade-in">
           <div className="w-11 h-11 rounded-2xl bg-red-500 text-white flex items-center justify-center shrink-0">
@@ -257,82 +242,37 @@ export const CashierPageModern: React.FC = () => {
           </div>
           <div className="flex-1">
             <p className="font-bold text-red-800 text-sm">Caisse non fermee !</p>
-            <p className="text-xs text-red-600 mt-0.5">
-              La caisse du {new Date(currentSession.opened_at).toLocaleDateString('fr-FR')} n'a pas ete fermee.
-            </p>
+            <p className="text-xs text-red-600 mt-0.5">La caisse du {new Date(currentSession.opened_at).toLocaleDateString('fr-FR')} n a pas ete fermee.</p>
           </div>
-          <button
-            onClick={() => { setShowUnclosedAlert(false); setShowClose(true) }}
-            className="px-4 py-2 rounded-xl bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition shrink-0"
-          >
+          <button onClick={() => { setShowUnclosedAlert(false); setShowClose(true) }} className="px-4 py-2 rounded-xl bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition shrink-0">
             Cloturer
           </button>
         </div>
       )}
 
-      {/* RAPPEL 18H */}
       {showReminder && currentSession && (
         <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-white border border-amber-100 animate-fade-in">
           <div className="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0">
             <Clock size={20} />
           </div>
           <div className="flex-1">
-            <p className="font-bold text-amber-800 text-sm">Il est 18h00 - N'oubliez pas de fermer la caisse</p>
-            <p className="text-xs text-amber-600 mt-0.5">
-              Solde attendu : <strong>{soldeAttendu.toLocaleString('fr-FR')} XOF</strong>
-            </p>
+            <p className="font-bold text-amber-800 text-sm">Il est 18h00 - N oubliez pas de fermer la caisse</p>
+            <p className="text-xs text-amber-600 mt-0.5">Solde attendu : <strong>{soldeAttendu.toLocaleString('fr-FR')} XOF</strong></p>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button
-              onClick={() => { setShowReminder(false); setShowClose(true) }}
-              className="px-4 py-2 rounded-xl bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition"
-            >
-              Fermer
-            </button>
-            <button
-              onClick={() => setShowReminder(false)}
-              className="px-4 py-2 rounded-xl bg-white text-on-surface text-xs font-bold border border-outline-variant/40 hover:bg-surface-container transition"
-            >
-              Plus tard
-            </button>
+            <button onClick={() => { setShowReminder(false); setShowClose(true) }} className="px-4 py-2 rounded-xl bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition">Fermer</button>
+            <button onClick={() => setShowReminder(false)} className="px-4 py-2 rounded-xl bg-white text-on-surface text-xs font-bold border border-outline-variant/40 hover:bg-surface-container transition">Plus tard</button>
           </div>
         </div>
       )}
 
-      {/* KPI FINANCIERS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <KpiCard
-          label="Fond de caisse"
-          value={(currentSession?.opening_amount || 0).toLocaleString('fr-FR')}
-          unit="XOF"
-          icon={<Wallet size={18} />}
-          sub={currentSession ? 'Fixe a l ouverture' : 'Aucune session'}
-        />
-        <KpiCard
-          label="Entrees du jour"
-          value={totalEntrees.toLocaleString('fr-FR')}
-          unit="XOF"
-          icon={<ArrowUpCircle size={18} />}
-          sub={`${sessionTx.filter((t: any) => t.type === 'entree').length} encaissement(s)`}
-        />
-        <KpiCard
-          label="Sorties / Depenses"
-          value={totalSorties.toLocaleString('fr-FR')}
-          unit="XOF"
-          icon={<ArrowDownCircle size={18} />}
-          sub={`${sessionTx.filter((t: any) => t.type === 'sortie').length} sortie(s)`}
-        />
-        <KpiCard
-          label="Solde theorique"
-          value={soldeAttendu.toLocaleString('fr-FR')}
-          unit="XOF"
-          icon={<Calculator size={18} />}
-          variant="primary"
-          sub="Montant attendu"
-        />
+        <KpiCard label="Fond de caisse" value={(currentSession?.opening_amount || 0).toLocaleString('fr-FR')} unit="XOF" icon={<Wallet size={18} />} sub={currentSession ? 'Fixe a l ouverture' : 'Aucune session'} />
+        <KpiCard label="Entrees du jour" value={totalEntrees.toLocaleString('fr-FR')} unit="XOF" icon={<ArrowUpCircle size={18} />} sub={sessionTx.filter((t: any) => t.type === 'entree').length + ' encaissement(s)'} />
+        <KpiCard label="Sorties / Depenses" value={totalSorties.toLocaleString('fr-FR')} unit="XOF" icon={<ArrowDownCircle size={18} />} sub={sessionTx.filter((t: any) => t.type === 'sortie').length + ' sortie(s)'} />
+        <KpiCard label="Solde theorique" value={soldeAttendu.toLocaleString('fr-FR')} unit="XOF" icon={<Calculator size={18} />} variant="primary" sub="Montant attendu" />
       </div>
 
-      {/* VERIFICATION AVANT OUVERTURE */}
       {!currentSession && lastClosedSession && (
         <div className="card-modern">
           <div className="flex items-center gap-3 mb-4">
@@ -340,84 +280,49 @@ export const CashierPageModern: React.FC = () => {
               <Calculator size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-on-surface" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                Verification du solde avant ouverture
-              </h3>
-              <p className="text-xs text-on-surface-variant">
-                Derniere cloture : <strong className="text-on-surface">{(lastClosedSession.closing_amount || 0).toLocaleString('fr-FR')} XOF</strong>
-              </p>
+              <h3 className="font-bold text-on-surface" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Verification du solde avant ouverture</h3>
+              <p className="text-xs text-on-surface-variant">Derniere cloture : <strong className="text-on-surface">{(lastClosedSession.closing_amount || 0).toLocaleString('fr-FR')} XOF</strong></p>
             </div>
           </div>
-
           <Field label="Solde physique compte (XOF)">
-            <input
-              type="number"
-              value={confirmedSolde}
-              onChange={e => setConfirmedSolde(e.target.value)}
-              placeholder="Comptez votre caisse..."
+            <input type="number" value={confirmedSolde} onChange={e => setConfirmedSolde(e.target.value)} placeholder="Comptez votre caisse..."
               className="w-full px-5 py-4 bg-surface-container-low text-on-surface text-2xl font-bold rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary border border-outline-variant/40 transition-all text-right"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-            />
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
           </Field>
-
           {confirmedSolde && ecart !== 0 && (
-            <div className={`mt-3 px-4 py-3 rounded-xl flex items-center justify-between font-semibold text-sm ${
-              ecart === 0
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-red-50 text-red-700 border border-red-200'
-            }`}>
-              <span className="flex items-center gap-2">
-                <AlertTriangle size={16} />
-                Ecart detecte
-              </span>
+            <div className="mt-3 px-4 py-3 rounded-xl bg-red-50 text-red-700 border border-red-200 flex items-center justify-between font-semibold text-sm">
+              <span className="flex items-center gap-2"><AlertTriangle size={16} />Ecart detecte</span>
               <span>{ecart > 0 ? '+' : ''}{ecart.toLocaleString('fr-FR')} XOF</span>
             </div>
           )}
-
           {confirmedSolde && ecart === 0 && (
             <div className="mt-3 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-2 font-semibold text-sm">
               <CheckCircle2 size={16} />
               Solde conforme
             </div>
           )}
-
-          <button
-            onClick={() => { setOpenAmount(confirmedSolde || String(lastClosedSession.closing_amount || 0)); handleOpenSession() }}
-            disabled={!confirmedSolde}
-            className="w-full mt-4 py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primary-container disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md flex items-center justify-center gap-2"
-          >
+          <button onClick={() => { setOpenAmount(confirmedSolde || String(lastClosedSession.closing_amount || 0)); handleOpenSession() }} disabled={!confirmedSolde}
+            className="w-full mt-4 py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primary-container disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md flex items-center justify-center gap-2">
             <Unlock size={18} />
             Confirmer et ouvrir la caisse
           </button>
         </div>
       )}
 
-      {/* REPARTITION ENCAISSEMENTS */}
       {repartitionPaiements.length > 0 && (
         <div className="card-modern">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-bold text-on-surface" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                Repartition des encaissements
-              </h3>
-              <p className="text-xs text-on-surface-variant mt-0.5">
-                Total : <strong className="text-primary">{totalEntrees.toLocaleString('fr-FR')} XOF</strong>
-              </p>
+              <h3 className="font-bold text-on-surface" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Repartition des encaissements</h3>
+              <p className="text-xs text-on-surface-variant mt-0.5">Total : <strong className="text-primary">{totalEntrees.toLocaleString('fr-FR')} XOF</strong></p>
             </div>
             <DollarSign size={20} className="text-primary" />
           </div>
-
           <div className="h-3 rounded-full bg-surface-container overflow-hidden flex mb-4">
             {repartitionPaiements.map((p, i) => (
-              <div
-                key={i}
-                className="h-full transition-all duration-500"
-                style={{ width: `${p.pct}%`, background: p.color }}
-                title={`${p.label} - ${p.pct}%`}
-              />
+              <div key={i} className="h-full transition-all duration-500" style={{ width: p.pct + '%', background: p.color }} title={p.label + ' - ' + p.pct + '%'} />
             ))}
           </div>
-
           <div className="flex flex-wrap gap-3">
             {repartitionPaiements.map((p, i) => (
               <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-low">
@@ -430,7 +335,6 @@ export const CashierPageModern: React.FC = () => {
         </div>
       )}
 
-      {/* MOUVEMENTS DE CAISSE */}
       <div className="card-modern !p-0 overflow-hidden">
         <div className="p-5 border-b border-outline-variant/30 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -438,25 +342,17 @@ export const CashierPageModern: React.FC = () => {
               <Receipt size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-on-surface" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                Derniers mouvements
-              </h3>
-              <p className="text-xs text-on-surface-variant">
-                {sessionTx.length} transaction(s) aujourd'hui
-              </p>
+              <h3 className="font-bold text-on-surface" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Derniers mouvements</h3>
+              <p className="text-xs text-on-surface-variant">{sessionTx.length} transaction(s) aujourd hui</p>
             </div>
           </div>
           {currentSession && (
-            <button
-              onClick={() => setShowTx(true)}
-              className="btn-modern-primary text-xs"
-            >
+            <button onClick={() => setShowTx(true)} className="btn-modern-primary text-xs">
               <Plus size={14} />
               Ajouter
             </button>
           )}
         </div>
-
         {sessionTx.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -472,23 +368,15 @@ export const CashierPageModern: React.FC = () => {
               <tbody>
                 {[...sessionTx].reverse().map((tx: any) => (
                   <tr key={tx.id} className="hover:bg-primary-fixed/20 transition-colors border-b border-outline-variant/20 last:border-0">
-                    <td className="py-3 px-5 text-sm text-on-surface-variant font-medium">
-                      {new Date(tx.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                    </td>
+                    <td className="py-3 px-5 text-sm text-on-surface-variant font-medium">{new Date(tx.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</td>
                     <td className="py-3 px-5">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                        tx.type === 'entree'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-red-50 text-red-700'
-                      }`}>
+                      <span className={'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ' + (tx.type === 'entree' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700')}>
                         {tx.type === 'entree' ? <ArrowUpCircle size={12} /> : <ArrowDownCircle size={12} />}
                         {tx.type === 'entree' ? 'Entree' : 'Sortie'}
                       </span>
                     </td>
                     <td className="py-3 px-5 text-sm text-on-surface max-w-xs truncate">{tx.reason}</td>
-                    <td className={`py-3 px-5 text-sm font-bold text-right ${
-                      tx.type === 'entree' ? 'text-emerald-600' : 'text-red-600'
-                    }`}>
+                    <td className={'py-3 px-5 text-sm font-bold text-right ' + (tx.type === 'entree' ? 'text-emerald-600' : 'text-red-600')}>
                       {tx.type === 'entree' ? '+' : '-'}{tx.amount.toLocaleString('fr-FR')} XOF
                     </td>
                     <td className="py-3 px-5 text-xs text-on-surface-variant">{tx.created_by}</td>
@@ -502,18 +390,15 @@ export const CashierPageModern: React.FC = () => {
             <div className="w-16 h-16 rounded-full bg-surface-container mx-auto flex items-center justify-center mb-4">
               <Receipt size={28} className="text-on-surface-variant/50" />
             </div>
-            <p className="text-sm text-on-surface-variant">Aucun mouvement aujourd'hui</p>
+            <p className="text-sm text-on-surface-variant">Aucun mouvement aujourd hui</p>
           </div>
         )}
       </div>
 
-      {/* HISTORIQUE */}
       {sessions.filter(s => s.status === 'closed').length > 0 && (
         <div className="card-modern !p-0 overflow-hidden">
           <div className="p-5 border-b border-outline-variant/30">
-            <h3 className="font-bold text-on-surface" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Historique des caisses
-            </h3>
+            <h3 className="font-bold text-on-surface" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Historique des caisses</h3>
             <p className="text-xs text-on-surface-variant mt-0.5">10 dernieres cloture(s)</p>
           </div>
           <div className="overflow-x-auto">
@@ -530,18 +415,10 @@ export const CashierPageModern: React.FC = () => {
               <tbody>
                 {sessions.filter(s => s.status === 'closed').slice(0, 10).map((s: any) => (
                   <tr key={s.id} className="hover:bg-primary-fixed/20 transition-colors border-b border-outline-variant/20 last:border-0">
-                    <td className="py-3 px-5 text-sm text-on-surface font-medium">
-                      {new Date(s.opened_at).toLocaleDateString('fr-FR')}
-                    </td>
-                    <td className="py-3 px-5 text-sm text-on-surface-variant">
-                      {s.opening_amount.toLocaleString('fr-FR')} XOF
-                    </td>
-                    <td className="py-3 px-5 text-sm text-on-surface-variant">
-                      {s.closed_at ? new Date(s.closed_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '-'}
-                    </td>
-                    <td className="py-3 px-5 text-sm font-bold text-primary text-right">
-                      {(s.closing_amount || 0).toLocaleString('fr-FR')} XOF
-                    </td>
+                    <td className="py-3 px-5 text-sm text-on-surface font-medium">{new Date(s.opened_at).toLocaleDateString('fr-FR')}</td>
+                    <td className="py-3 px-5 text-sm text-on-surface-variant">{s.opening_amount.toLocaleString('fr-FR')} XOF</td>
+                    <td className="py-3 px-5 text-sm text-on-surface-variant">{s.closed_at ? new Date(s.closed_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                    <td className="py-3 px-5 text-sm font-bold text-primary text-right">{(s.closing_amount || 0).toLocaleString('fr-FR')} XOF</td>
                     <td className="py-3 px-5 text-xs text-on-surface-variant">{s.opened_by}</td>
                   </tr>
                 ))}
@@ -551,30 +428,18 @@ export const CashierPageModern: React.FC = () => {
         </div>
       )}
 
-      {/* ============ MODAL OUVERTURE ============ */}
       <Modal open={showOpen} onClose={() => setShowOpen(false)} title="Ouvrir la caisse" size="sm">
         <div className="space-y-4">
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-            <p className="text-sm font-bold text-emerald-800">
-              {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
+            <p className="text-sm font-bold text-emerald-800">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
             <p className="text-xs text-emerald-600 mt-1">Comptez votre fond de caisse avant de commencer.</p>
           </div>
           <Field label="Fond de caisse initial (XOF)">
-            <Input
-              type="number"
-              value={openAmount}
-              onChange={e => setOpenAmount(e.target.value)}
-              placeholder="Ex: 50 000"
-            />
+            <Input type="number" value={openAmount} onChange={e => setOpenAmount(e.target.value)} placeholder="Ex: 50 000" />
           </Field>
           <div className="grid grid-cols-4 gap-2">
             {[1000, 5000, 10000, 50000].map(v => (
-              <button
-                key={v}
-                onClick={() => setOpenAmount(String((parseFloat(openAmount) || 0) + v))}
-                className="py-2 rounded-lg bg-surface-container-low hover:bg-primary-fixed text-sm font-bold text-on-surface transition"
-              >
+              <button key={v} onClick={() => setOpenAmount(String((parseFloat(openAmount) || 0) + v))} className="py-2 rounded-lg bg-surface-container-low hover:bg-primary-fixed text-sm font-bold text-on-surface transition">
                 +{v / 1000}k
               </button>
             ))}
@@ -585,41 +450,21 @@ export const CashierPageModern: React.FC = () => {
         </div>
       </Modal>
 
-      {/* ============ MODAL FERMETURE ============ */}
       <Modal open={showClose} onClose={() => setShowClose(false)} title="Fermer la caisse" size="sm">
         <div className="space-y-4">
           <div className="bg-surface-container-low border border-outline-variant/40 rounded-xl p-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-on-surface-variant">Fond initial</span>
-              <span className="font-semibold">{(currentSession?.opening_amount || 0).toLocaleString('fr-FR')} XOF</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-on-surface-variant">Entrees</span>
-              <span className="font-semibold text-emerald-600">+{totalEntrees.toLocaleString('fr-FR')} XOF</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-on-surface-variant">Sorties</span>
-              <span className="font-semibold text-red-600">-{totalSorties.toLocaleString('fr-FR')} XOF</span>
-            </div>
-            <div className="flex justify-between font-bold border-t border-outline-variant/40 pt-2">
-              <span>Solde theorique</span>
-              <span className="text-primary">{soldeAttendu.toLocaleString('fr-FR')} XOF</span>
-            </div>
+            <div className="flex justify-between text-sm"><span className="text-on-surface-variant">Fond initial</span><span className="font-semibold">{(currentSession?.opening_amount || 0).toLocaleString('fr-FR')} XOF</span></div>
+            <div className="flex justify-between text-sm"><span className="text-on-surface-variant">Entrees</span><span className="font-semibold text-emerald-600">+{totalEntrees.toLocaleString('fr-FR')} XOF</span></div>
+            <div className="flex justify-between text-sm"><span className="text-on-surface-variant">Sorties</span><span className="font-semibold text-red-600">-{totalSorties.toLocaleString('fr-FR')} XOF</span></div>
+            <div className="flex justify-between font-bold border-t border-outline-variant/40 pt-2"><span>Solde theorique</span><span className="text-primary">{soldeAttendu.toLocaleString('fr-FR')} XOF</span></div>
           </div>
           <Field label="Solde physique compte (XOF)">
-            <Input
-              type="number"
-              value={closeAmount}
-              onChange={e => setCloseAmount(e.target.value)}
-              placeholder={String(soldeAttendu)}
-            />
+            <Input type="number" value={closeAmount} onChange={e => setCloseAmount(e.target.value)} placeholder={String(soldeAttendu)} />
           </Field>
           {closeAmount && parseFloat(closeAmount) !== soldeAttendu && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
               <AlertTriangle size={16} className="text-red-600" />
-              <p className="text-sm font-bold text-red-700">
-                Ecart : {(parseFloat(closeAmount) - soldeAttendu).toLocaleString('fr-FR')} XOF
-              </p>
+              <p className="text-sm font-bold text-red-700">Ecart : {(parseFloat(closeAmount) - soldeAttendu).toLocaleString('fr-FR')} XOF</p>
             </div>
           )}
           <Button className="w-full" onClick={handleCloseSession} icon={<Lock size={16} />} variant="danger">
@@ -628,54 +473,30 @@ export const CashierPageModern: React.FC = () => {
         </div>
       </Modal>
 
-      {/* ============ MODAL MOUVEMENT ============ */}
       <Modal open={showTx} onClose={() => setShowTx(false)} title="Mouvement de caisse" size="sm">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setTxForm(f => ({ ...f, type: 'entree' }))}
-              className={`p-3 rounded-xl border-2 text-center font-semibold transition flex items-center justify-center gap-2 ${
-                txForm.type === 'entree' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-outline-variant/40 text-on-surface-variant'
-              }`}
-            >
+            <button onClick={() => setTxForm(f => ({ ...f, type: 'entree' }))} className={'p-3 rounded-xl border-2 text-center font-semibold transition flex items-center justify-center gap-2 ' + (txForm.type === 'entree' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-outline-variant/40 text-on-surface-variant')}>
               <ArrowUpCircle size={16} />
               Entree
             </button>
-            <button
-              onClick={() => setTxForm(f => ({ ...f, type: 'sortie' }))}
-              className={`p-3 rounded-xl border-2 text-center font-semibold transition flex items-center justify-center gap-2 ${
-                txForm.type === 'sortie' ? 'border-red-500 bg-red-50 text-red-700' : 'border-outline-variant/40 text-on-surface-variant'
-              }`}
-            >
+            <button onClick={() => setTxForm(f => ({ ...f, type: 'sortie' }))} className={'p-3 rounded-xl border-2 text-center font-semibold transition flex items-center justify-center gap-2 ' + (txForm.type === 'sortie' ? 'border-red-500 bg-red-50 text-red-700' : 'border-outline-variant/40 text-on-surface-variant')}>
               <ArrowDownCircle size={16} />
               Sortie
             </button>
           </div>
-
           <Field label="Montant (XOF)">
-            <input
-              type="number"
-              value={txForm.amount}
-              onChange={e => setTxForm(f => ({ ...f, amount: e.target.value }))}
-              placeholder="Montant..."
+            <input type="number" value={txForm.amount} onChange={e => setTxForm(f => ({ ...f, amount: e.target.value }))} placeholder="Montant..."
               className="w-full px-4 py-4 bg-surface-container-low text-on-surface text-2xl font-bold rounded-xl text-right focus:outline-none focus:ring-2 focus:ring-primary/30 border border-outline-variant/40"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-            />
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
           </Field>
-
           <div className="grid grid-cols-4 gap-2">
             {[1000, 5000, 10000, 50000].map(v => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => addQuickAmount(v)}
-                className="py-2 rounded-lg bg-surface-container-low hover:bg-primary-fixed text-xs font-bold text-on-surface transition"
-              >
+              <button key={v} type="button" onClick={() => addQuickAmount(v)} className="py-2 rounded-lg bg-surface-container-low hover:bg-primary-fixed text-xs font-bold text-on-surface transition">
                 +{v / 1000}k
               </button>
             ))}
           </div>
-
           <Field label="Mode de paiement">
             <Select value={txForm.method} onChange={e => setTxForm(f => ({ ...f, method: e.target.value }))}>
               <option value="especes">Especes</option>
@@ -684,15 +505,9 @@ export const CashierPageModern: React.FC = () => {
               <option value="mtn">MTN Money</option>
             </Select>
           </Field>
-
           <Field label="Raison">
-            <Input
-              value={txForm.reason}
-              onChange={e => setTxForm(f => ({ ...f, reason: e.target.value }))}
-              placeholder="Ex: Paiement client..."
-            />
+            <Input value={txForm.reason} onChange={e => setTxForm(f => ({ ...f, reason: e.target.value }))} placeholder="Ex: Paiement client..." />
           </Field>
-
           <Button className="w-full" onClick={handleAddTx}>
             Enregistrer
           </Button>
