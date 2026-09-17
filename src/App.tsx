@@ -2,6 +2,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { useAuthStore, useShopConfig } from './lib/store'
+import { useTheme } from './lib/useTheme'
 import { BillingPage } from './pages/billing/BillingPage'
 import { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/auth/LoginPage'
@@ -16,8 +17,9 @@ import { AtelierPageModern } from './pages/atelier/AtelierPageModern'
 import {
   StockPage, HRPage, NotificationsPage,
   AgendaPage, MultiAgencyPage, AccountingPage, ReportsPage,
-  ServicesPage, DeliveryPage, SettingsPage
+  ServicesPage, DeliveryPage
 } from './pages/AllPages'
+import { SettingsPageModern } from './pages/settings/SettingsPageModern'
 import { LoyaltyPageModern } from './pages/loyalty/LoyaltyPageModern'
  
 const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -31,6 +33,7 @@ function App() {
   const [expired, setExpired] = useState(false)
   const { user, setUser, setSession } = useAuthStore()
   const { setConfig } = useShopConfig()
+  useTheme()
 
   // VÃ©rifie que le pressing (tenant) n'est pas suspendu ET que son
   // abonnement n'est pas expirÃ©, avant de laisser l'utilisateur accÃ©der
@@ -258,7 +261,7 @@ function App() {
         <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
         <Route path="/services" element={<Protected><ServicesPage /></Protected>} />
         <Route path="/delivery" element={<Protected><DeliveryPage /></Protected>} />
-        <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
+        <Route path="/settings" element={<Protected><SettingsPageModern /></Protected>} />
         <Route path="/users" element={<Protected><UsersPage /></Protected>} />
         <Route path="/atelier" element={<Protected><AtelierPageModern /></Protected>} />
         <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
@@ -268,6 +271,8 @@ function App() {
 }
  
 export default App
+
+
 
 
 

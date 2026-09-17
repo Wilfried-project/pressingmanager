@@ -1,25 +1,8 @@
-﻿export default {
+export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
-        // ============================================
-        // COULEURS DYNAMIQUES (via variables CSS)
-        // Change selon le pressing via useTheme()
-        // ============================================
-        'primary': 'rgb(var(--primary-rgb) / <alpha-value>)',
-        'on-primary': 'rgb(var(--on-primary-rgb) / <alpha-value>)',
-        'primary-container': 'rgb(var(--primary-container-rgb) / <alpha-value>)',
-        'on-primary-container': 'rgb(var(--on-primary-container-rgb) / <alpha-value>)',
-        'primary-fixed': 'rgb(var(--primary-fixed-rgb) / <alpha-value>)',
-        'primary-fixed-dim': 'rgb(var(--primary-fixed-dim-rgb) / <alpha-value>)',
-        'on-primary-fixed': 'rgb(var(--on-primary-fixed-rgb) / <alpha-value>)',
-        'on-primary-fixed-variant': 'rgb(var(--on-primary-fixed-variant-rgb) / <alpha-value>)',
-        'inverse-primary': 'rgb(var(--inverse-primary-rgb) / <alpha-value>)',
-
-        // ============================================
-        // COULEURS STATIQUES (Material Design 3)
-        // ============================================
         'surface': '#faf8ff',
         'surface-dim': '#d2d9f4',
         'surface-bright': '#faf8ff',
@@ -35,6 +18,11 @@
         'outline': '#7b7487',
         'outline-variant': '#ccc3d8',
         'surface-tint': '#732ee4',
+        'primary': '#630ed4',
+        'on-primary': '#ffffff',
+        'primary-container': '#7c3aed',
+        'on-primary-container': '#ede0ff',
+        'inverse-primary': '#d2bbff',
         'secondary': '#4b41e1',
         'on-secondary': '#ffffff',
         'secondary-container': '#645efb',
@@ -47,6 +35,10 @@
         'on-error': '#ffffff',
         'error-container': '#ffdad6',
         'on-error-container': '#93000a',
+        'primary-fixed': '#eaddff',
+        'primary-fixed-dim': '#d2bbff',
+        'on-primary-fixed': '#25005a',
+        'on-primary-fixed-variant': '#5a00c6',
         'secondary-fixed': '#e2dfff',
         'secondary-fixed-dim': '#c3c0ff',
         'on-secondary-fixed': '#0f0069',
