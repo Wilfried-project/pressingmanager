@@ -9,7 +9,7 @@ import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { DashboardModern } from './pages/dashboard/DashboardModern'
 import { ClientsPage } from './pages/clients/ClientsPage'
 import { OrdersPageModern } from './pages/orders/OrdersPageModern'
-import { CashierPage } from './pages/cashier/CashierPage'
+import { CashierPageModern } from './pages/cashier/CashierPageModern'
 import { UsersPage } from './pages/users/UsersPage'
 import { ScanPage } from './pages/scan/ScanPage'
 import { AtelierPageModern } from './pages/atelier/AtelierPageModern'
@@ -245,7 +245,7 @@ function App() {
         <Route path="/" element={<Protected><DashboardModern /></Protected>} />
         <Route path="/orders" element={<Protected><OrdersPageModern /></Protected>} />
         <Route path="/clients" element={<Protected><ClientsPage /></Protected>} />
-        <Route path="/cashier" element={<Protected><CashierPage /></Protected>} />
+        <Route path="/cashier" element={<Protected><CashierPageModern /></Protected>} />
         <Route path="/billing" element={<Protected><BillingPage /></Protected>} />
         <Route path="/stock" element={<Protected><StockPage /></Protected>} />
         <Route path="/hr" element={<Protected><HRPage /></Protected>} />
@@ -267,6 +267,7 @@ function App() {
 }
  
 export default App
+
 
 
 
