@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { useAuthStore, useShopConfig } from './lib/store'
@@ -6,7 +6,7 @@ import { BillingPage } from './pages/billing/BillingPage'
 import { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/auth/LoginPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
-import { DashboardPage } from './pages/dashboard/DashboardPage'
+import { DashboardModern } from './pages/dashboard/DashboardModern'
 import { ClientsPage } from './pages/clients/ClientsPage'
 import { OrdersPage } from './pages/orders/OrdersPage'
 import { CashierPage } from './pages/cashier/CashierPage'
@@ -31,10 +31,10 @@ function App() {
   const { user, setUser, setSession } = useAuthStore()
   const { setConfig } = useShopConfig()
 
-  // Vérifie que le pressing (tenant) n'est pas suspendu ET que son
-  // abonnement n'est pas expiré, avant de laisser l'utilisateur accéder
-  // à l'application. Dans les deux cas, la session est fermée
-  // immédiatement, même si les identifiants étaient corrects.
+  // VÃ©rifie que le pressing (tenant) n'est pas suspendu ET que son
+  // abonnement n'est pas expirÃ©, avant de laisser l'utilisateur accÃ©der
+  // Ã  l'application. Dans les deux cas, la session est fermÃ©e
+  // immÃ©diatement, mÃªme si les identifiants Ã©taient corrects.
   const checkTenantStatus = async (tenantId: string): Promise<boolean> => {
     if (!tenantId) return true
     try {
@@ -66,7 +66,7 @@ function App() {
 
       return true
     } catch (err) {
-      console.error('Erreur vérification statut pressing:', err)
+      console.error('Erreur vÃ©rification statut pressing:', err)
       return true
     }
   }
@@ -215,11 +215,11 @@ function App() {
   if (suspended) return (
     <div className="min-h-screen bg-gradient-to-br from-red-800 to-red-600 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">⏸️</div>
-        <h1 className="text-xl font-bold text-gray-900 mb-2">Accès suspendu</h1>
-        <p className="text-gray-600 text-sm mb-6">L'accès à ce pressing a été temporairement suspendu. Vos données restent en sécurité — contactez-nous pour réactiver votre accès.</p>
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">â¸ï¸</div>
+        <h1 className="text-xl font-bold text-gray-900 mb-2">AccÃ¨s suspendu</h1>
+        <p className="text-gray-600 text-sm mb-6">L'accÃ¨s Ã  ce pressing a Ã©tÃ© temporairement suspendu. Vos donnÃ©es restent en sÃ©curitÃ© â€” contactez-nous pour rÃ©activer votre accÃ¨s.</p>
         <a href="https://wa.me/2250779613865?text=Bonjour%2C%20mon%20acc%C3%A8s%20PressingManager%20est%20suspendu%2C%20je%20souhaite%20le%20r%C3%A9activer." target="_blank" rel="noopener noreferrer" className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition mb-3">Contacter sur WhatsApp</a>
-        <button onClick={() => window.location.reload()} className="text-purple-600 font-semibold hover:underline text-sm">Réessayer</button>
+        <button onClick={() => window.location.reload()} className="text-purple-600 font-semibold hover:underline text-sm">RÃ©essayer</button>
       </div>
     </div>
   )
@@ -227,11 +227,11 @@ function App() {
   if (expired) return (
     <div className="min-h-screen bg-gradient-to-br from-orange-700 to-orange-500 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
-        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">⏰</div>
-        <h1 className="text-xl font-bold text-gray-900 mb-2">Abonnement expiré</h1>
-        <p className="text-gray-600 text-sm mb-6">L'abonnement de ce pressing est arrivé à échéance. Vos données restent en sécurité — contactez-nous pour renouveler et retrouver l'accès.</p>
+        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">â°</div>
+        <h1 className="text-xl font-bold text-gray-900 mb-2">Abonnement expirÃ©</h1>
+        <p className="text-gray-600 text-sm mb-6">L'abonnement de ce pressing est arrivÃ© Ã  Ã©chÃ©ance. Vos donnÃ©es restent en sÃ©curitÃ© â€” contactez-nous pour renouveler et retrouver l'accÃ¨s.</p>
         <a href="https://wa.me/2250779613865?text=Bonjour%2C%20mon%20abonnement%20PressingManager%20est%20expir%C3%A9%2C%20je%20souhaite%20le%20renouveler." target="_blank" rel="noopener noreferrer" className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition mb-3">Contacter sur WhatsApp</a>
-        <button onClick={() => window.location.reload()} className="text-purple-600 font-semibold hover:underline text-sm">Réessayer</button>
+        <button onClick={() => window.location.reload()} className="text-purple-600 font-semibold hover:underline text-sm">RÃ©essayer</button>
       </div>
     </div>
   )
@@ -242,7 +242,7 @@ function App() {
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/scan/:ticket" element={<ScanPage />} />
-        <Route path="/" element={<Protected><DashboardPage /></Protected>} />
+        <Route path="/" element={<Protected><DashboardModern /></Protected>} />
         <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
         <Route path="/clients" element={<Protected><ClientsPage /></Protected>} />
         <Route path="/cashier" element={<Protected><CashierPage /></Protected>} />
@@ -267,3 +267,4 @@ function App() {
 }
  
 export default App
+
