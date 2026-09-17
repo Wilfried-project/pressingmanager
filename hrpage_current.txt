@@ -1,0 +1,124 @@
+export const HRPage: React.FC = () => {
+  const { employees, attendances, leaves, addEmployee, updateEmployee, deleteEmployee, addAttendance, addLeave, updateLeave, getTodayAttendance } = useHRStore()
+  const [showForm, setShowForm] = useState(false)
+  const [showAttendance, setShowAttendance] = useState(false)
+  const [showLeave, setShowLeave] = useState(false)
+  const [activeTab, setActiveTab] = useState('employees')
+  const [form, setForm] = useState({ full_name: '', role: 'laveur' as Employee['role'], phone: '', salary: 0, hire_date: '' })
+  const [attForm, setAttForm] = useState({ employee_id: '', status: 'present' as Attendance['status'] })
+  const [leaveForm, setLeaveForm] = useState({ employee_id: '', type: 'conge' as Leave['type'], start_date: '', end_date: '', notes: '' })
+  const todayAtt = getTodayAttendance()
+  const activeEmployees = employees.filter(e => e.is_active)
+  const pendingLeaves = leaves.filter(l => l.status === 'pending')
+  const totalSalaries = employees.filter(e => e.is_active).reduce((s, e) => s + e.salary, 0)
+  const roleColors: Record<string, string> = { admin: 'purple', manager: 'blue', caissier: 'green', reception: 'cyan', laveur: 'orange', repasseur: 'yellow', livreur: 'indigo' }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader title="EmployǸs & RH" subtitle={`${activeEmployees.length} employǸ(s) actif(s)`} action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter employǸ</Button>} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard label="EmployǸs actifs" value={activeEmployees.length} icon={<Users size={20} />} color="purple" />
+        <StatCard label="PrǸsents aujourd'hui" value={todayAtt.filter(a => a.status === 'present').length} icon={<CheckCircle size={20} />} color="green" />
+        <StatCard label="CongǸs en attente" value={pendingLeaves.length} icon={<Calendar size={20} />} color="yellow" />
+        <StatCard label="Masse salariale" value={`${totalSalaries.toLocaleString('fr-FR')} XOF`} icon={<DollarSign size={20} />} color="blue" />
+      </div>
+      <Tabs tabs={[{ key: 'employees', label: 'EmployǸs', icon: '' }, { key: 'attendance', label: 'Pointage', icon: '��?' }, { key: 'leaves', label: 'CongǸs', icon: '' }]} active={activeTab} onChange={setActiveTab} />
+      {activeTab === 'employees' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {employees.map(emp => (
+            <Card key={emp.id}>
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-700 font-bold text-lg">{emp.full_name.charAt(0)}</div>
+                <div className="flex gap-1">
+                  <button onClick={() => updateEmployee(emp.id, { is_active: !emp.is_active })} className={`px-2 py-1 rounded text-xs font-medium ${emp.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{emp.is_active ? 'Actif' : 'Inactif'}</button>
+                  <button onClick={() => { if (confirm('Supprimer ?')) deleteEmployee(emp.id) }} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+                </div>
+              </div>
+              <h3 className="font-bold text-gray-900">{emp.full_name}</h3>
+              <Badge label={emp.role} color={roleColors[emp.role] || 'gray'} />
+              <div className="mt-4 space-y-1.5">
+                {emp.phone && <p className="text-sm text-gray-500"> {emp.phone}</p>}
+                <p className="text-sm font-semibold text-gray-700"> {Number(emp.salary).toLocaleString('fr-FR')} XOF/mois</p>
+                {emp.hire_date && <p className="text-xs text-gray-400"> Depuis {new Date(emp.hire_date).toLocaleDateString('fr-FR')}</p>}
+              </div>
+            </Card>
+          ))}
+          {employees.length === 0 && <div className="col-span-3 bg-white rounded-xl shadow-sm border"><EmptyState icon="" message="Aucun employǸ" action={<Button icon={<Plus size={18} />} onClick={() => setShowForm(true)}>Ajouter</Button>} /></div>}
+        </div>
+      )}
+      {activeTab === 'attendance' && (
+        <div className="space-y-4">
+          <div className="flex justify-end"><Button icon={<Plus size={18} />} onClick={() => setShowAttendance(true)}>Enregistrer prǸsence</Button></div>
+          {todayAtt.length > 0 ? (
+            <Table headers={['EmployǸ', 'Statut', 'Heure arrivǸe', 'Heure dǸpart']}>
+              {todayAtt.map(att => { const emp = employees.find(e => e.id === att.employee_id); return (
+                <tr key={att.id} className="hover:bg-gray-50">
+                  <td className="px-5 py-4 font-medium text-sm">{emp?.full_name || 'Inconnu'}</td>
+                  <td className="px-5 py-4"><Badge label={att.status} color={att.status === 'present' ? 'green' : att.status === 'absent' ? 'red' : 'yellow'} /></td>
+                  <td className="px-5 py-4 text-sm">{new Date(att.check_in).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</td>
+                  <td className="px-5 py-4 text-sm">{att.check_out ? new Date(att.check_out).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                </tr>
+              )})}
+            </Table>
+          ) : <Card><EmptyState icon="��?" message="Aucun pointage aujourd'hui" /></Card>}
+        </div>
+      )}
+      {activeTab === 'leaves' && (
+        <div className="space-y-4">
+          <div className="flex justify-end"><Button icon={<Plus size={18} />} onClick={() => setShowLeave(true)}>Demande de congǸ</Button></div>
+          {leaves.length > 0 ? (
+            <Table headers={['EmployǸ', 'Type', 'Du', 'Au', 'Statut', 'Actions']}>
+              {leaves.map(leave => { const emp = employees.find(e => e.id === leave.employee_id); return (
+                <tr key={leave.id} className="hover:bg-gray-50">
+                  <td className="px-5 py-4 font-medium text-sm">{emp?.full_name || 'Inconnu'}</td>
+                  <td className="px-5 py-4"><Badge label={leave.type} color="blue" /></td>
+                  <td className="px-5 py-4 text-sm">{new Date(leave.start_date).toLocaleDateString('fr-FR')}</td>
+                  <td className="px-5 py-4 text-sm">{new Date(leave.end_date).toLocaleDateString('fr-FR')}</td>
+                  <td className="px-5 py-4"><Badge label={leave.status} color={leave.status === 'approved' ? 'green' : leave.status === 'rejected' ? 'red' : 'yellow'} /></td>
+                  <td className="px-5 py-4">{leave.status === 'pending' && <div className="flex gap-1"><button onClick={() => updateLeave(leave.id, { status: 'approved' })} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs"></button><button onClick={() => updateLeave(leave.id, { status: 'rejected' })} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs"></button></div>}</td>
+                </tr>
+              )})}
+            </Table>
+          ) : <Card><EmptyState icon="" message="Aucune demande" /></Card>}
+        </div>
+      )}
+      <Modal open={showForm} onClose={() => setShowForm(false)} title="Nouvel employǸ">
+        <form onSubmit={e => { e.preventDefault(); addEmployee({ id: crypto.randomUUID(), user_id: crypto.randomUUID(), agency_id: 'default', ...form, salary: Number(form.salary), is_active: true }); setShowForm(false); setForm({ full_name: '', role: 'laveur', phone: '', salary: 0, hire_date: '' }) }} className="space-y-4">
+          <Field label="Nom complet" required><Input required value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} placeholder="PrǸnom et Nom" /></Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="R��le"><Select value={form.role} onChange={e => setForm({ ...form, role: e.target.value as Employee['role'] })}>{['admin','manager','caissier','reception','laveur','repasseur','livreur'].map(r => <option key={r} value={r}>{r}</option>)}</Select></Field>
+            <Field label="TǸlǸphone"><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></Field>
+            <Field label="Salaire (XOF)"><Input type="number" min="0" value={form.salary} onChange={e => setForm({ ...form, salary: parseInt(e.target.value) || 0 })} /></Field>
+            <Field label="Date d'embauche"><Input type="date" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} /></Field>
+          </div>
+          <div className="flex gap-3"><Button type="submit" className="flex-1">Enregistrer</Button><Button type="button" variant="secondary" className="flex-1" onClick={() => setShowForm(false)}>Annuler</Button></div>
+        </form>
+      </Modal>
+      <Modal open={showAttendance} onClose={() => setShowAttendance(false)} title="Enregistrer prǸsence">
+        <form onSubmit={e => { e.preventDefault(); addAttendance({ id: crypto.randomUUID(), employee_id: attForm.employee_id, date: new Date().toISOString().split('T')[0], check_in: new Date().toISOString(), status: attForm.status }); setShowAttendance(false) }} className="space-y-4">
+          <Field label="EmployǸ" required><Select required value={attForm.employee_id} onChange={e => setAttForm({ ...attForm, employee_id: e.target.value })}><option value="">SǸlectionner...</option>{employees.filter(e => e.is_active).map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}</Select></Field>
+          <Field label="Statut"><Select value={attForm.status} onChange={e => setAttForm({ ...attForm, status: e.target.value as any })}><option value="present"> PrǸsent</option><option value="absent"> Absent</option><option value="retard"> Retard</option><option value="conge"> CongǸ</option></Select></Field>
+          <div className="flex gap-3"><Button type="submit" className="flex-1">Enregistrer</Button><Button type="button" variant="secondary" className="flex-1" onClick={() => setShowAttendance(false)}>Annuler</Button></div>
+        </form>
+      </Modal>
+      <Modal open={showLeave} onClose={() => setShowLeave(false)} title="Demande de congǸ">
+        <form onSubmit={e => { e.preventDefault(); addLeave({ id: crypto.randomUUID(), ...leaveForm, status: 'pending' }); setShowLeave(false); setLeaveForm({ employee_id: '', type: 'conge', start_date: '', end_date: '', notes: '' }) }} className="space-y-4">
+          <Field label="EmployǸ" required><Select required value={leaveForm.employee_id} onChange={e => setLeaveForm({ ...leaveForm, employee_id: e.target.value })}><option value="">SǸlectionner...</option>{employees.filter(e => e.is_active).map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}</Select></Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Type"><Select value={leaveForm.type} onChange={e => setLeaveForm({ ...leaveForm, type: e.target.value as any })}><option value="conge"> CongǸ</option><option value="maladie">�Y?� Maladie</option><option value="autre"> Autre</option></Select></Field>
+            <div />
+            <Field label="Date dǸbut"><Input type="date" required value={leaveForm.start_date} onChange={e => setLeaveForm({ ...leaveForm, start_date: e.target.value })} /></Field>
+            <Field label="Date fin"><Input type="date" required value={leaveForm.end_date} onChange={e => setLeaveForm({ ...leaveForm, end_date: e.target.value })} /></Field>
+          </div>
+          <Field label="Notes"><Textarea value={leaveForm.notes} onChange={e => setLeaveForm({ ...leaveForm, notes: e.target.value })} /></Field>
+          <div className="flex gap-3"><Button type="submit" className="flex-1">Soumettre</Button><Button type="button" variant="secondary" className="flex-1" onClick={() => setShowLeave(false)}>Annuler</Button></div>
+        </form>
+      </Modal>
+    </div>
+  )
+}
+
+// ============================================================
+// NOTIFICATIONS PAGE
+// ============================================================
+
