@@ -12,7 +12,7 @@ import { OrdersPageModern } from './pages/orders/OrdersPageModern'
 import { CashierPage } from './pages/cashier/CashierPage'
 import { UsersPage } from './pages/users/UsersPage'
 import { ScanPage } from './pages/scan/ScanPage'
-import { AtelierPage } from './pages/atelier/AtelierPage'
+import { AtelierPageModern } from './pages/atelier/AtelierPageModern'
 import {
   StockPage, HRPage, NotificationsPage, LoyaltyPage,
   AgendaPage, MultiAgencyPage, AccountingPage, ReportsPage,
@@ -259,7 +259,7 @@ function App() {
         <Route path="/delivery" element={<Protected><DeliveryPage /></Protected>} />
         <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
         <Route path="/users" element={<Protected><UsersPage /></Protected>} />
-        <Route path="/atelier" element={<Protected><AtelierPage /></Protected>} />
+        <Route path="/atelier" element={<Protected><AtelierPageModern /></Protected>} />
         <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
       </Routes>
     </BrowserRouter>
@@ -267,5 +267,6 @@ function App() {
 }
  
 export default App
+
 
 
