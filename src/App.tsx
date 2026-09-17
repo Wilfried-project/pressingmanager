@@ -2,7 +2,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { useAuthStore, useShopConfig } from './lib/store'
+import { useSettingsStore } from './lib/settingsStore'
 import { useTheme } from './lib/useTheme'
+import { Toaster } from 'sonner'
+import { CommandPalette } from './components/CommandPalette'
 import { BillingPage } from './pages/billing/BillingPage'
 import { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/auth/LoginPage'
@@ -15,16 +18,35 @@ import { UsersPage } from './pages/users/UsersPage'
 import { ScanPage } from './pages/scan/ScanPage'
 import { AtelierPageModern } from './pages/atelier/AtelierPageModern'
 import {
-  StockPage, HRPage, NotificationsPage,
-  AgendaPage, MultiAgencyPage, AccountingPage, ReportsPage,
-  ServicesPage, DeliveryPage
+
+  MultiAgencyPage,
 } from './pages/AllPages'
+import { ServicesPageModern } from './pages/services/ServicesPageModern'
+import { NotificationsPageModern } from './pages/notifications/NotificationsPageModern'
+import { HRPageModern } from './pages/hr/HRPageModern'
+import { DeliveryPageModern } from './pages/delivery/DeliveryPageModern'
+import { AgendaPageModern } from './pages/agenda/AgendaPageModern'
+import { ReportsPageModern } from './pages/reports/ReportsPageModern'
+import { StockPageModern } from './pages/stock/StockPageModern'
+import { AccountingPageModern } from './pages/accounting/AccountingPageModern'
 import { SettingsPageModern } from './pages/settings/SettingsPageModern'
 import { LoyaltyPageModern } from './pages/loyalty/LoyaltyPageModern'
+import { OnboardingWizard } from './pages/onboarding/OnboardingWizard'
  
 const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const user = useAuthStore(s => s.user)
-  return user ? <Layout>{children}</Layout> : <Navigate to="/login" replace />
+  const { settings } = useSettingsStore()
+  const location = window.location.pathname
+
+  if (!user) return <Navigate to="/login" replace />
+
+  // Si l'utilisateur n'a pas terminé son onboarding, rediriger vers /onboarding
+  // sauf s'il y est déjà (évite une boucle infinie)
+  if (settings && !settings.onboarding_completed && location !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />
+  }
+
+  return <Layout>{children}</Layout>
 }
  
 function App() {
@@ -34,6 +56,14 @@ function App() {
   const { user, setUser, setSession } = useAuthStore()
   const { setConfig } = useShopConfig()
   useTheme()
+
+  // Charger les settings du pressing au démarrage (necessaire pour l'onboarding)
+  const { loadSettings: loadAppSettings } = useSettingsStore()
+  useEffect(() => {
+    if (user) {
+      loadAppSettings()
+    }
+  }, [user])
 
   // VÃ©rifie que le pressing (tenant) n'est pas suspendu ET que son
   // abonnement n'est pas expirÃ©, avant de laisser l'utilisateur accÃ©der
@@ -246,31 +276,61 @@ function App() {
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/scan/:ticket" element={<ScanPage />} />
+        <Route path="/onboarding" element={<Protected><OnboardingWizard /></Protected>} />
         <Route path="/" element={<Protected><DashboardModern /></Protected>} />
         <Route path="/orders" element={<Protected><OrdersPageModern /></Protected>} />
         <Route path="/clients" element={<Protected><ClientsPageModern /></Protected>} />
         <Route path="/cashier" element={<Protected><CashierPageModern /></Protected>} />
         <Route path="/billing" element={<Protected><BillingPage /></Protected>} />
-        <Route path="/stock" element={<Protected><StockPage /></Protected>} />
-        <Route path="/hr" element={<Protected><HRPage /></Protected>} />
-        <Route path="/notifications" element={<Protected><NotificationsPage /></Protected>} />
+        <Route path="/stock" element={<Protected><StockPageModern /></Protected>} />
+        <Route path="/hr" element={<Protected><HRPageModern /></Protected>} />
+        <Route path="/notifications" element={<Protected><NotificationsPageModern /></Protected>} />
         <Route path="/loyalty" element={<Protected><LoyaltyPageModern /></Protected>} />
-        <Route path="/agenda" element={<Protected><AgendaPage /></Protected>} />
+        <Route path="/agenda" element={<Protected><AgendaPageModern /></Protected>} />
         <Route path="/multiagency" element={<Protected><MultiAgencyPage /></Protected>} />
-        <Route path="/accounting" element={<Protected><AccountingPage /></Protected>} />
-        <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
-        <Route path="/services" element={<Protected><ServicesPage /></Protected>} />
-        <Route path="/delivery" element={<Protected><DeliveryPage /></Protected>} />
+        <Route path="/accounting" element={<Protected><AccountingPageModern /></Protected>} />
+        <Route path="/reports" element={<Protected><ReportsPageModern /></Protected>} />
+        <Route path="/services" element={<Protected><ServicesPageModern /></Protected>} />
+        <Route path="/delivery" element={<Protected><DeliveryPageModern /></Protected>} />
         <Route path="/settings" element={<Protected><SettingsPageModern /></Protected>} />
         <Route path="/users" element={<Protected><UsersPage /></Protected>} />
         <Route path="/atelier" element={<Protected><AtelierPageModern /></Protected>} />
         <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
       </Routes>
+            <CommandPalette />
+      <Toaster
+        position="top-right"
+        richColors
+        closeButton
+        toastOptions={{
+          style: {
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            boxShadow: '0 12px 32px rgba(15,23,42,0.08), 0 4px 12px rgba(15,23,42,0.04)',
+            fontFamily: 'Inter, sans-serif',
+          },
+          className: 'toast-custom',
+        }}
+      />
     </BrowserRouter>
   )
 }
  
 export default App
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

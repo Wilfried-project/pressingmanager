@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useAuthStore, useShopConfig } from '../../lib/store'
 import { useSettingsStore } from '../../lib/settingsStore'
 import { supabase } from '../../lib/supabase'
+import { toast } from '../../lib/toast'
 import { useNavigate } from 'react-router-dom'
 import {
   Building2, Palette, Printer, Coins, Bell, Settings2, Database,
@@ -200,7 +201,7 @@ export const SettingsPageModern: React.FC = () => {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 2 * 1024 * 1024) { alert('Logo trop lourd - max 2 MB'); return }
+    if (file.size > 2 * 1024 * 1024) { toast.warning('Logo trop lourd', { description: 'Maximum 2 Mo. Compressez votre image.' }); return }
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Non connecte')
@@ -252,10 +253,10 @@ export const SettingsPageModern: React.FC = () => {
       await supabase.from('sequence_counters').delete().eq('tenant_id', tenantId)
       await supabase.from('employees').delete().eq('tenant_id', tenantId).neq('user_id', session.user.id)
 
-      alert('Toutes les donnees ont ete reinitialisees.')
+      toast.success('Donnees reinitialisees', { description: 'Tout a ete supprime avec succes' })
       window.location.href = '/'
     } catch (err: any) {
-      alert('Erreur lors de la reinitialisation : ' + (err.message || 'reessayez'))
+      toast.error('Erreur de reinitialisation', { description: err.message || 'Reessayez dans un instant' })
     } finally {
       setResetting(false)
       setShowResetModal(false)
@@ -1032,3 +1033,4 @@ export const SettingsPageModern: React.FC = () => {
 }
 
 export default SettingsPageModern
+

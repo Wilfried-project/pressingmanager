@@ -2,6 +2,7 @@
 import { useAuthStore } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { cashService } from '../../lib/db'
+import { toast } from '../../lib/toast'
 import { PageHeader, Button, Field, Input, Select, Card, Table, Badge, Modal, Alert, KpiCard, StatusBadge } from '../../components/ui'
 import {
   DollarSign, TrendingUp, TrendingDown, Lock, Unlock, Plus,
@@ -124,7 +125,7 @@ export const CashierPageModern: React.FC = () => {
       setOpenAmount('')
       setShowOpen(false)
       setConfirmedSolde('')
-    } catch (err) { alert('Erreur ouverture caisse') }
+    } catch (err) { toast.error('Erreur ouverture caisse', { description: 'Verifiez votre connexion et reessayez' }) }
   }
 
   const handleCloseSession = async () => {
@@ -138,13 +139,13 @@ export const CashierPageModern: React.FC = () => {
       setCloseAmount('')
       setShowClose(false)
       setShowUnclosedAlert(false)
-    } catch (err) { alert('Erreur fermeture caisse') }
+    } catch (err) { toast.error('Erreur fermeture caisse', { description: 'Verifiez votre connexion et reessayez' }) }
   }
 
   const handleAddTx = async () => {
-    if (!currentSession) { alert('Ouvrez la caisse d abord'); setShowOpen(true); return }
+    if (!currentSession) { toast.warning('Caisse fermee', { description: 'Ouvrez la caisse avant d enregistrer un mouvement' }); setShowOpen(true); return }
     const amount = parseFloat(txForm.amount) || 0
-    if (!amount || !txForm.reason) { alert('Montant et raison requis'); return }
+    if (!amount || !txForm.reason) { toast.warning('Informations manquantes', { description: 'Montant et raison sont obligatoires' }); return }
     try {
       const tx = await cashService.addTransaction({
         id: crypto.randomUUID(), session_id: currentSession.id,
@@ -156,7 +157,7 @@ export const CashierPageModern: React.FC = () => {
       setTransactions([tx, ...transactions])
       setTxForm({ type: 'entree', amount: '', reason: '', method: 'especes' })
       setShowTx(false)
-    } catch (err) { alert('Erreur enregistrement') }
+    } catch (err) { toast.error('Erreur enregistrement', { description: 'Verifiez votre connexion et reessayez' }) }
   }
 
   const addQuickAmount = (val: number) => {
@@ -518,3 +519,4 @@ export const CashierPageModern: React.FC = () => {
 }
 
 export default CashierPageModern
+

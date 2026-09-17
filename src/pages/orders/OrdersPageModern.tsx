@@ -2,6 +2,7 @@
 import QRCode from 'qrcode'
 import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig, useAgendaStore } from '../../lib/store'
 import { clientsService, ordersService, generateTicketNumber, servicePriceService, cashService } from '../../lib/db'
+import { toast } from '../../lib/toast'
 import {
   PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea,
   Badge, EmptyState, Table, Card, StatusBadge, Avatar,
@@ -72,6 +73,13 @@ export const OrdersPageModern: React.FC = () => {
 
   useEffect(() => {
     servicePriceService.getAll().then(setCustomPrices).catch(() => setCustomPrices([]))
+  }, [])
+
+  // Ecoute l'evenement global "open-new-order" (emis par la CommandPalette)
+  useEffect(() => {
+    const handler = () => setShowForm(true)
+    window.addEventListener('open-new-order', handler)
+    return () => window.removeEventListener('open-new-order', handler)
   }, [])
 
   const getPriceFor = (clothType: string, serviceType: string) => {
@@ -218,7 +226,7 @@ export const OrdersPageModern: React.FC = () => {
 
   const handleCreateClient = async () => {
     if (!newClient.first_name || !newClient.phone) {
-      alert('Prenom et telephone requis')
+      toast.warning('Informations manquantes', { description: 'Prenom et telephone sont obligatoires' })
       return
     }
     try {
@@ -237,7 +245,7 @@ export const OrdersPageModern: React.FC = () => {
       setClientSearch(`${client.first_name} ${client.last_name}`)
       setShowNewClientForm(false)
     } catch (err: any) {
-      alert('Erreur creation client : ' + (err.message || 'reessayez'))
+      toast.error('Erreur creation client', { description: err.message || 'Reessayez dans un instant' })
     }
     setNewClient({ first_name: '', last_name: '', phone: '', email: '' })
   }
@@ -245,7 +253,7 @@ export const OrdersPageModern: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const client = clients.find(c => c.id === form.client_id)
-    if (!client) { alert('Veuillez selectionner un client'); return }
+    if (!client) { toast.warning('Client non selectionne', { description: 'Veuillez choisir un client pour continuer' }); return }
     const ticket = await generateTicketNumber()
     const now = new Date().toISOString()
     const clothesFull: Cloth[] = clothes.map(c => ({
@@ -374,7 +382,7 @@ export const OrdersPageModern: React.FC = () => {
       setTimeout(() => window.open(waUrl, '_blank'), 1500)
     }
 
-    alert(`Commande creee ! Ticket: ${ticket}\n+${pts} points fidelite`)
+    toast.success('Commande creee !', { description: `Ticket #${ticket} · +${pts} points fidelite` })
   }
 
   const resetForm = () => {
@@ -434,7 +442,7 @@ export const OrdersPageModern: React.FC = () => {
       })
     }
 
-    alert(`Paiement enregistre !\nMontant recu: ${paymentAmount.toLocaleString('fr-FR')} XOF\n${newRemaining > 0 ? `Reste: ${newRemaining.toLocaleString('fr-FR')} XOF` : 'Commande entierement payee'}`)
+    toast.success('Paiement enregistre !', { description: newRemaining > 0 ? `Recu: ${paymentAmount.toLocaleString('fr-FR')} XOF · Reste: ${newRemaining.toLocaleString('fr-FR')} XOF` : `Montant total: ${paymentAmount.toLocaleString('fr-FR')} XOF · Commande soldee` })
     setShowPaymentModal(null)
     setPaymentAmount(0)
   }
@@ -552,7 +560,7 @@ export const OrdersPageModern: React.FC = () => {
       const waUrl = 'https://wa.me/' + phoneClean + '?text=' + encodeURIComponent(finalMsg)
       window.open(waUrl, '_blank')
     } else {
-      alert(`Notification preparee pour ${order.client?.first_name} ${order.client?.last_name}`)
+      toast.info('Notification preparee', { description: `${order.client?.first_name} ${order.client?.last_name}` })
     }
   }
 
@@ -1204,3 +1212,10 @@ export const OrdersPageModern: React.FC = () => {
 }
 
 export default OrdersPageModern
+
+
+
+
+
+
+

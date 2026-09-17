@@ -158,3 +158,64 @@
 ::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 8px; border: 2px solid #f8f5ff; }
 ::-webkit-scrollbar-thumb:hover { background: #a78bfa; }
 * { scrollbar-width: thin; scrollbar-color: #c4b5fd #f8f5ff; }
+/* ============================================
+   TOASTS - Style premium
+   ============================================ */
+.toast-custom {
+  font-family: 'Inter', sans-serif !important;
+}
+
+[data-sonner-toast] {
+  padding: 14px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: #10b981 !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: #ef4444 !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-icon] {
+  color: #f59e0b !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-icon] {
+  color: #3b82f6 !important;
+}
+
+[data-sonner-toast] [data-title] {
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+[data-sonner-toast] [data-description] {
+  color: #64748b !important;
+  font-size: 13px !important;
+  margin-top: 4px !important;
+}
+
+[data-sonner-toast] [data-button] {
+  background: linear-gradient(135deg, #6c47ff, #8b5cf6) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(108,71,255,0.3) !important;
+}
+
+[data-sonner-toast] [data-button]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(108,71,255,0.4) !important;
+}
+
+[data-sonner-toast] [data-close-button] {
+  background: #f1f5f9 !important;
+  border: none !important;
+  color: #64748b !important;
+}

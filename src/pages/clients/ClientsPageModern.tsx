@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useMemo } from 'react'
 import { clientsService, ordersService } from '../../lib/db'
+import { toast } from '../../lib/toast'
 import { Modal, Field, Input, Select, Textarea, Button, KpiCard, StatusBadge, Avatar } from '../../components/ui'
 import type { Client } from '../../types'
 import {
@@ -123,7 +124,7 @@ export const ClientsPageModern: React.FC = () => {
       await clientsService.delete(id)
       setClients(clients.filter(c => c.id !== id))
     } catch (err) {
-      alert('Erreur lors de la suppression')
+      toast.error('Erreur de suppression', { description: 'Impossible de supprimer ce client. Reessayez.' })
     }
   }
 
@@ -484,3 +485,4 @@ export const ClientsPageModern: React.FC = () => {
 }
 
 export default ClientsPageModern
+
