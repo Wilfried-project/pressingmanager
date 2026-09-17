@@ -7,7 +7,7 @@ import { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/auth/LoginPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { DashboardModern } from './pages/dashboard/DashboardModern'
-import { ClientsPage } from './pages/clients/ClientsPage'
+import { ClientsPageModern } from './pages/clients/ClientsPageModern'
 import { OrdersPageModern } from './pages/orders/OrdersPageModern'
 import { CashierPageModern } from './pages/cashier/CashierPageModern'
 import { UsersPage } from './pages/users/UsersPage'
@@ -244,7 +244,7 @@ function App() {
         <Route path="/scan/:ticket" element={<ScanPage />} />
         <Route path="/" element={<Protected><DashboardModern /></Protected>} />
         <Route path="/orders" element={<Protected><OrdersPageModern /></Protected>} />
-        <Route path="/clients" element={<Protected><ClientsPage /></Protected>} />
+        <Route path="/clients" element={<Protected><ClientsPageModern /></Protected>} />
         <Route path="/cashier" element={<Protected><CashierPageModern /></Protected>} />
         <Route path="/billing" element={<Protected><BillingPage /></Protected>} />
         <Route path="/stock" element={<Protected><StockPage /></Protected>} />
@@ -267,6 +267,7 @@ function App() {
 }
  
 export default App
+
 
 
 
