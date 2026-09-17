@@ -8,7 +8,7 @@ import { LoginPage } from './pages/auth/LoginPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { DashboardModern } from './pages/dashboard/DashboardModern'
 import { ClientsPage } from './pages/clients/ClientsPage'
-import { OrdersPage } from './pages/orders/OrdersPage'
+import { OrdersPageModern } from './pages/orders/OrdersPageModern'
 import { CashierPage } from './pages/cashier/CashierPage'
 import { UsersPage } from './pages/users/UsersPage'
 import { ScanPage } from './pages/scan/ScanPage'
@@ -243,7 +243,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/scan/:ticket" element={<ScanPage />} />
         <Route path="/" element={<Protected><DashboardModern /></Protected>} />
-        <Route path="/orders" element={<Protected><OrdersPage /></Protected>} />
+        <Route path="/orders" element={<Protected><OrdersPageModern /></Protected>} />
         <Route path="/clients" element={<Protected><ClientsPage /></Protected>} />
         <Route path="/cashier" element={<Protected><CashierPage /></Protected>} />
         <Route path="/billing" element={<Protected><BillingPage /></Protected>} />
@@ -267,4 +267,5 @@ function App() {
 }
  
 export default App
+
 

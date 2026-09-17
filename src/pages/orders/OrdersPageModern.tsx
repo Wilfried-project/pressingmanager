@@ -1,0 +1,1206 @@
+﻿import React, { useState, useMemo, useRef, useEffect } from 'react'
+import QRCode from 'qrcode'
+import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig, useAgendaStore } from '../../lib/store'
+import { clientsService, ordersService, generateTicketNumber, servicePriceService, cashService } from '../../lib/db'
+import {
+  PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea,
+  Badge, EmptyState, Table, Card, StatusBadge, Avatar,
+  getOrderStatusColor, getPriorityColor, getClothStatusColor
+} from '../../components/ui'
+import {
+  Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard,
+  Search, Filter, Clock, Package, CheckCircle2, Truck, XCircle, ArrowRight
+} from 'lucide-react'
+import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
+
+const CLOTH_TYPES: { value: ClothType; label: string; icon: string }[] = [
+  { value: 'chemise', label: 'Chemise', icon: '' }, { value: 'pantalon', label: 'Pantalon', icon: '' },
+  { value: 'robe', label: 'Robe', icon: '' }, { value: 'costume', label: 'Costume', icon: '' },
+  { value: 'veste', label: 'Veste', icon: '' }, { value: 'manteau', label: 'Manteau', icon: '' },
+  { value: 'jupe', label: 'Jupe', icon: '' }, { value: 'pull', label: 'Pull', icon: '' },
+  { value: 'tshirt', label: 'T-Shirt', icon: '' }, { value: 'cravate', label: 'Cravate', icon: '' },
+  { value: 'couverture', label: 'Couverture', icon: '' }, { value: 'rideau', label: 'Rideau', icon: '' },
+  { value: 'nappe', label: 'Nappe', icon: '' }, { value: 'tapis', label: 'Tapis', icon: '' },
+  { value: 'couette', label: 'Couette', icon: '' }, { value: 'chaussures', label: 'Chaussures', icon: '' },
+  { value: 'sac', label: 'Sac', icon: '' }, { value: 'autre', label: 'Autre', icon: '' },
+]
+
+const SERVICES: { value: ServiceType; label: string; basePrice: number }[] = [
+  { value: 'lavage_simple', label: 'Lavage simple', basePrice: 1500 },
+  { value: 'lavage_express', label: 'Lavage express', basePrice: 2500 },
+  { value: 'repassage', label: 'Repassage', basePrice: 750 },
+  { value: 'nettoyage_sec', label: 'Nettoyage a sec', basePrice: 3500 },
+  { value: 'detachage', label: 'Detachage', basePrice: 1500 },
+  { value: 'impermeabilisant', label: 'Impermeabilisant', basePrice: 2500 },
+  { value: 'service_vip', label: 'Service VIP complet', basePrice: 8000 },
+]
+
+const STATUS_STEPS = [
+  { key: 'recu', label: 'Recu', icon: '' }, { key: 'tri', label: 'Tri', icon: '' },
+  { key: 'pretraitement', label: 'Pretraitement', icon: '' }, { key: 'detachage', label: 'Detachage', icon: '' },
+  { key: 'lavage', label: 'Lavage', icon: '' }, { key: 'essorage', label: 'Essorage', icon: '' },
+  { key: 'sechage', label: 'Sechage', icon: '' }, { key: 'repassage', label: 'Repassage', icon: '' },
+  { key: 'controle', label: 'Controle', icon: '' }, { key: 'retouche', label: 'Retouche', icon: '' },
+  { key: 'emballage', label: 'Emballage', icon: '' }, { key: 'stock', label: 'Stock', icon: '' },
+  { key: 'pret', label: 'Pret', icon: '' }, { key: 'livre', label: 'Livre', icon: '' },
+]
+
+const STATUS_TO_BADGE: Record<string, any> = {
+  recu: 'pending', en_attente: 'pending', tri: 'inProgress', pretraitement: 'inProgress',
+  detachage: 'inProgress', lavage: 'inProgress', essorage: 'inProgress', sechage: 'inProgress',
+  repassage: 'inProgress', controle: 'inProgress', retouche: 'inProgress', emballage: 'inProgress',
+  stock: 'inProgress', pret: 'ready', livre: 'delivered', annule: 'cancelled'
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  recu: 'Recu', en_attente: 'En attente', tri: 'Tri', pretraitement: 'Pretraitement',
+  detachage: 'Detachage', lavage: 'Lavage', essorage: 'Essorage', sechage: 'Sechage',
+  repassage: 'Repassage', controle: 'Controle', retouche: 'Retouche', emballage: 'Emballage',
+  stock: 'Stock', pret: 'Pret', livre: 'Livre', annule: 'Annule',
+  en_cours: 'En cours'
+}
+
+const PAYMENT_TO_BADGE: Record<string, any> = {
+  paye: 'paid', acompte: 'partial', non_paye: 'unpaid'
+}
+
+export const OrdersPageModern: React.FC = () => {
+  const { orders, addOrder, updateOrder, deleteOrder } = useOrderStore()
+  const { clients: localClients, addClient } = useClientStore()
+  const [dbClients, setDbClients] = useState<Client[]>([])
+  const [customPrices, setCustomPrices] = useState<any[]>([])
+
+  useEffect(() => {
+    servicePriceService.getAll().then(setCustomPrices).catch(() => setCustomPrices([]))
+  }, [])
+
+  const getPriceFor = (clothType: string, serviceType: string) => {
+    const custom = customPrices.find(p => p.cloth_type === clothType && p.service_type === serviceType)
+    if (custom) return custom.price
+    return SERVICES.find(s => s.value === serviceType)?.basePrice || 0
+  }
+
+  const allClothTypes = [
+    ...CLOTH_TYPES,
+    ...Array.from(new Set(customPrices.map(p => p.cloth_type)))
+      .filter(t => !CLOTH_TYPES.some(ct => ct.value === t))
+      .map(t => ({ value: t as ClothType, label: t.charAt(0).toUpperCase() + t.slice(1), icon: '' }))
+  ]
+  const allServiceTypes = [
+    ...SERVICES,
+    ...Array.from(new Set(customPrices.map(p => p.service_type)))
+      .filter(s => !SERVICES.some(sv => sv.value === s))
+      .map(s => ({ value: s as ServiceType, label: s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' '), basePrice: 0 }))
+  ]
+  const [loadingClients, setLoadingClients] = useState(false)
+
+  useEffect(() => {
+    const loadClients = async () => {
+      setLoadingClients(true)
+      try {
+        const data = await clientsService.getAll()
+        setDbClients(data as Client[])
+      } catch {
+        // Fallback sur les clients locaux
+      } finally {
+        setLoadingClients(false)
+      }
+    }
+    loadClients()
+  }, [])
+
+  const clients = useMemo(() => {
+    const allClients = [...dbClients]
+    localClients.forEach(lc => {
+      if (!allClients.find(c => c.id === lc.id)) allClients.push(lc)
+    })
+    return allClients
+  }, [dbClients, localClients])
+
+  const { addNotification } = useNotificationStore()
+  const { addLoyaltyPoints } = useCS()
+  const { user } = useAuthStore()
+  const { addTransaction } = useTransactionStore()
+  const { config } = useShopConfig()
+  const { addEvent, events } = useAgendaStore()
+  const [search, setSearch] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [viewOrder, setViewOrder] = useState<Order | null>(null)
+  const [showPaymentModal, setShowPaymentModal] = useState<Order | null>(null)
+  const [paymentAmount, setPaymentAmount] = useState(0)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('especes')
+
+  const [clientSearch, setClientSearch] = useState('')
+  const [showNewClientForm, setShowNewClientForm] = useState(false)
+  const [newClient, setNewClient] = useState({ first_name: '', last_name: '', phone: '', email: '' })
+
+  const [form, setForm] = useState({
+    client_id: '', priority: 'normal' as Priority,
+    expected_at: '', payment_method: 'especes' as PaymentMethod,
+    payment_status: 'non_paye' as PaymentStatus, deposit: 0, notes: ''
+  })
+  const [manualDiscount, setManualDiscount] = useState(0)
+  const [clothes, setClothes] = useState<Partial<Cloth>[]>([{
+    type: 'chemise', color: '', brand: '', size: '', material: '',
+    quantity: '' as any, service: 'lavage_simple', price: '' as any,
+    special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: []
+  }])
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetail[]>([])
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  const filtered = useMemo(() => orders.filter(o => {
+    const ms = o.ticket_number.toLowerCase().includes(search.toLowerCase()) ||
+      `${o.client?.first_name} ${o.client?.last_name}`.toLowerCase().includes(search.toLowerCase())
+    return ms && (!filterStatus || o.status === filterStatus)
+  }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [orders, search, filterStatus])
+
+  const filteredClients = useMemo(() =>
+    clients.filter(c => !c.is_blacklisted && (
+      `${c.first_name} ${c.last_name} ${c.phone}`.toLowerCase().includes(clientSearch.toLowerCase())
+    )).slice(0, 8), [clients, clientSearch])
+
+  const selectedClient = clients.find(c => c.id === form.client_id)
+  const subtotal = clothes.reduce((s, c) => s + ((c.price || 0) * (c.quantity || 1)), 0)
+
+  const getSuggestedDate = () => {
+    const MAX_PER_DAY = 10
+    for (let i = 1; i <= 14; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() + i)
+      if (d.getDay() === 0) continue
+      const ds = d.toISOString().split('T')[0]
+      const ordersThisDay = orders.filter(o => o.expected_at?.startsWith(ds)).length
+      const eventsThisDay = events.filter(e => e.date === ds).length
+      if (ordersThisDay + eventsThisDay < MAX_PER_DAY) {
+        return `${ds}T09:00`
+      }
+    }
+    const d = new Date()
+    d.setDate(d.getDate() + 15)
+    return `${d.toISOString().split('T')[0]}T09:00`
+  }
+
+  const suggestedDate = getSuggestedDate()
+  const discount = manualDiscount
+  const totalAfterDiscount = subtotal - discount
+  const expressMultiplier = form.priority === 'express' ? 1.2 : form.priority === 'vip' ? 1.5 : 1
+  const total = totalAfterDiscount * expressMultiplier
+  const remaining = total - form.deposit
+
+  const isDepositDisabled = form.payment_status === 'paye' || form.payment_status === 'non_paye'
+
+  const addCloth = () => setClothes([...clothes, {
+    type: 'chemise', color: '', brand: '', size: '', material: '',
+    quantity: '' as any, service: 'lavage_simple', price: '' as any,
+    special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: []
+  }])
+  const updateCloth = (i: number, d: Partial<Cloth>) => { const n = [...clothes]; n[i] = { ...n[i], ...d }; setClothes(n) }
+  const removeCloth = (i: number) => setClothes(clothes.filter((_, idx) => idx !== i))
+
+  const handlePhotoUpload = (i: number, files: FileList | null) => {
+    if (!files) return
+    const readers = Array.from(files).map(file => new Promise<string>(resolve => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.readAsDataURL(file)
+    }))
+    Promise.all(readers).then(photos => {
+      updateCloth(i, { photos: [...(clothes[i].photos || []), ...photos] })
+    })
+  }
+
+  const removePhoto = (clothIdx: number, photoIdx: number) => {
+    const photos = [...(clothes[clothIdx].photos || [])]
+    photos.splice(photoIdx, 1)
+    updateCloth(clothIdx, { photos })
+  }
+
+  const handleCreateClient = async () => {
+    if (!newClient.first_name || !newClient.phone) {
+      alert('Prenom et telephone requis')
+      return
+    }
+    try {
+      const client = await clientsService.create({
+        first_name: newClient.first_name,
+        last_name: newClient.last_name,
+        phone: newClient.phone,
+        email: newClient.email,
+        loyalty_points: 0,
+        discount_rate: 0,
+        is_blacklisted: false,
+        whatsapp: newClient.phone, address: "", balance: 0, credit: 0, notes: "",
+      })
+      addClient(client as Client)
+      setForm({ ...form, client_id: client.id })
+      setClientSearch(`${client.first_name} ${client.last_name}`)
+      setShowNewClientForm(false)
+    } catch (err: any) {
+      alert('Erreur creation client : ' + (err.message || 'reessayez'))
+    }
+    setNewClient({ first_name: '', last_name: '', phone: '', email: '' })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const client = clients.find(c => c.id === form.client_id)
+    if (!client) { alert('Veuillez selectionner un client'); return }
+    const ticket = await generateTicketNumber()
+    const now = new Date().toISOString()
+    const clothesFull: Cloth[] = clothes.map(c => ({
+      ...c, id: crypto.randomUUID(), order_id: ticket,
+      qr_code: `QR-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      status: 'recu' as const,
+      status_history: [{ status: 'recu' as const, changed_at: now, changed_by: 'system', notes: 'Reception client' }],
+      photos: c.photos || [], created_at: now
+    } as Cloth))
+
+    const depositFinal = form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit
+    const remainingFinal = total - depositFinal
+
+    const order: Order = {
+      id: crypto.randomUUID(), ticket_number: ticket, agency_id: 'default',
+      client_id: client.id, client, clothes: clothesFull,
+      status: 'en_attente', priority: form.priority,
+      received_at: now, expected_at: form.expected_at,
+      subtotal, discount, total, deposit: depositFinal, remaining: remainingFinal,
+      payment_method: form.payment_method, payment_status: form.payment_status,
+      payment_details: paymentDetails, notes: form.notes,
+      created_by: 'system', created_at: now
+    }
+    addOrder(order)
+
+    try {
+      await ordersService.create({
+        id: order.id,
+        ticket_number: ticket,
+        client_id: client.id,
+        status: 'en_attente',
+        priority: form.priority,
+        received_at: now,
+        expected_at: form.expected_at,
+        subtotal,
+        discount,
+        total,
+        deposit: depositFinal,
+        remaining: remainingFinal,
+        payment_method: form.payment_method,
+        payment_status: form.payment_status,
+        notes: form.notes,
+        created_by: user?.full_name || 'Admin'
+      }, clothesFull.map(c => ({
+        id: c.id,
+        type: c.type,
+        color: c.color,
+        brand: c.brand,
+        size: c.size,
+        material: c.material,
+        quantity: c.quantity,
+        service: c.service,
+        price: c.price,
+        status: 'recu',
+        special_instructions: c.special_instructions,
+        condition_on_arrival: c.condition_on_arrival,
+        photos: c.photos,
+        qr_code: c.qr_code
+      })))
+    } catch (err) {
+      console.error('Erreur sauvegarde Supabase:', err)
+    }
+
+    if (depositFinal > 0) {
+      ;(async () => {
+        try {
+          const allSessions = await cashService.getSessions()
+          const openSession = allSessions.find((s: any) => s.status === 'open')
+          if (openSession) {
+            await cashService.addTransaction({
+              id: crypto.randomUUID(),
+              session_id: openSession.id,
+              type: 'entree',
+              amount: depositFinal,
+              reason: `${remainingFinal <= 0 ? 'Paiement complet' : 'Acompte'} commande #${ticket} - ${client.first_name} ${client.last_name}`,
+              created_by: user?.full_name || 'Admin',
+              created_at: new Date().toISOString()
+            })
+          }
+        } catch (err) { console.error('Erreur enregistrement caisse:', err) }
+      })()
+    }
+
+    if (depositFinal > 0) {
+      addTransaction({
+        id: crypto.randomUUID(),
+        agency_id: 'default',
+        type: 'recette',
+        category: 'Vente pressing',
+        amount: depositFinal,
+        description: `${remainingFinal <= 0 ? 'Paiement complet' : 'Acompte'} commande #${ticket} - ${client.first_name} ${client.last_name}`,
+        date: new Date().toISOString().split('T')[0],
+        created_by: user?.full_name || 'Admin'
+      })
+    }
+
+    if (order.expected_at) {
+      addEvent({
+        id: crypto.randomUUID(),
+        title: `Livraison #${ticket} - ${client.first_name} ${client.last_name} (${clothesFull.length} article(s))`,
+        type: 'livraison',
+        date: order.expected_at.split('T')[0],
+        time: order.expected_at.includes('T') ? order.expected_at.split('T')[1].slice(0, 5) : '09:00',
+        description: `${clothesFull.length} article(s) - ${total.toLocaleString('fr-FR')} XOF - ${client.phone}`,
+        created_at: new Date().toISOString()
+      })
+    }
+
+    const pts = Math.floor(total / 1000)
+    if (pts > 0) addLoyaltyPoints(client.id, pts)
+    resetForm()
+    printTicket(order).catch(console.error)
+
+    const msgReception = (config.msgReception || '')
+      .replace('{prenom}', client.first_name)
+      .replace('{nb}', String(clothesFull.length))
+      .replace('{ticket}', ticket)
+      .replace('{date}', order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'A definir')
+      .replace('{total}', total.toLocaleString('fr-FR'))
+      .replace('{adresse}', config.address || '')
+      .replace('{nom}', config.name || 'PressingManager')
+
+    const phoneClean = (client.phone || '').replace(/\s/g, '').replace(/^00/, '+')
+    if (phoneClean && msgReception) {
+      const waUrl = `https://wa.me/${phoneClean}?text=${encodeURIComponent(msgReception)}`
+      setTimeout(() => window.open(waUrl, '_blank'), 1500)
+    }
+
+    alert(`Commande creee ! Ticket: ${ticket}\n+${pts} points fidelite`)
+  }
+
+  const resetForm = () => {
+    setForm({ client_id: '', priority: 'normal', expected_at: '', payment_method: 'especes', payment_status: 'non_paye', deposit: 0, notes: '' })
+    setManualDiscount(0)
+    setClothes([{ type: 'chemise', color: '', brand: '', size: '', material: '', quantity: '' as any, service: 'lavage_simple', price: '' as any, special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: [] }])
+    setPaymentDetails([])
+    setClientSearch('')
+    setShowNewClientForm(false)
+    setShowForm(false)
+  }
+
+  const handlePaymentOnPickup = async () => {
+    if (!showPaymentModal) return
+    const order = showPaymentModal
+    const newDeposit = order.deposit + paymentAmount
+    const newRemaining = order.total - newDeposit
+    const newStatus: PaymentStatus = newRemaining <= 0 ? 'paye' : 'acompte'
+    updateOrder(order.id, {
+      deposit: newDeposit,
+      remaining: Math.max(0, newRemaining),
+      payment_status: newStatus,
+      payment_method: paymentMethod,
+      ...(newRemaining <= 0 ? { status: 'livre', delivered_at: new Date().toISOString() } : {})
+    })
+
+    if (paymentAmount > 0) {
+      ;(async () => {
+        try {
+          const allSessions = await cashService.getSessions()
+          const openSession = allSessions.find((s: any) => s.status === 'open')
+          if (openSession) {
+            await cashService.addTransaction({
+              id: crypto.randomUUID(),
+              session_id: openSession.id,
+              type: 'entree',
+              amount: paymentAmount,
+              reason: `Paiement livraison #${order.ticket_number} - ${order.client?.first_name} ${order.client?.last_name}`,
+              created_by: user?.full_name || 'Admin',
+              created_at: new Date().toISOString()
+            })
+          }
+        } catch (err) { console.error('Erreur enregistrement caisse:', err) }
+      })()
+    }
+
+    if (paymentAmount > 0) {
+      addTransaction({
+        id: crypto.randomUUID(),
+        agency_id: 'default',
+        type: 'recette',
+        category: 'Vente pressing',
+        amount: paymentAmount,
+        description: `Paiement livraison #${order.ticket_number} - ${order.client?.first_name} ${order.client?.last_name}`,
+        date: new Date().toISOString().split('T')[0],
+        created_by: user?.full_name || 'Admin'
+      })
+    }
+
+    alert(`Paiement enregistre !\nMontant recu: ${paymentAmount.toLocaleString('fr-FR')} XOF\n${newRemaining > 0 ? `Reste: ${newRemaining.toLocaleString('fr-FR')} XOF` : 'Commande entierement payee'}`)
+    setShowPaymentModal(null)
+    setPaymentAmount(0)
+  }
+
+  const printTicket = async (order: Order) => {
+    const scanUrl = `${window.location.origin}/scan/${encodeURIComponent(order.ticket_number)}`
+    const qrDataUrl = await QRCode.toDataURL(scanUrl, { width: 120, margin: 1, color: { dark: '#000000', light: '#ffffff' } })
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(`<!DOCTYPE html><html><head><title>Ticket ${order.ticket_number}</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      @page { size: 80mm auto; margin: 0; }
+      body { font-family: Arial, sans-serif; font-size: 13px; background: #fff; color: #000; }
+      .ticket { width: 100%; margin: 0; padding: 10px; }
+      .header { background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; text-align: center; padding: 18px 10px; border-radius: 8px 8px 0 0; }
+      .title { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+      .subtitle { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+      .ticket-num { background: #fff; color: #7c3aed; font-size: 22px; font-weight: bold; text-align: center; padding: 12px; margin: 0; border-left: 3px solid #7c3aed; border-right: 3px solid #7c3aed; letter-spacing: 2px; }
+      .section { border: 1px solid #e5e7eb; border-top: none; padding: 12px; }
+      .section-title { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #7c3aed; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+      .row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 12px; }
+      .row .label { color: #6b7280; }
+      .row .value { font-weight: 600; text-align: right; max-width: 60%; }
+      .article { border-bottom: 1px dashed #e5e7eb; padding: 6px 0; font-size: 12px; }
+      .article-name { font-weight: bold; color: #111; }
+      .article-detail { color: #6b7280; font-size: 11px; }
+      .article-price { font-weight: bold; color: #7c3aed; float: right; }
+      .totals { border: 2px solid #7c3aed; padding: 12px; }
+      .total-line { display: flex; justify-content: space-between; margin: 3px 0; font-size: 12px; }
+      .total-main { font-size: 18px; font-weight: bold; color: #7c3aed; border-top: 2px solid #7c3aed; padding-top: 7px; margin-top: 7px; display: flex; justify-content: space-between; }
+      .remaining { background: #fef2f2; color: #dc2626; font-weight: bold; text-align: center; padding: 7px; font-size: 13px; margin-top: 5px; border-radius: 4px; }
+      .paid { background: #f0fdf4; color: #16a34a; font-weight: bold; text-align: center; padding: 7px; font-size: 13px; margin-top: 5px; border-radius: 4px; }
+      .footer { border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 12px; text-align: center; background: #f9fafb; }
+      .footer-note { font-size: 11px; color: #6b7280; margin: 2px 0; }
+      .footer-important { font-size: 12px; font-weight: bold; color: #7c3aed; margin: 4px 0; }
+      @media print { body { margin: 0; width: 80mm; } }
+    </style></head><body>
+    <div class="ticket">
+      <div class="header">
+        ${config.logo ? `<img src="${config.logo}" alt="logo" style="width: 140px;height: auto;object-fit:cover;border-radius:8px;margin-bottom:6px" />` : ''}
+        <div class="title">${config.name || 'PRESSINGMANAGER'}</div>
+        <div class="subtitle">${config.slogan || 'Recu de depot - Ticket client'}</div>
+      </div>
+      <div class="ticket-num">#${order.ticket_number}</div>
+      <div style="text-align:center;padding:10px;border:1px solid #e5e7eb;border-top:none">
+        <img src="${qrDataUrl}" alt="QR Code" style="width:100px;height:100px" />
+        <p style="font-size:9px;color:#6b7280;margin-top:4px">Scannez pour voir le detail</p>
+      </div>
+      <div class="section">
+        <div class="section-title">Informations client</div>
+        <div class="row"><span class="label">Client</span><span class="value">${order.client?.first_name} ${order.client?.last_name}</span></div>
+        <div class="row"><span class="label">Telephone</span><span class="value">${order.client?.phone}</span></div>
+        <div class="row"><span class="label">Date depot</span><span class="value">${new Date(order.received_at).toLocaleDateString('fr-FR')} a ${new Date(order.received_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
+        <div class="row"><span class="label">Date prevue</span><span class="value">${order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'A definir'}</span></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Articles (${order.clothes.length})</div>
+        ${order.clothes.map((c) => `
+          <div class="article">
+            <span class="article-price">${((c.price || 0) * (c.quantity || 1)).toLocaleString('fr-FR')} XOF</span>
+            <div class="article-name">${c.quantity}x ${c.type?.charAt(0).toUpperCase() + (c.type?.slice(1) || '')}</div>
+            <div class="article-detail">${c.service?.replace(/_/g, ' ')} ${c.color ? '- ' + c.color : ''} ${c.brand ? '- ' + c.brand : ''}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="totals">
+        <div class="section-title">Recapitulatif paiement</div>
+        <div class="total-line"><span>Sous-total</span><span>${order.subtotal.toLocaleString('fr-FR')} XOF</span></div>
+        ${order.discount > 0 ? `<div class="total-line" style="color:#16a34a"><span>Remise client</span><span>-${order.discount.toLocaleString('fr-FR')} XOF</span></div>` : ''}
+        <div class="total-main"><span>TOTAL</span><span>${order.total.toLocaleString('fr-FR')} XOF</span></div>
+        ${order.deposit > 0 ? `<div class="total-line" style="color:#2563eb;margin-top:4px"><span>Acompte verse</span><span>${order.deposit.toLocaleString('fr-FR')} XOF</span></div>` : ''}
+        ${order.remaining > 0
+          ? `<div class="remaining">Reste a payer: ${order.remaining.toLocaleString('fr-FR')} XOF</div>`
+          : `<div class="paid">Commande entierement payee</div>`
+        }
+        <div class="total-line" style="margin-top:4px;font-size:10px;color:#6b7280"><span>Mode de paiement</span><span>${order.payment_method?.replace('_', ' ')}</span></div>
+      </div>
+      <div class="footer">
+        <div class="footer-important">Conservez ce ticket pour recuperer vos articles</div>
+        <div class="footer-note">${config.footer || 'Merci pour votre confiance !'}</div>
+        ${config.phone ? `<div class="footer-note">${config.phone}</div>` : ''}
+        ${config.address ? `<div class="footer-note">${config.address}</div>` : ''}
+        <div class="footer-note" style="margin-top:6px">Imprime le ${new Date().toLocaleString('fr-FR')}</div>
+      </div>
+    </div>
+    <script>window.onload = () => { window.print(); }</script>
+    </body></html>`)
+    win.document.close()
+  }
+
+  const sendReadyNotification = (order: Order) => {
+    const msgPret = (config.msgPret || '')
+      .replace('{prenom}', order.client?.first_name || '')
+      .replace('{nb}', String(order.clothes.length))
+      .replace('{ticket}', order.ticket_number)
+      .replace('{reste}', order.remaining.toLocaleString('fr-FR'))
+      .replace('{adresse}', config.address || '')
+      .replace('{nom}', config.name || 'PressingManager')
+
+    const notif = {
+      id: crypto.randomUUID(), client_id: order.client_id,
+      client_name: `${order.client?.first_name} ${order.client?.last_name}`,
+      client_phone: order.client?.phone || '',
+      type: 'whatsapp' as const,
+      message: msgPret || `Bonjour ${order.client?.first_name} ! Vos vetements sont prets. Ticket: #${order.ticket_number}. - ${config.name || 'PressingManager'}`,
+      status: 'pending' as const, created_at: new Date().toISOString()
+    }
+    addNotification(notif)
+
+    const phoneClean = (order.client?.phone || '').replace(/\s/g, '').replace(/^00/, '+')
+    if (phoneClean) {
+      const defaultMsg = 'Bonjour ' + (order.client?.first_name || '') + ' ! Vos vetements sont prets. Ticket: #' + order.ticket_number + '. Venez recuperer. - ' + (config.name || 'PressingManager')
+      const finalMsg = msgPret || defaultMsg
+      const waUrl = 'https://wa.me/' + phoneClean + '?text=' + encodeURIComponent(finalMsg)
+      window.open(waUrl, '_blank')
+    } else {
+      alert(`Notification preparee pour ${order.client?.first_name} ${order.client?.last_name}`)
+    }
+  }
+
+  const updateClothStatus = (orderId: string, clothId: string, newStatus: Cloth['status']) => {
+    const order = orders.find(o => o.id === orderId)
+    if (!order) return
+    const updatedClothes = order.clothes.map(c => {
+      if (c.id !== clothId) return c
+      return { ...c, status: newStatus, status_history: [...(c.status_history || []), { status: newStatus, changed_at: new Date().toISOString(), changed_by: 'system', notes: '' }] }
+    })
+    const allReady = updatedClothes.every(c => c.status === 'pret' || c.status === 'livre')
+    updateOrder(orderId, { clothes: updatedClothes, ...(allReady && order.status !== 'livre' ? { status: 'pret' } : {}) })
+    if (viewOrder?.id === orderId) setViewOrder({ ...viewOrder, clothes: updatedClothes })
+  }
+
+  const statusGroups = useMemo(() => ({
+    en_attente: orders.filter(o => o.status === 'en_attente').length,
+    en_cours: orders.filter(o => o.status === 'en_cours').length,
+    pret: orders.filter(o => o.status === 'pret').length,
+    livre: orders.filter(o => o.status === 'livre').length,
+    annule: orders.filter(o => o.status === 'annule').length,
+  }), [orders])
+
+  return (
+    <div className="flex flex-col gap-6 animate-fade-in">
+
+      {/* ===== HEADER ===== */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1
+              className="text-3xl font-extrabold text-on-surface tracking-tight"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+              Commandes
+            </h1>
+            <span className="badge-modern bg-primary-fixed text-primary">
+              <Package size={12} />
+              {orders.length} au total
+            </span>
+          </div>
+          <p className="text-sm text-on-surface-variant mt-1">
+            Suivi complet des depots, traitements et livraisons
+          </p>
+        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="btn-modern-primary self-start md:self-auto"
+        >
+          <Plus size={18} strokeWidth={2.5} />
+          Nouvelle commande
+        </button>
+      </div>
+
+      {/* ===== KPI STATUTS ===== */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {[
+          { s: 'en_attente', l: 'En attente', icon: Clock, color: 'bg-amber-50 text-amber-600', numColor: 'text-amber-600', bar: 'bg-amber-500' },
+          { s: 'en_cours', l: 'En cours', icon: Package, color: 'bg-blue-50 text-blue-600', numColor: 'text-blue-600', bar: 'bg-blue-500' },
+          { s: 'pret', l: 'Prets', icon: CheckCircle2, color: 'bg-emerald-50 text-emerald-600', numColor: 'text-emerald-600', bar: 'bg-emerald-500' },
+          { s: 'livre', l: 'Livres', icon: Truck, color: 'bg-slate-100 text-slate-600', numColor: 'text-slate-600', bar: 'bg-slate-400' },
+          { s: 'annule', l: 'Annules', icon: XCircle, color: 'bg-red-50 text-red-600', numColor: 'text-red-600', bar: 'bg-red-500' },
+        ].map(({ s, l, icon: Icon, color, numColor, bar }) => {
+          const count = statusGroups[s as keyof typeof statusGroups]
+          const pct = orders.length > 0 ? Math.round((count / orders.length) * 100) : 0
+          const isActive = filterStatus === s
+          return (
+            <button
+              key={s}
+              onClick={() => setFilterStatus(isActive ? '' : s)}
+              className={`card-modern flex flex-col justify-between text-left transition-all ${
+                isActive ? 'ring-2 ring-primary ring-offset-2' : ''
+              }`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <span className="kpi-label-modern">{l}</span>
+                <div className={`w-9 h-9 rounded-xl ${color} flex items-center justify-center`}>
+                  <Icon size={18} strokeWidth={2.2} />
+                </div>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <span className={`kpi-value-modern ${numColor}`}>{count}</span>
+                <span className="text-xs text-on-surface-variant font-medium">cmd</span>
+              </div>
+              <div className="w-full bg-surface-container-high h-1.5 rounded-full mt-3 overflow-hidden">
+                <div
+                  className={`${bar} h-full rounded-full transition-all duration-500`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* ===== RECHERCHE + FILTRES ===== */}
+      <div className="card-modern flex flex-col lg:flex-row items-center gap-3">
+        <div className="relative w-full lg:flex-1">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Numero ticket, nom client, telephone..."
+            className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-on-surface placeholder:text-on-surface-variant transition"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 w-full lg:w-auto">
+          <Filter size={16} className="text-on-surface-variant shrink-0" />
+          <select
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value)}
+            className="w-full lg:w-48 px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-on-surface cursor-pointer transition"
+          >
+            <option value="">Tous les statuts</option>
+            <option value="en_attente">En attente</option>
+            <option value="en_cours">En cours</option>
+            <option value="pret">Pret</option>
+            <option value="livre">Livre</option>
+            <option value="annule">Annule</option>
+          </select>
+        </div>
+      </div>
+
+      {/* ===== TABLEAU ===== */}
+      {filtered.length > 0 ? (
+        <div className="card-modern !p-0 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-surface-container-low border-b border-outline-variant/30">
+                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Ticket</th>
+                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Client</th>
+                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Articles</th>
+                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Total / Paiement</th>
+                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Statut</th>
+                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Date limite</th>
+                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(order => (
+                  <tr
+                    key={order.id}
+                    className="hover:bg-primary-fixed/20 transition-colors border-b border-outline-variant/20 last:border-0"
+                  >
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-primary-fixed text-primary flex items-center justify-center shrink-0">
+                          <Package size={14} strokeWidth={2.5} />
+                        </div>
+                        <span className="font-bold text-primary text-sm">#{order.ticket_number}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-3">
+                        <Avatar
+                          name={`${order.client?.first_name || '?'} ${order.client?.last_name || ''}`}
+                          size="sm"
+                        />
+                        <div>
+                          <div className="font-semibold text-sm text-on-surface">
+                            {order.client?.first_name} {order.client?.last_name}
+                          </div>
+                          <div className="text-xs text-on-surface-variant">
+                            {order.client?.phone}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <span className="badge-modern bg-surface-container text-on-surface-variant">
+                        <Package size={12} />
+                        {order.clothes.length} article(s)
+                      </span>
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-on-surface text-sm">
+                            {order.total.toLocaleString('fr-FR')} XOF
+                          </span>
+                          <StatusBadge status={PAYMENT_TO_BADGE[order.payment_status] || 'unpaid'} />
+                        </div>
+                        {order.remaining > 0 && (
+                          <span className="text-xs text-red-600 font-medium">
+                            Reste: {order.remaining.toLocaleString('fr-FR')} XOF
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-5">
+                      <StatusBadge status={STATUS_TO_BADGE[order.status] || 'pending'} label={STATUS_LABELS[order.status] || order.status} />
+                    </td>
+                    <td className="py-4 px-5 text-sm text-on-surface-variant">
+                      {order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : '-'}
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setViewOrder(order)}
+                          className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-primary hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
+                          title="Voir details"
+                        >
+                          <Eye size={15} />
+                        </button>
+                        <button
+                          onClick={() => printTicket(order).catch(console.error)}
+                          className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
+                          title="Imprimer ticket"
+                        >
+                          <Printer size={15} />
+                        </button>
+                        {order.status === 'pret' && (
+                          <button
+                            onClick={() => sendReadyNotification(order)}
+                            className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
+                            title="Notifier client"
+                          >
+                            <Bell size={15} />
+                          </button>
+                        )}
+                        {order.remaining > 0 && (
+                          <button
+                            onClick={() => { setShowPaymentModal(order); setPaymentAmount(order.remaining) }}
+                            className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-amber-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
+                            title="Encaisser paiement"
+                          >
+                            <CreditCard size={15} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => { if (confirm('Supprimer cette commande ?')) deleteOrder(order.id) }}
+                          className="w-8 h-8 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-white hover:bg-red-500 transition-all flex items-center justify-center"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="card-modern text-center py-16">
+          <div className="w-16 h-16 rounded-full bg-surface-container mx-auto flex items-center justify-center mb-4">
+            <Package size={28} className="text-on-surface-variant" />
+          </div>
+          <p className="text-on-surface-variant mb-4">Aucune commande trouvee</p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="btn-modern-primary mx-auto"
+          >
+            <Plus size={18} strokeWidth={2.5} />
+            Creer une commande
+          </button>
+        </div>
+      )}
+
+      {/* ===== SCAN RAPIDE ===== */}
+      <div className="card-modern flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary-container text-white flex items-center justify-center shrink-0 shadow-sm">
+          <Camera size={22} />
+        </div>
+        <div className="flex-1">
+          <h3 className="font-bold text-on-surface" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            Scan Rapide Atelier
+          </h3>
+          <p className="text-xs text-on-surface-variant mt-0.5">
+            Utilisez le pistolet code-barres ou la camera mobile pour passer les commandes a l'etat suivant.
+          </p>
+        </div>
+        <a
+          href="/atelier"
+          className="btn-modern-primary self-stretch sm:self-auto justify-center"
+        >
+          <Camera size={16} strokeWidth={2.5} />
+          Demarrer le scan
+        </a>
+      </div>
+
+      {/* ===== MODAL PAIEMENT ===== */}
+      {showPaymentModal && (
+        <Modal open={!!showPaymentModal} onClose={() => setShowPaymentModal(null)} title="Encaissement a la livraison" size="sm">
+          <div className="space-y-4">
+            <div className="bg-primary-fixed/40 rounded-xl p-4">
+              <p className="text-xs text-on-surface-variant">Client</p>
+              <p className="font-bold text-base text-on-surface">{showPaymentModal.client?.first_name} {showPaymentModal.client?.last_name}</p>
+              <p className="text-xs text-on-surface-variant mt-2">Ticket</p>
+              <p className="font-bold text-primary">#{showPaymentModal.ticket_number}</p>
+            </div>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex justify-between mb-2 text-sm">
+                <span className="text-on-surface-variant">Total commande</span>
+                <span className="font-bold">{showPaymentModal.total.toLocaleString('fr-FR')} XOF</span>
+              </div>
+              <div className="flex justify-between mb-2 text-sm">
+                <span className="text-on-surface-variant">Deja paye</span>
+                <span className="font-semibold text-emerald-600">{showPaymentModal.deposit.toLocaleString('fr-FR')} XOF</span>
+              </div>
+              <div className="flex justify-between border-t border-red-200 pt-2">
+                <span className="font-bold text-red-700 text-sm">Reste a payer</span>
+                <span className="font-bold text-red-700 text-xl">{showPaymentModal.remaining.toLocaleString('fr-FR')} XOF</span>
+              </div>
+            </div>
+            <Field label="Montant encaisse (XOF)">
+              <Input type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)} onFocus={e => e.target.value === '0' && (e.target.value = '')} min="0" max={showPaymentModal.remaining} />
+            </Field>
+            <Field label="Mode de paiement">
+              <Select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}>
+                <option value="wave">Wave</option>
+                <option value="orange_money">Orange Money</option>
+                <option value="mtn">MTN Money</option>
+                <option value="especes">Especes</option>
+                <option value="mixte">Paiement mixte</option>
+              </Select>
+            </Field>
+            {paymentAmount > 0 && (
+              <div className={`p-3 rounded-xl text-sm font-semibold ${showPaymentModal.remaining - paymentAmount <= 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                {showPaymentModal.remaining - paymentAmount <= 0
+                  ? 'Commande entierement soldee'
+                  : `Reste apres paiement: ${(showPaymentModal.remaining - paymentAmount).toLocaleString('fr-FR')} XOF`
+                }
+              </div>
+            )}
+            <div className="flex gap-3">
+              <Button className="flex-1" onClick={handlePaymentOnPickup} disabled={paymentAmount <= 0} icon={<CreditCard size={16} />}>Confirmer paiement</Button>
+              <Button variant="secondary" className="flex-1" onClick={() => setShowPaymentModal(null)}>Annuler</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ===== FORMULAIRE NOUVELLE COMMANDE ===== */}
+      <Modal open={showForm} onClose={resetForm} title="Nouvelle commande" size="full">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bg-primary-fixed/30 rounded-xl p-4">
+            <h3 className="font-bold text-on-surface mb-4">Client</h3>
+            <div className="grid grid-cols-1">
+              <Field label="Client" required>
+                <div className="relative">
+                  <Input
+                    placeholder="Rechercher par nom ou telephone..."
+                    value={clientSearch}
+                    onChange={e => { setClientSearch(e.target.value); setForm({ ...form, client_id: '' }) }}
+                  />
+                  {clientSearch && !form.client_id && (
+                    <div className="absolute z-10 left-0 right-0 top-full mt-1 bg-white border border-outline-variant/40 rounded-xl shadow-lg overflow-hidden">
+                      {filteredClients.length > 0 ? (
+                        filteredClients.map(c => (
+                          <button key={c.id} type="button"
+                            onClick={() => { setForm({ ...form, client_id: c.id }); setClientSearch(`${c.first_name} ${c.last_name} - ${c.phone}`) }}
+                            className="w-full text-left px-4 py-3 hover:bg-primary-fixed/30 border-b border-outline-variant/20 last:border-0">
+                            <p className="font-semibold text-sm">{c.first_name} {c.last_name}</p>
+                            <p className="text-xs text-on-surface-variant">{c.phone} - {c.loyalty_points} pts</p>
+                          </button>
+                        ))
+                      ) : null}
+                      <button type="button"
+                        onClick={() => { setShowNewClientForm(true); setNewClient({ ...newClient, first_name: clientSearch }) }}
+                        className="w-full text-left px-4 py-3 hover:bg-emerald-50 text-emerald-700 font-semibold text-sm border-t border-outline-variant/20">
+                        Creer "{clientSearch}" comme nouveau client
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </Field>
+              {showNewClientForm && (
+                <div className="mt-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+                  <p className="font-bold text-emerald-800 mb-3">Nouveau client</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Prenom *">
+                      <Input value={newClient.first_name} onChange={e => setNewClient({ ...newClient, first_name: e.target.value })} placeholder="Prenom" />
+                    </Field>
+                    <Field label="Nom">
+                      <Input value={newClient.last_name} onChange={e => setNewClient({ ...newClient, last_name: e.target.value })} placeholder="Nom" />
+                    </Field>
+                    <Field label="Telephone *">
+                      <Input value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} placeholder="+225 07..." />
+                    </Field>
+                    <Field label="Email">
+                      <Input value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} placeholder="email@..." />
+                    </Field>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <Button type="button" onClick={handleCreateClient} size="sm">Creer le client</Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setShowNewClientForm(false)}>Annuler</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+            {selectedClient && (
+              <div className="mt-3 p-3 bg-primary-fixed rounded-lg flex items-center gap-3">
+                <Avatar name={`${selectedClient.first_name} ${selectedClient.last_name}`} />
+                <div>
+                  <p className="font-bold text-primary">{selectedClient.first_name} {selectedClient.last_name}</p>
+                  <p className="text-xs text-primary/80">{selectedClient.loyalty_points} points - Remise: {selectedClient.discount_rate}% - Groupe: {selectedClient.group}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-on-surface">Vetements ({clothes.length})</h3>
+              <Button type="button" variant="ghost" size="sm" icon={<Plus size={15} />} onClick={addCloth}>Ajouter</Button>
+            </div>
+            <div className="space-y-4">
+              {clothes.map((cloth, i) => (
+                <div key={i} className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
+                    <Field label="Type">
+                      <Select value={cloth.type} onChange={e => {
+                        const newType = e.target.value as ClothType
+                        const price = cloth.service ? getPriceFor(newType, cloth.service) : cloth.price
+                        updateCloth(i, { type: newType, ...(cloth.service ? { price } : {}) })
+                      }}>
+                        {allClothTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      </Select>
+                    </Field>
+                    <Field label="Service">
+                      <Select value={cloth.service} onChange={e => {
+                        const price = getPriceFor(cloth.type || '', e.target.value)
+                        updateCloth(i, { service: e.target.value as ServiceType, price: price || cloth.price })
+                      }}>
+                        {allServiceTypes.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                      </Select>
+                    </Field>
+                    <Field label="Quantite">
+                      <Input type="number" min="1" value={cloth.quantity} onChange={e => updateCloth(i, { quantity: e.target.value === '' ? '' as any : parseInt(e.target.value) || 0 })} />
+                    </Field>
+                    <Field label="Prix unitaire (XOF)">
+                      <Input type="number" value={cloth.price} onChange={e => updateCloth(i, { price: e.target.value === '' ? '' as any : parseFloat(e.target.value) || 0 })} />
+                    </Field>
+                    <Field label="Couleur">
+                      <Input value={cloth.color || ''} onChange={e => updateCloth(i, { color: e.target.value })} placeholder="Ex: Bleu" />
+                    </Field>
+                    <Field label="Marque">
+                      <Input value={cloth.brand || ''} onChange={e => updateCloth(i, { brand: e.target.value })} placeholder="Ex: Zara" />
+                    </Field>
+                    <Field label="Taille">
+                      <Input value={cloth.size || ''} onChange={e => updateCloth(i, { size: e.target.value })} placeholder="S, M, L, XL..." />
+                    </Field>
+                    <Field label="Matiere">
+                      <Input value={cloth.material || ''} onChange={e => updateCloth(i, { material: e.target.value })} placeholder="Coton, Soie..." />
+                    </Field>
+                    <Field label="Etat a reception">
+                      <Select value={cloth.condition_on_arrival} onChange={e => updateCloth(i, { condition_on_arrival: e.target.value })}>
+                        <option value="bon">Bon etat</option>
+                        <option value="taches">Taches</option>
+                        <option value="dechire">Dechire</option>
+                        <option value="use">Use</option>
+                        <option value="abime">Abime</option>
+                      </Select>
+                    </Field>
+                    <Field label="Instructions speciales">
+                      <Input value={cloth.special_instructions || ''} onChange={e => updateCloth(i, { special_instructions: e.target.value })} placeholder="Delicat, pas de chlore..." />
+                    </Field>
+                    <div className="flex items-end justify-between col-span-2">
+                      <div>
+                        <p className="text-xs text-on-surface-variant">Sous-total article</p>
+                        <p className="font-bold text-lg text-primary">{((cloth.price || 0) * (cloth.quantity || 1)).toLocaleString('fr-FR')} XOF</p>
+                      </div>
+                      {clothes.length > 1 && <Button type="button" variant="danger" size="sm" onClick={() => removeCloth(i)}>Retirer</Button>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-primary-fixed/30 rounded-xl p-4">
+            <h3 className="font-bold text-on-surface mb-4">Delai</h3>
+            <Field label="Date limite" required>
+              <Input required type="datetime-local" value={form.expected_at} onChange={e => setForm({ ...form, expected_at: e.target.value })} />
+              <button type="button" onClick={() => setForm({ ...form, expected_at: suggestedDate })}
+                className="mt-1.5 text-xs text-primary hover:underline font-semibold flex items-center gap-1">
+                Date suggeree : {new Date(suggestedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} a 9h00
+              </button>
+            </Field>
+          </div>
+
+          <div className="bg-gradient-to-r from-primary-fixed/40 to-secondary-fixed/40 border border-primary/20 rounded-xl p-5">
+            <h3 className="font-bold text-on-surface mb-3">Recapitulatif</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm"><span className="text-on-surface-variant">Sous-total ({clothes.length} article(s))</span><span className="font-medium">{subtotal.toLocaleString('fr-FR')} XOF</span></div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-on-surface-variant">Reduction (XOF)</span>
+                <Input type="number" min="0" value={manualDiscount} onChange={e => setManualDiscount(parseFloat(e.target.value) || 0)} onFocus={e => e.target.value === '0' && (e.target.value = '')} className="w-32 text-right" />
+              </div>
+              <div className="border-t border-primary/20 pt-2 flex justify-between font-bold text-xl"><span>TOTAL</span><span className="text-primary">{total.toLocaleString('fr-FR')} XOF</span></div>
+            </div>
+          </div>
+
+          <div className="bg-primary-fixed/30 rounded-xl p-4">
+            <h3 className="font-bold text-on-surface mb-4">Paiement</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Field label="Mode de paiement">
+                <Select value={form.payment_method} onChange={e => setForm({ ...form, payment_method: e.target.value as PaymentMethod })}>
+                  <option value="wave">Wave</option>
+                  <option value="orange_money">Orange Money</option>
+                  <option value="mtn">MTN Money</option>
+                  <option value="especes">Especes</option>
+                  <option value="mixte">Paiement mixte</option>
+                </Select>
+              </Field>
+              <Field label="Statut paiement">
+                <Select value={form.payment_status} onChange={e => {
+                  const ps = e.target.value as PaymentStatus
+                  setForm({ ...form, payment_status: ps, deposit: ps === 'paye' ? total : ps === 'non_paye' ? 0 : form.deposit })
+                }}>
+                  <option value="non_paye">Non paye</option>
+                  <option value="acompte">Acompte verse</option>
+                  <option value="paye">Paye en totalite</option>
+                </Select>
+              </Field>
+              <Field label="Acompte recu (XOF)">
+                <Input
+                  type="number" min="0"
+                  value={form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit}
+                  onChange={e => setForm({ ...form, deposit: parseFloat(e.target.value) || 0 })}
+                  disabled={isDepositDisabled}
+                  className={isDepositDisabled ? 'bg-surface-container text-on-surface-variant cursor-not-allowed' : ''}
+                />
+              </Field>
+            </div>
+          </div>
+
+          <Field label="Notes generales">
+            <Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Informations supplementaires pour l'equipe..." />
+          </Field>
+
+          <div className="flex gap-3">
+            <Button type="submit" className="flex-1" size="lg" icon={<Printer size={18} />}>Enregistrer & Imprimer ticket</Button>
+            <Button type="button" variant="secondary" className="flex-1" size="lg" onClick={resetForm}>Annuler</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ===== DETAIL COMMANDE ===== */}
+      {viewOrder && (
+        <Modal open={!!viewOrder} onClose={() => setViewOrder(null)} title={`Commande #${viewOrder.ticket_number}`} size="xl">
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[
+                { label: 'Client', value: `${viewOrder.client?.first_name} ${viewOrder.client?.last_name}` },
+                { label: 'Telephone', value: viewOrder.client?.phone || '-' },
+                { label: 'Recu le', value: new Date(viewOrder.received_at).toLocaleDateString('fr-FR') },
+                { label: 'Date limite', value: viewOrder.expected_at ? new Date(viewOrder.expected_at).toLocaleDateString('fr-FR') : '-' },
+                { label: 'Paiement', value: viewOrder.payment_method },
+              ].map((item, i) => (
+                <div key={i} className="bg-surface-container-low rounded-xl p-3">
+                  <p className="text-xs text-on-surface-variant">{item.label}</p>
+                  <p className="font-semibold text-sm mt-0.5 capitalize text-on-surface">{item.value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <p className="text-sm font-bold text-on-surface mb-2">Changer le statut :</p>
+              <div className="flex flex-wrap gap-2">
+                {['en_attente', 'en_cours', 'pret', 'livre', 'annule'].map(s => (
+                  <button key={s} onClick={() => {
+                    updateOrder(viewOrder.id, { status: s as Order['status'], ...(s === 'livre' ? { delivered_at: new Date().toISOString() } : {}) })
+                    setViewOrder({ ...viewOrder, status: s as Order['status'] })
+                    if (s === 'pret') sendReadyNotification(viewOrder)
+                  }}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition ${viewOrder.status === s ? 'border-primary bg-primary-fixed text-primary' : 'border-outline-variant/40 hover:border-primary/50 text-on-surface-variant'}`}>
+                    {s.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-bold text-on-surface mb-3">Suivi des {viewOrder.clothes.length} vetement(s) :</p>
+              <div className="space-y-4">
+                {viewOrder.clothes.map((cloth) => {
+                  const currentIdx = STATUS_STEPS.findIndex(s => s.key === cloth.status)
+                  return (
+                    <div key={cloth.id} className="bg-surface-container-low rounded-xl p-4">
+                      <div className="flex justify-between items-center mb-3">
+                        <div>
+                          <p className="font-bold text-sm capitalize text-on-surface">{cloth.type} {cloth.color ? `- ${cloth.color}` : ''} {cloth.brand ? `(${cloth.brand})` : ''}</p>
+                          <p className="text-xs text-on-surface-variant">{cloth.service?.replace('_', ' ')} | {cloth.quantity}x</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-primary text-sm">{((cloth.price || 0) * cloth.quantity).toLocaleString('fr-FR')} XOF</p>
+                          <StatusBadge status={STATUS_TO_BADGE[cloth.status] || 'pending'} label={STATUS_LABELS[cloth.status] || cloth.status} />
+                        </div>
+                      </div>
+                      {(cloth.photos || []).length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {(cloth.photos || []).map((photo, pi) => (
+                            <img key={pi} src={photo} alt={`Photo ${pi + 1}`} className="w-14 h-14 object-cover rounded-lg border border-outline-variant/40" />
+                          ))}
+                        </div>
+                      )}
+                      <div className="overflow-x-auto pb-2">
+                        <div className="flex items-center gap-0.5 min-w-max">
+                          {STATUS_STEPS.map((step, idx) => (
+                            <React.Fragment key={step.key}>
+                              <button onClick={() => updateClothStatus(viewOrder.id, cloth.id, step.key as Cloth['status'])}
+                                className={`flex flex-col items-center text-center w-10 transition rounded-lg p-1 ${idx <= currentIdx ? 'opacity-100' : 'opacity-35 hover:opacity-60'}`}>
+                                <span className={`w-8 h-8 flex items-center justify-center rounded-full text-sm mb-0.5 ${idx === currentIdx ? 'bg-primary text-white shadow-md' : idx < currentIdx ? 'bg-emerald-500 text-white' : 'bg-surface-container-high text-on-surface-variant'}`}>
+                                  {step.icon}
+                                </span>
+                                <span className="text-xs leading-tight text-center font-medium text-on-surface" style={{ fontSize: '9px' }}>{step.label}</span>
+                              </button>
+                              {idx < STATUS_STEPS.length - 1 && <ChevronRight size={10} className={`flex-shrink-0 ${idx < currentIdx ? 'text-emerald-400' : 'text-outline-variant'}`} />}
+                            </React.Fragment>
+                          ))}
+                        </div>
+                      </div>
+                      {cloth.special_instructions && (
+                        <p className="text-xs text-amber-700 bg-amber-50 rounded p-2 mt-2">{cloth.special_instructions}</p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="bg-primary-fixed/30 rounded-xl p-4 space-y-2">
+              <div className="flex justify-between text-sm"><span>Sous-total</span><span>{viewOrder.subtotal.toLocaleString('fr-FR')} XOF</span></div>
+              {viewOrder.discount > 0 && <div className="flex justify-between text-sm text-emerald-600"><span>Remise</span><span>-{viewOrder.discount.toLocaleString('fr-FR')} XOF</span></div>}
+              <div className="flex justify-between font-bold text-lg border-t border-primary/20 pt-2"><span>TOTAL</span><span className="text-primary">{viewOrder.total.toLocaleString('fr-FR')} XOF</span></div>
+              {viewOrder.remaining > 0 && <div className="flex justify-between font-bold text-red-600"><span>Restant a payer</span><span>{viewOrder.remaining.toLocaleString('fr-FR')} XOF</span></div>}
+            </div>
+
+            <div className="flex gap-3">
+              <Button icon={<Printer size={16} />} variant="ghost" className="flex-1" onClick={() => printTicket(viewOrder).catch(console.error)}>Reimprimer ticket</Button>
+              {viewOrder.remaining > 0 && (
+                <Button icon={<CreditCard size={16} />} variant="warning" className="flex-1"
+                  onClick={() => { setShowPaymentModal(viewOrder); setPaymentAmount(viewOrder.remaining); setViewOrder(null) }}>
+                  Encaisser paiement
+                </Button>
+              )}
+              {viewOrder.status === 'pret' && <Button icon={<Bell size={16} />} variant="success" className="flex-1" onClick={() => sendReadyNotification(viewOrder)}>Notifier client</Button>}
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  )
+}
+
+export default OrdersPageModern
