@@ -219,3 +219,19 @@
   border: none !important;
   color: #64748b !important;
 }
+
+/* ============================================
+   ICONES MATERIAL FILLED (pour la bottom tab bar)
+   ============================================ */
+.material-symbols-outlined-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ============================================
+   SAFE AREA (pour iPhone notch et Android)
+   ============================================ */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
