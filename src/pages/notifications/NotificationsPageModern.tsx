@@ -7,7 +7,7 @@ import { Field, Input, Select, Textarea, Button, Modal, Avatar } from '../../com
 import {
   Bell, Plus, Send, MessageCircle, Mail, Smartphone, CheckCircle2,
   XCircle, Clock, Zap, TrendingUp, Filter, Search, Sparkles,
-  History, FileText, ToggleLeft, ToggleRight, AlertTriangle
+  History, FileText, ToggleLeft, ToggleRight, AlertTriangle, ChevronRight
 } from 'lucide-react'
 import type { Notification } from '../../types'
 
@@ -550,3 +550,4 @@ export const NotificationsPageModern: React.FC = () => {
 }
 
 export default NotificationsPageModern
+

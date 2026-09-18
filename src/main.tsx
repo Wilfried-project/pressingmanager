@@ -7,7 +7,7 @@ import './index.css'
 // ============================================
 // ENREGISTREMENT DU SERVICE WORKER (PWA)
 // ============================================
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+if ('serviceWorker' in navigator && true) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')
@@ -60,3 +60,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>
 )
+
