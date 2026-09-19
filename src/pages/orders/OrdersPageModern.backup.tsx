@@ -31,18 +31,18 @@ const SERVICES: { value: ServiceType; label: string; basePrice: number }[] = [
   { value: 'lavage_express', label: 'Lavage express', basePrice: 2500 },
   { value: 'repassage', label: 'Repassage', basePrice: 750 },
   { value: 'nettoyage_sec', label: 'Nettoyage a sec', basePrice: 3500 },
-  { value: 'detachage', label: 'Détachage', basePrice: 1500 },
+  { value: 'detachage', label: 'Detachage', basePrice: 1500 },
   { value: 'impermeabilisant', label: 'Impermeabilisant', basePrice: 2500 },
   { value: 'service_vip', label: 'Service VIP complet', basePrice: 8000 },
 ]
 
-// 5 statuts globaux de la commande (remplace les 14 etapes par vêtement)
+// 5 statuts globaux de la commande (remplace les 14 etapes par vetement)
 const ORDER_STATUSES = [
   { key: 'en_attente', label: 'En attente', color: 'amber', icon: 'schedule' },
   { key: 'en_cours',   label: 'En cours',   color: 'blue',  icon: 'local_laundry_service' },
-  { key: 'pret',       label: 'Prêt',       color: 'emerald', icon: 'check_circle' },
-  { key: 'livre',      label: 'Livré',      color: 'slate', icon: 'inventory' },
-  { key: 'annule',     label: 'Annulé',     color: 'red',   icon: 'cancel' },
+  { key: 'pret',       label: 'Pret',       color: 'emerald', icon: 'check_circle' },
+  { key: 'livre',      label: 'Livre',      color: 'slate', icon: 'inventory' },
+  { key: 'annule',     label: 'Annule',     color: 'red',   icon: 'cancel' },
 ] as const
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; bar: string }> = {
@@ -61,10 +61,10 @@ const STATUS_TO_BADGE: Record<string, any> = {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  recu: 'Reçu', en_attente: 'En attente', tri: 'Tri', pretraitement: 'Prétraitement',
-  detachage: 'Détachage', lavage: 'Lavage', essorage: 'Essorage', sechage: 'Séchage',
-  repassage: 'Repassage', controle: 'Contrôle', retouche: 'Retouche', emballage: 'Emballage',
-  stock: 'Stock', pret: 'Prêt', livre: 'Livré', annule: 'Annulé',
+  recu: 'Recu', en_attente: 'En attente', tri: 'Tri', pretraitement: 'Pretraitement',
+  detachage: 'Detachage', lavage: 'Lavage', essorage: 'Essorage', sechage: 'Sechage',
+  repassage: 'Repassage', controle: 'Controle', retouche: 'Retouche', emballage: 'Emballage',
+  stock: 'Stock', pret: 'Pret', livre: 'Livre', annule: 'Annule',
   en_cours: 'En cours'
 }
 
@@ -233,7 +233,7 @@ export const OrdersPageModern: React.FC = () => {
 
   const handleCreateClient = async () => {
     if (!newClient.first_name || !newClient.phone) {
-      toast.warning('Informations manquantes', { description: 'Prénom et téléphone sont obligatoires' })
+      toast.warning('Informations manquantes', { description: 'Prenom et telephone sont obligatoires' })
       return
     }
     try {
@@ -260,14 +260,14 @@ export const OrdersPageModern: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const client = clients.find(c => c.id === form.client_id)
-    if (!client) { toast.warning('Client non sélectionné', { description: 'Veuillez choisir un client pour continuer' }); return }
+    if (!client) { toast.warning('Client non selectionne', { description: 'Veuillez choisir un client pour continuer' }); return }
     const ticket = await generateTicketNumber()
     const now = new Date().toISOString()
     const clothesFull: Cloth[] = clothes.map(c => ({
       ...c, id: crypto.randomUUID(), order_id: ticket,
       qr_code: `QR-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
       status: 'recu' as const,
-      status_history: [{ status: 'recu' as const, changed_at: now, changed_by: 'system', notes: 'Réception client' }],
+      status_history: [{ status: 'recu' as const, changed_at: now, changed_by: 'system', notes: 'Reception client' }],
       photos: c.photos || [], created_at: now
     } as Cloth))
 
@@ -389,7 +389,7 @@ export const OrdersPageModern: React.FC = () => {
       setTimeout(() => window.open(waUrl, '_blank'), 1500)
     }
 
-    toast.success('Commande créée !', { description: `Ticket #${ticket} · +${pts} points fidélité` })
+    toast.success('Commande creee !', { description: `Ticket #${ticket} · +${pts} points fidelite` })
   }
 
   const resetForm = () => {
@@ -502,7 +502,7 @@ export const OrdersPageModern: React.FC = () => {
       <div class="section">
         <div class="section-title">Informations client</div>
         <div class="row"><span class="label">Client</span><span class="value">${order.client?.first_name} ${order.client?.last_name}</span></div>
-        <div class="row"><span class="label">Téléphone</span><span class="value">${order.client?.phone}</span></div>
+        <div class="row"><span class="label">Telephone</span><span class="value">${order.client?.phone}</span></div>
         <div class="row"><span class="label">Date depot</span><span class="value">${new Date(order.received_at).toLocaleDateString('fr-FR')} a ${new Date(order.received_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
         <div class="row"><span class="label">Date prevue</span><span class="value">${order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'A definir'}</span></div>
       </div>
@@ -517,14 +517,14 @@ export const OrdersPageModern: React.FC = () => {
         `).join('')}
       </div>
       <div class="totals">
-        <div class="section-title">Récapitulatif paiement</div>
+        <div class="section-title">Recapitulatif paiement</div>
         <div class="total-line"><span>Sous-total</span><span>${order.subtotal.toLocaleString('fr-FR')} XOF</span></div>
         ${order.discount > 0 ? `<div class="total-line" style="color:#16a34a"><span>Remise client</span><span>-${order.discount.toLocaleString('fr-FR')} XOF</span></div>` : ''}
         <div class="total-main"><span>TOTAL</span><span>${order.total.toLocaleString('fr-FR')} XOF</span></div>
-        ${order.deposit > 0 ? `<div class="total-line" style="color:#2563eb;margin-top:4px"><span>Acompte versé</span><span>${order.deposit.toLocaleString('fr-FR')} XOF</span></div>` : ''}
+        ${order.deposit > 0 ? `<div class="total-line" style="color:#2563eb;margin-top:4px"><span>Acompte verse</span><span>${order.deposit.toLocaleString('fr-FR')} XOF</span></div>` : ''}
         ${order.remaining > 0
-          ? `<div class="remaining">Reste à payer: ${order.remaining.toLocaleString('fr-FR')} XOF</div>`
-          : `<div class="paid">Commande entièrement payee</div>`
+          ? `<div class="remaining">Reste a payer: ${order.remaining.toLocaleString('fr-FR')} XOF</div>`
+          : `<div class="paid">Commande entierement payee</div>`
         }
         <div class="total-line" style="margin-top:4px;font-size:10px;color:#6b7280"><span>Mode de paiement</span><span>${order.payment_method?.replace('_', ' ')}</span></div>
       </div>
@@ -555,14 +555,14 @@ export const OrdersPageModern: React.FC = () => {
       client_name: `${order.client?.first_name} ${order.client?.last_name}`,
       client_phone: order.client?.phone || '',
       type: 'whatsapp' as const,
-      message: msgPret || `Bonjour ${order.client?.first_name} ! Vos vêtements sont prets. Ticket: #${order.ticket_number}. - ${config.name || 'PressingManager'}`,
+      message: msgPret || `Bonjour ${order.client?.first_name} ! Vos vetements sont prets. Ticket: #${order.ticket_number}. - ${config.name || 'PressingManager'}`,
       status: 'pending' as const, created_at: new Date().toISOString()
     }
     addNotification(notif)
 
     const phoneClean = (order.client?.phone || '').replace(/\s/g, '').replace(/^00/, '+')
     if (phoneClean) {
-      const defaultMsg = 'Bonjour ' + (order.client?.first_name || '') + ' ! Vos vêtements sont prets. Ticket: #' + order.ticket_number + '. Venez recuperer. - ' + (config.name || 'PressingManager')
+      const defaultMsg = 'Bonjour ' + (order.client?.first_name || '') + ' ! Vos vetements sont prets. Ticket: #' + order.ticket_number + '. Venez recuperer. - ' + (config.name || 'PressingManager')
       const finalMsg = msgPret || defaultMsg
       const waUrl = 'https://wa.me/' + phoneClean + '?text=' + encodeURIComponent(finalMsg)
       window.open(waUrl, '_blank')
@@ -660,7 +660,7 @@ export const OrdersPageModern: React.FC = () => {
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Numéro ticket, nom client, téléphone..."
+            placeholder="Numero ticket, nom client, telephone..."
             className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-on-surface placeholder:text-on-surface-variant transition"
           />
         </div>
@@ -815,7 +815,7 @@ export const OrdersPageModern: React.FC = () => {
             className="btn-modern-primary mx-auto"
           >
             <Plus size={18} strokeWidth={2.5} />
-            Créer une commande
+            Creer une commande
           </button>
         </div>
       )}
@@ -844,7 +844,7 @@ export const OrdersPageModern: React.FC = () => {
 
       {/* ===== MODAL PAIEMENT ===== */}
       {showPaymentModal && (
-        <Modal open={!!showPaymentModal} onClose={() => setShowPaymentModal(null)} title="Encaissement à la livraison" size="sm">
+        <Modal open={!!showPaymentModal} onClose={() => setShowPaymentModal(null)} title="Encaissement a la livraison" size="sm">
           <div className="space-y-4">
             <div className="bg-primary-fixed/40 rounded-xl p-4">
               <p className="text-xs text-on-surface-variant">Client</p>
@@ -858,15 +858,15 @@ export const OrdersPageModern: React.FC = () => {
                 <span className="font-bold">{showPaymentModal.total.toLocaleString('fr-FR')} XOF</span>
               </div>
               <div className="flex justify-between mb-2 text-sm">
-                <span className="text-on-surface-variant">Déjà payé</span>
+                <span className="text-on-surface-variant">Deja paye</span>
                 <span className="font-semibold text-emerald-600">{showPaymentModal.deposit.toLocaleString('fr-FR')} XOF</span>
               </div>
               <div className="flex justify-between border-t border-red-200 pt-2">
-                <span className="font-bold text-red-700 text-sm">Reste à payer</span>
+                <span className="font-bold text-red-700 text-sm">Reste a payer</span>
                 <span className="font-bold text-red-700 text-xl">{showPaymentModal.remaining.toLocaleString('fr-FR')} XOF</span>
               </div>
             </div>
-            <Field label="Montant encaissé (XOF)">
+            <Field label="Montant encaisse (XOF)">
               <Input type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)} onFocus={e => e.target.value === '0' && (e.target.value = '')} min="0" max={showPaymentModal.remaining} />
             </Field>
             <Field label="Mode de paiement">
@@ -874,14 +874,14 @@ export const OrdersPageModern: React.FC = () => {
                 <option value="wave">Wave</option>
                 <option value="orange_money">Orange Money</option>
                 <option value="mtn">MTN Money</option>
-                <option value="especes">Espèces</option>
+                <option value="especes">Especes</option>
                 <option value="mixte">Paiement mixte</option>
               </Select>
             </Field>
             {paymentAmount > 0 && (
               <div className={`p-3 rounded-xl text-sm font-semibold ${showPaymentModal.remaining - paymentAmount <= 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
                 {showPaymentModal.remaining - paymentAmount <= 0
-                  ? 'Commande entièrement soldee'
+                  ? 'Commande entierement soldee'
                   : `Reste apres paiement: ${(showPaymentModal.remaining - paymentAmount).toLocaleString('fr-FR')} XOF`
                 }
               </div>
@@ -903,7 +903,7 @@ export const OrdersPageModern: React.FC = () => {
               <Field label="Client" required>
                 <div className="relative">
                   <Input
-                    placeholder="Rechercher par nom ou téléphone..."
+                    placeholder="Rechercher par nom ou telephone..."
                     value={clientSearch}
                     onChange={e => { setClientSearch(e.target.value); setForm({ ...form, client_id: '' }) }}
                   />
@@ -922,7 +922,7 @@ export const OrdersPageModern: React.FC = () => {
                       <button type="button"
                         onClick={() => { setShowNewClientForm(true); setNewClient({ ...newClient, first_name: clientSearch }) }}
                         className="w-full text-left px-4 py-3 hover:bg-emerald-50 text-emerald-700 font-semibold text-sm border-t border-outline-variant/20">
-                        Créer "{clientSearch}" comme nouveau client
+                        Creer "{clientSearch}" comme nouveau client
                       </button>
                     </div>
                   )}
@@ -932,13 +932,13 @@ export const OrdersPageModern: React.FC = () => {
                 <div className="mt-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
                   <p className="font-bold text-emerald-800 mb-3">Nouveau client</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <Field label="Prénom *">
-                      <Input value={newClient.first_name} onChange={e => setNewClient({ ...newClient, first_name: e.target.value })} placeholder="Prénom" />
+                    <Field label="Prenom *">
+                      <Input value={newClient.first_name} onChange={e => setNewClient({ ...newClient, first_name: e.target.value })} placeholder="Prenom" />
                     </Field>
                     <Field label="Nom">
                       <Input value={newClient.last_name} onChange={e => setNewClient({ ...newClient, last_name: e.target.value })} placeholder="Nom" />
                     </Field>
-                    <Field label="Téléphone *">
+                    <Field label="Telephone *">
                       <Input value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} placeholder="+225 07..." />
                     </Field>
                     <Field label="Email">
@@ -946,7 +946,7 @@ export const OrdersPageModern: React.FC = () => {
                     </Field>
                   </div>
                   <div className="flex gap-2 mt-3">
-                    <Button type="button" onClick={handleCreateClient} size="sm">Créer le client</Button>
+                    <Button type="button" onClick={handleCreateClient} size="sm">Creer le client</Button>
                     <Button type="button" variant="ghost" size="sm" onClick={() => setShowNewClientForm(false)}>Annuler</Button>
                   </div>
                 </div>
@@ -965,7 +965,7 @@ export const OrdersPageModern: React.FC = () => {
 
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-on-surface">Vêtements ({clothes.length})</h3>
+              <h3 className="font-bold text-on-surface">Vetements ({clothes.length})</h3>
               <Button type="button" variant="ghost" size="sm" icon={<Plus size={15} />} onClick={addCloth}>Ajouter</Button>
             </div>
             <div className="space-y-4">
@@ -1004,10 +1004,10 @@ export const OrdersPageModern: React.FC = () => {
                     <Field label="Taille">
                       <Input value={cloth.size || ''} onChange={e => updateCloth(i, { size: e.target.value })} placeholder="S, M, L, XL..." />
                     </Field>
-                    <Field label="Matière">
+                    <Field label="Matiere">
                       <Input value={cloth.material || ''} onChange={e => updateCloth(i, { material: e.target.value })} placeholder="Coton, Soie..." />
                     </Field>
-                    <Field label="Etat a réception">
+                    <Field label="Etat a reception">
                       <Select value={cloth.condition_on_arrival} onChange={e => updateCloth(i, { condition_on_arrival: e.target.value })}>
                         <option value="bon">Bon etat</option>
                         <option value="taches">Taches</option>
@@ -1016,7 +1016,7 @@ export const OrdersPageModern: React.FC = () => {
                         <option value="abime">Abime</option>
                       </Select>
                     </Field>
-                    <Field label="Instructions spéciales">
+                    <Field label="Instructions speciales">
                       <Input value={cloth.special_instructions || ''} onChange={e => updateCloth(i, { special_instructions: e.target.value })} placeholder="Delicat, pas de chlore..." />
                     </Field>
                     <div className="flex items-end justify-between col-span-2">
@@ -1038,17 +1038,17 @@ export const OrdersPageModern: React.FC = () => {
               <Input required type="datetime-local" value={form.expected_at} onChange={e => setForm({ ...form, expected_at: e.target.value })} />
               <button type="button" onClick={() => setForm({ ...form, expected_at: suggestedDate })}
                 className="mt-1.5 text-xs text-primary hover:underline font-semibold flex items-center gap-1">
-                Date suggérée : {new Date(suggestedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} a 9h00
+                Date suggeree : {new Date(suggestedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} a 9h00
               </button>
             </Field>
           </div>
 
           <div className="bg-gradient-to-r from-primary-fixed/40 to-secondary-fixed/40 border border-primary/20 rounded-xl p-5">
-            <h3 className="font-bold text-on-surface mb-3">Récapitulatif</h3>
+            <h3 className="font-bold text-on-surface mb-3">Recapitulatif</h3>
             <div className="space-y-2">
               <div className="flex justify-between text-sm"><span className="text-on-surface-variant">Sous-total ({clothes.length} article(s))</span><span className="font-medium">{subtotal.toLocaleString('fr-FR')} XOF</span></div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-on-surface-variant">Réduction (XOF)</span>
+                <span className="text-on-surface-variant">Reduction (XOF)</span>
                 <Input type="number" min="0" value={manualDiscount} onChange={e => setManualDiscount(parseFloat(e.target.value) || 0)} onFocus={e => e.target.value === '0' && (e.target.value = '')} className="w-32 text-right" />
               </div>
               <div className="border-t border-primary/20 pt-2 flex justify-between font-bold text-xl"><span>TOTAL</span><span className="text-primary">{total.toLocaleString('fr-FR')} XOF</span></div>
@@ -1063,7 +1063,7 @@ export const OrdersPageModern: React.FC = () => {
                   <option value="wave">Wave</option>
                   <option value="orange_money">Orange Money</option>
                   <option value="mtn">MTN Money</option>
-                  <option value="especes">Espèces</option>
+                  <option value="especes">Especes</option>
                   <option value="mixte">Paiement mixte</option>
                 </Select>
               </Field>
@@ -1072,12 +1072,12 @@ export const OrdersPageModern: React.FC = () => {
                   const ps = e.target.value as PaymentStatus
                   setForm({ ...form, payment_status: ps, deposit: ps === 'paye' ? total : ps === 'non_paye' ? 0 : form.deposit })
                 }}>
-                  <option value="non_paye">Non payé</option>
-                  <option value="acompte">Acompte versé</option>
-                  <option value="paye">Payé en totalité</option>
+                  <option value="non_paye">Non paye</option>
+                  <option value="acompte">Acompte verse</option>
+                  <option value="paye">Paye en totalite</option>
                 </Select>
               </Field>
-              <Field label="Acompte reçu (XOF)">
+              <Field label="Acompte recu (XOF)">
                 <Input
                   type="number" min="0"
                   value={form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit}
@@ -1090,7 +1090,7 @@ export const OrdersPageModern: React.FC = () => {
           </div>
 
           <Field label="Notes generales">
-            <Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Informations supplémentaires pour l'equipe..." />
+            <Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Informations supplementaires pour l'equipe..." />
           </Field>
 
           <div className="flex gap-3">
@@ -1107,7 +1107,7 @@ export const OrdersPageModern: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
                 { label: 'Client', value: `${viewOrder.client?.first_name} ${viewOrder.client?.last_name}` },
-                { label: 'Téléphone', value: viewOrder.client?.phone || '-' },
+                { label: 'Telephone', value: viewOrder.client?.phone || '-' },
                 { label: 'Recu le', value: new Date(viewOrder.received_at).toLocaleDateString('fr-FR') },
                 { label: 'Date limite', value: viewOrder.expected_at ? new Date(viewOrder.expected_at).toLocaleDateString('fr-FR') : '-' },
                 { label: 'Paiement', value: viewOrder.payment_method },
@@ -1119,8 +1119,24 @@ export const OrdersPageModern: React.FC = () => {
               ))}
             </div>
 
+            <div>
+              <p className="text-sm font-bold text-on-surface mb-2">Changer le statut :</p>
+              <div className="flex flex-wrap gap-2">
+                {['en_attente', 'en_cours', 'pret', 'livre', 'annule'].map(s => (
+                  <button key={s} onClick={() => {
+                    updateOrder(viewOrder.id, { status: s as Order['status'], ...(s === 'livre' ? { delivered_at: new Date().toISOString() } : {}) })
+                    setViewOrder({ ...viewOrder, status: s as Order['status'] })
+                    if (s === 'pret') sendReadyNotification(viewOrder)
+                  }}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition ${viewOrder.status === s ? 'border-primary bg-primary-fixed text-primary' : 'border-outline-variant/40 hover:border-primary/50 text-on-surface-variant'}`}>
+                    {s.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* ============================================ */}
-            {/* STATUT GLOBAL DE LA COMMANDE (remplace le workflow par vêtement) */}
+            {/* STATUT GLOBAL DE LA COMMANDE (remplace le workflow par vetement) */}
             {/* ============================================ */}
             <div className="card-modern !p-4">
               <p className="text-sm font-bold text-on-surface mb-3">Statut de la commande</p>
@@ -1198,11 +1214,11 @@ export const OrdersPageModern: React.FC = () => {
               <div className="flex justify-between text-sm"><span>Sous-total</span><span>{viewOrder.subtotal.toLocaleString('fr-FR')} XOF</span></div>
               {viewOrder.discount > 0 && <div className="flex justify-between text-sm text-emerald-600"><span>Remise</span><span>-{viewOrder.discount.toLocaleString('fr-FR')} XOF</span></div>}
               <div className="flex justify-between font-bold text-lg border-t border-primary/20 pt-2"><span>TOTAL</span><span className="text-primary">{viewOrder.total.toLocaleString('fr-FR')} XOF</span></div>
-              {viewOrder.remaining > 0 && <div className="flex justify-between font-bold text-red-600"><span>Restant à payer</span><span>{viewOrder.remaining.toLocaleString('fr-FR')} XOF</span></div>}
+              {viewOrder.remaining > 0 && <div className="flex justify-between font-bold text-red-600"><span>Restant a payer</span><span>{viewOrder.remaining.toLocaleString('fr-FR')} XOF</span></div>}
             </div>
 
             <div className="flex gap-3">
-              <Button icon={<Printer size={16} />} variant="ghost" className="flex-1" onClick={() => printTicket(viewOrder).catch(console.error)}>Réimprimer ticket</Button>
+              <Button icon={<Printer size={16} />} variant="ghost" className="flex-1" onClick={() => printTicket(viewOrder).catch(console.error)}>Reimprimer ticket</Button>
               {viewOrder.remaining > 0 && (
                 <Button icon={<CreditCard size={16} />} variant="warning" className="flex-1"
                   onClick={() => { setShowPaymentModal(viewOrder); setPaymentAmount(viewOrder.remaining); setViewOrder(null) }}>
