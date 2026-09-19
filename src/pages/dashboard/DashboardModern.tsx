@@ -1,7 +1,8 @@
-﻿import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../lib/store'
+import { useSettingsStore } from '../../lib/settingsStore'
 import {
   AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -26,7 +27,18 @@ const Icon: React.FC<{ name: string; size?: number; className?: string }> = ({
 // ============================================
 // CONSTANTES
 // ============================================
-const COLORS = ['#630ed4', '#4b41e1', '#005b3d', '#f97316', '#ba1a1a', '#8b5cf6', '#14b8a6']
+// Palette de couleurs dynamiques basees sur la couleur primaire du pressing
+function buildColorPalette(primaryColor: string): string[] {
+  return [
+    primaryColor,       // Primaire
+    '#06b6d4',          // Cyan
+    '#10b981',          // Emeraude
+    '#f59e0b',          // Ambre
+    '#ef4444',          // Rouge
+    '#8b5cf6',          // Violet clair
+    '#3b82f6',          // Bleu
+  ]
+}
 
 const STATUS_LABELS: Record<string, string> = {
   recu: 'Recu', en_attente: 'En attente', tri: 'Tri', lavage: 'Lavage',
@@ -57,6 +69,9 @@ async function getTenantId() {
 export const DashboardModern: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { settings } = useSettingsStore()
+  const primaryColor = settings?.theme?.primary_color || '#6c47ff'
+  const COLORS = buildColorPalette(primaryColor)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     todayOrders: 0, todayClothes: 0, readyOrders: 0,
@@ -325,8 +340,8 @@ export const DashboardModern: React.FC = () => {
               <AreaChart data={caByDay} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradCA" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#630ed4" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#630ed4" stopOpacity={0} />
+                    <stop offset="0%" stopColor={primaryColor} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={primaryColor} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#eaedff" vertical={false} />
@@ -350,10 +365,10 @@ export const DashboardModern: React.FC = () => {
                 />
                 <Area
                   type="monotone" dataKey="ca"
-                  stroke="#630ed4" strokeWidth={3}
+                  stroke={primaryColor} strokeWidth={3}
                   fill="url(#gradCA)"
-                  dot={{ r: 4, fill: '#630ed4', strokeWidth: 2, stroke: '#ffffff' }}
-                  activeDot={{ r: 7, fill: '#630ed4', stroke: '#ffffff', strokeWidth: 3 }}
+                  dot={{ r: 4, fill: primaryColor, strokeWidth: 2, stroke: '#ffffff' }}
+                  activeDot={{ r: 7, fill: primaryColor, stroke: '#ffffff', strokeWidth: 3 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -505,8 +520,8 @@ export const DashboardModern: React.FC = () => {
               <AreaChart data={clothesByDay} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradHabits" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#4b41e1" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#4b41e1" stopOpacity={0} />
+                    <stop offset="0%" stopColor={primaryColor} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={primaryColor} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#eaedff" vertical={false} />
@@ -525,10 +540,10 @@ export const DashboardModern: React.FC = () => {
                 />
                 <Area
                   type="monotone" dataKey="habits"
-                  stroke="#4b41e1" strokeWidth={3}
+                  stroke={primaryColor} strokeWidth={3}
                   fill="url(#gradHabits)"
-                  dot={{ r: 4, fill: '#4b41e1', strokeWidth: 2, stroke: '#ffffff' }}
-                  activeDot={{ r: 7, fill: '#4b41e1', stroke: '#ffffff', strokeWidth: 3 }}
+                  dot={{ r: 4, fill: primaryColor, strokeWidth: 2, stroke: '#ffffff' }}
+                  activeDot={{ r: 7, fill: primaryColor, stroke: '#ffffff', strokeWidth: 3 }}
                 />
               </AreaChart>
             </ResponsiveContainer>

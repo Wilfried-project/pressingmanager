@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -234,4 +234,27 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+/* ============================================
+   ANTI-FLASH Material Symbols
+   Cache les icones tant que la police n'est pas chargee
+   ============================================ */
+.material-symbols-outlined {
+  visibility: hidden;
+  font-display: block;
+}
+
+/* Quand la police est chargee, on affiche les icones */
+.fonts-loaded .material-symbols-outlined,
+html.fonts-loaded .material-symbols-outlined {
+  visibility: visible;
+}
+
+/* Securite : si JS plante, on affiche quand meme apres 2 secondes */
+@keyframes forceShowIcons {
+  to { visibility: visible; }
+}
+.material-symbols-outlined {
+  animation: forceShowIcons 0s linear 2s forwards;
 }

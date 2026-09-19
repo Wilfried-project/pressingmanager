@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { toast } from 'sonner'
 import App from './App'
@@ -61,3 +61,24 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>
 )
 
+
+// ============================================
+// ANTI-FLASH : Detecter le chargement de Material Symbols
+// ============================================
+if ('fonts' in document) {
+  // Attendre que Material Symbols soit pret
+  document.fonts.ready.then(() => {
+    document.documentElement.classList.add('fonts-loaded')
+  })
+
+  // Ou attendre specifiquement cette police
+  document.fonts.load('24px "Material Symbols Outlined"').then(() => {
+    document.documentElement.classList.add('fonts-loaded')
+  }).catch(() => {
+    // Fallback si la police n'existe pas
+    document.documentElement.classList.add('fonts-loaded')
+  })
+} else {
+  // Vieux navigateur : afficher direct
+  document.documentElement.classList.add('fonts-loaded')
+}
