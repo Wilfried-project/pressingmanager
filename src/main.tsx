@@ -65,20 +65,19 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 // ============================================
 // ANTI-FLASH : Detecter le chargement de Material Symbols
 // ============================================
-if ('fonts' in document) {
-  // Attendre que Material Symbols soit pret
-  document.fonts.ready.then(() => {
-    document.documentElement.classList.add('fonts-loaded')
+const rootEl = document.documentElement
+const fonts = (document as any).fonts
+
+if (fonts) {
+  fonts.ready.then(() => {
+    rootEl.classList.add('fonts-loaded')
   })
 
-  // Ou attendre specifiquement cette police
-  document.fonts.load('24px "Material Symbols Outlined"').then(() => {
-    document.documentElement.classList.add('fonts-loaded')
+  fonts.load('24px "Material Symbols Outlined"').then(() => {
+    rootEl.classList.add('fonts-loaded')
   }).catch(() => {
-    // Fallback si la police n'existe pas
-    document.documentElement.classList.add('fonts-loaded')
+    rootEl.classList.add('fonts-loaded')
   })
 } else {
-  // Vieux navigateur : afficher direct
-  document.documentElement.classList.add('fonts-loaded')
+  rootEl.classList.add('fonts-loaded')
 }
