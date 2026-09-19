@@ -1,11 +1,11 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore, useOrderStore, useStockStore, useNotificationStore, useShopConfig } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { BottomTabBar } from './BottomTabBar'
 import { MobileHeader } from './MobileHeader'
 
-// IcÃ´ne Material Symbols (Google) â€” celle utilisÃ©e par le design Stitch.
+// Icône Material Symbols (Google) â€” celle utilisée par le design Stitch.
 const Icon: React.FC<{ name: string; size?: number; className?: string }> = ({ name, size = 20, className = '' }) => (
   <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size }}>{name}</span>
 )
@@ -16,17 +16,17 @@ export const ALL_MODULES = [
   { path: '/clients', label: 'Clients', icon: 'groups', group: 'Clients & Ventes' },
   { path: '/billing', label: 'Facturation', icon: 'request_quote', group: 'Clients & Ventes' },
   { path: '/cashier', label: 'Caisse', icon: 'point_of_sale', group: 'Clients & Ventes' },
-  { path: '/loyalty', label: 'FidÃ©litÃ©', icon: 'loyalty', group: 'Clients & Ventes' },
-  { path: '/stock', label: 'Stock', icon: 'inventory_2', group: 'OpÃ©rations' },
-  { path: '/delivery', label: 'Livraisons', icon: 'local_shipping', group: 'OpÃ©rations' },
-  { path: '/notifications', label: 'Notifications', icon: 'notifications', group: 'OpÃ©rations' },
-  { path: '/agenda', label: 'Agenda', icon: 'calendar_month', group: 'OpÃ©rations' },
-  { path: '/atelier', label: 'Atelier', icon: 'qr_code_scanner', group: 'OpÃ©rations' },
-  { path: '/hr', label: 'EmployÃ©s & RH', icon: 'badge', group: 'Ã‰quipe & Finance' },
-  { path: '/accounting', label: 'ComptabilitÃ©', icon: 'account_balance_wallet', group: 'Ã‰quipe & Finance' },
-  { path: '/reports', label: 'Rapports', icon: 'monitoring', group: 'Ã‰quipe & Finance' },
+  { path: '/loyalty', label: 'Fidélité', icon: 'loyalty', group: 'Clients & Ventes' },
+  { path: '/stock', label: 'Stock', icon: 'inventory_2', group: 'Opérations' },
+  { path: '/delivery', label: 'Livraisons', icon: 'local_shipping', group: 'Opérations' },
+  { path: '/notifications', label: 'Notifications', icon: 'notifications', group: 'Opérations' },
+  { path: '/agenda', label: 'Agenda', icon: 'calendar_month', group: 'Opérations' },
+  { path: '/atelier', label: 'Atelier', icon: 'qr_code_scanner', group: 'Opérations' },
+  { path: '/hr', label: 'Employés & RH', icon: 'badge', group: 'Équipe & Finance' },
+  { path: '/accounting', label: 'Comptabilité', icon: 'account_balance_wallet', group: 'Équipe & Finance' },
+  { path: '/reports', label: 'Rapports', icon: 'monitoring', group: 'Équipe & Finance' },
   { path: '/services', label: 'Services & Tarifs', icon: 'sell', group: 'Configuration' },
-  { path: '/settings', label: 'ParamÃ¨tres', icon: 'settings', group: 'Configuration' },
+  { path: '/settings', label: 'Paramètres', icon: 'settings', group: 'Configuration' },
   { path: '/users', label: 'Utilisateurs', icon: 'manage_accounts', group: 'Configuration' },
 ]
 
@@ -113,7 +113,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </div>
       </aside>
 
-      {/* Contenu + en-tÃªte */}
+      {/* Contenu + en-tête */}
       <div className="lg:pl-64">
         <MobileHeader />
         <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40">
@@ -124,7 +124,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               </button>
               <div className="hidden md:flex items-center flex-1 max-w-xl relative">
                 <span className="material-symbols-outlined absolute left-space-md text-outline pointer-events-none" style={{ fontSize: 20 }}>search</span>
-                <input className="w-full pl-10 pr-space-lg py-space-xs bg-surface-container-lowest text-on-surface font-body-md text-body-md rounded-full shadow-[0_1px_3px_rgba(15,23,42,0.05)] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline" placeholder="Rechercher un ticket, client, tÃ©lÃ©phone..." type="text" />
+                <input className="w-full pl-10 pr-space-lg py-space-xs bg-surface-container-lowest text-on-surface font-body-md text-body-md rounded-full shadow-[0_1px_3px_rgba(15,23,42,0.05)] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline" placeholder="Rechercher un ticket, client, téléphone..." type="text" />
               </div>
             </div>
             <div className="flex items-center gap-space-md">
@@ -144,9 +144,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   <span className="font-label-sm text-label-sm text-outline leading-tight capitalize">{user?.role || 'admin'}</span>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-bold text-sm shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-                  {user?.full_name?.charAt(0).toUpperCase() || 'A'}
+                  {user?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'A'}
                 </div>
-                <button onClick={handleLogout} className="p-1.5 hover:bg-error-container text-outline hover:text-error rounded-full transition" title="DÃ©connexion">
+                <button onClick={handleLogout} className="p-1.5 hover:bg-error-container text-outline hover:text-error rounded-full transition" title="Déconnexion">
                   <Icon name="logout" size={16} />
                 </button>
               </div>
