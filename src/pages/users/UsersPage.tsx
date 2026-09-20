@@ -18,14 +18,14 @@ interface AppUser {
 }
 
 const DEFAULT_ROLES = [
-  { value: 'admin', label: ' Administrateur', desc: 'Accès complet à tout' },
-  { value: 'responsable', label: ' Responsable', desc: 'Gestion opérationnelle' },
-  { value: 'caissier', label: ' Caissier', desc: 'Caisse, facturation, clients' },
-  { value: 'employe', label: ' Employé', desc: 'Commandes uniquement' },
-  { value: 'livreur', label: ' Livreur', desc: 'Livraisons uniquement' },
-  { value: 'comptable', label: ' Comptable', desc: 'Finance et rapports' },
-  { value: 'laveur', label: ' Laveur/Repasseur', desc: 'Interface atelier' },
-  { value: 'custom', label: ' Personnalisé', desc: 'Permissions manuelles' },
+  { value: 'admin', label: 'Administrateur', desc: 'Accès complet à tout' },
+  { value: 'responsable', label: 'Responsable', desc: 'Gestion opérationnelle' },
+  { value: 'caissier', label: 'Caissier', desc: 'Caisse, facturation, clients' },
+  { value: 'employe', label: 'Employé', desc: 'Commandes uniquement' },
+  { value: 'livreur', label: 'Livreur', desc: 'Livraisons uniquement' },
+  { value: 'comptable', label: 'Comptable', desc: 'Finance et rapports' },
+  { value: 'laveur', label: 'Laveur/Repasseur', desc: 'Interface atelier' },
+  { value: 'custom', label: 'Personnalisé', desc: 'Permissions manuelles' },
 ]
 
 export const UsersPage: React.FC = () => {
@@ -119,7 +119,6 @@ export const UsersPage: React.FC = () => {
       const effectivePerms = getEffectivePermissions(form.role, form.permissions)
 
       if (editUser) {
-        // Modifier l'employé existant
         const { error } = await supabase.from('employees').update({
           full_name: form.full_name,
           phone: form.phone,
@@ -129,13 +128,10 @@ export const UsersPage: React.FC = () => {
         }).eq('id', editUser.id)
         if (error) throw error
 
-        setSuccess(' Utilisateur modifié avec succès')
+        setSuccess('Utilisateur modifié avec succès')
       } else {
-        // Sauvegarder la session admin AVANT de créer le compte —
-        // signUp connecte automatiquement le nouvel utilisateur et remplacerait la session actuelle
         const { data: { session: adminSession } } = await supabase.auth.getSession()
 
-        // Créer le compte Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: form.email,
           password: form.password,
@@ -143,12 +139,10 @@ export const UsersPage: React.FC = () => {
         })
         if (authError) throw authError
 
-        // Restaurer la session admin immédiatement pour ne pas rester connecté en tant que nouvel employé
         if (adminSession) {
           await supabase.auth.setSession({ access_token: adminSession.access_token, refresh_token: adminSession.refresh_token })
         }
 
-        // Lier le compte au profil employé déjà créé dans RH (pas de nouvelle ligne)
         const { error: empError } = await supabase.from('employees').update({
           user_id: authData.user?.id,
           email: form.email,
@@ -158,7 +152,7 @@ export const UsersPage: React.FC = () => {
         }).eq('id', selectedEmployeeId)
         if (empError) throw empError
 
-        setSuccess(` Compte créé ! ${form.full_name} peut se connecter avec ${form.email}`)
+        setSuccess(`Compte créé ! ${form.full_name} peut se connecter avec ${form.email}`)
       }
 
       await loadUsers()
@@ -175,7 +169,7 @@ export const UsersPage: React.FC = () => {
     if (!confirm(`Envoyer un email de réinitialisation de mot de passe à ${user.full_name} (${user.email}) ?`)) return
     try {
       await supabase.auth.resetPasswordForEmail(user.email, { redirectTo: window.location.origin + '/reset-password' })
-      alert(` Email de réinitialisation envoyé à ${user.email}`)
+      alert(`Email de réinitialisation envoyé à ${user.email}`)
     } catch (err: any) {
       alert('Erreur lors de l\'envoi : ' + (err.message || 'réessayez plus tard'))
     }
@@ -266,11 +260,11 @@ export const UsersPage: React.FC = () => {
               <div key={role.value} className="flex flex-col p-space-lg rounded-DEFAULT bg-surface-container-lowest shadow-sm hover:shadow-md transition-all">
                 <div className="flex items-center justify-between mb-space-sm">
                   <span className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold">
-                    {role.label.trim().charAt(0)}
+                    {role.label.charAt(0)}
                   </span>
                   <span className="font-numeric-currency text-label-sm font-bold text-primary px-2 py-0.5 rounded-full bg-primary-fixed">{activeCount} actif(s)</span>
                 </div>
-                <span className="font-headline-md text-title-sm font-bold text-on-surface">{role.label.replace(/^./, '').trim()}</span>
+                <span className="font-headline-md text-title-sm font-bold text-on-surface">{role.label}</span>
                 <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-0.5">{role.desc}</p>
                 <div className="mt-space-md pt-space-xs">
                   <span className="font-label-sm text-label-sm font-bold text-primary">{ROLE_PERMISSIONS[role.value]?.length || 0} modules</span>
@@ -306,7 +300,7 @@ export const UsersPage: React.FC = () => {
                   <p className="font-body-sm text-body-sm text-on-surface-variant truncate">{user.email} {user.phone ? `• ${user.phone}` : ''}</p>
                 </div>
                 <div className="hidden sm:flex flex-col items-end gap-space-2xs">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm font-bold">{roleInfo?.label.replace(/^./, '').trim() || user.role}</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm font-bold">{roleInfo?.label || user.role}</span>
                   <span className="font-label-sm text-label-sm text-outline">{user.permissions?.length || ROLE_PERMISSIONS[user.role]?.length || 0} modules</span>
                 </div>
                 <div className="flex gap-space-2xs">
@@ -323,7 +317,6 @@ export const UsersPage: React.FC = () => {
           {!loading && users.length === 0 && (
             <div className="text-center py-space-3xl text-outline">
               <p>Aucun utilisateur — attribuez un accès à un employé RH</p>
-
             </div>
           )}
         </div>
@@ -374,7 +367,7 @@ export const UsersPage: React.FC = () => {
                   {editUser ? (
                     <button type="button" onClick={() => { setForm({ ...form, password: 'reset-requested' }); handleResetPassword({ ...editUser, full_name: form.full_name, email: form.email } as AppUser) }}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-purple-700 hover:bg-purple-50 transition text-left">
-                       Envoyer un email de réinitialisation
+                      Envoyer un email de réinitialisation
                     </button>
                   ) : (
                     <div className="relative">
@@ -388,8 +381,8 @@ export const UsersPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Statut</label>
                   <select value={form.is_active ? 'active' : 'inactive'} onChange={e => setForm({ ...form, is_active: e.target.value === 'active' })} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                    <option value="active"> Actif</option>
-                    <option value="inactive"> Inactif</option>
+                    <option value="active">Actif</option>
+                    <option value="inactive">Inactif</option>
                   </select>
                 </div>
               </div>
@@ -427,7 +420,14 @@ export const UsersPage: React.FC = () => {
                   <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
                     <p className="text-sm text-purple-700 font-medium mb-2">Modules inclus dans le rôle <strong>{DEFAULT_ROLES.find(r => r.value === form.role)?.label}</strong> :</p>
                     <div className="flex flex-wrap gap-2">
-                      {effectivePerms.map(path => { const mod = ALL_MODULES.find(m => m.path === path); return mod ? <span key={path} className="flex items-center gap-1 bg-white text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg text-xs font-medium">{mod.icon} {mod.label}</span> : null })}
+                      {effectivePerms.map(path => {
+                        const mod = ALL_MODULES.find(m => m.path === path)
+                        return mod ? (
+                          <span key={path} className="bg-white text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg text-xs font-medium">
+                            {mod.label}
+                          </span>
+                        ) : null
+                      })}
                     </div>
                     <p className="text-xs text-purple-500 mt-3">Pour personnaliser, sélectionnez le rôle "Personnalisé".</p>
                   </div>
@@ -442,7 +442,6 @@ export const UsersPage: React.FC = () => {
                             return (
                               <label key={mod.path} className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition ${checked ? 'bg-purple-50 border border-purple-200' : 'hover:bg-gray-50 border border-transparent'}`}>
                                 <input type="checkbox" checked={checked} onChange={() => togglePermission(mod.path)} className="w-4 h-4 text-purple-600 rounded" />
-                                <span className="text-base">{mod.icon}</span>
                                 <span className="text-sm font-medium text-gray-700">{mod.label}</span>
                               </label>
                             )

@@ -37,6 +37,7 @@ const SERVICES: { value: ServiceType; label: string; basePrice: number }[] = [
   { value: 'service_vip', label: 'Service VIP complet', basePrice: 8000 },
 ]
 
+// 5 statuts globaux de la commande (remplace les 14 etapes par vêtement)
 const ORDER_STATUSES = [
   { key: 'en_attente', label: 'En attente', color: 'amber', icon: 'schedule' },
   { key: 'en_cours',   label: 'En cours',   color: 'blue',  icon: 'local_laundry_service' },
@@ -82,6 +83,7 @@ export const OrdersPageModern: React.FC = () => {
     servicePriceService.getAll().then(setCustomPrices).catch(() => setCustomPrices([]))
   }, [])
 
+  // Ecoute l'evenement global "open-new-order" (emis par la CommandPalette)
   useEffect(() => {
     const handler = () => setShowForm(true)
     window.addEventListener('open-new-order', handler)
@@ -453,147 +455,87 @@ export const OrdersPageModern: React.FC = () => {
     setPaymentAmount(0)
   }
 
-  // ============================================
-  // IMPRESSION TICKET — Compact + texte original + mention légale
-  // ============================================
   const printTicket = async (order: Order) => {
     const scanUrl = `${window.location.origin}/scan/${encodeURIComponent(order.ticket_number)}`
-    const qrDataUrl = await QRCode.toDataURL(scanUrl, { width: 180, margin: 1, color: { dark: '#000000', light: '#ffffff' } })
+    const qrDataUrl = await QRCode.toDataURL(scanUrl, { width: 120, margin: 1, color: { dark: '#000000', light: '#ffffff' } })
     const win = window.open('', '_blank')
     if (!win) return
     win.document.write(`<!DOCTYPE html><html><head><title>Ticket ${order.ticket_number}</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       @page { size: 80mm auto; margin: 0; }
-      body { font-family: 'Courier New', 'Arial', sans-serif; font-size: 13px; background: #fff; color: #000; font-weight: 700; line-height: 1.2; }
-      .ticket { width: 100%; margin: 0; padding: 4px; }
-
-      .header { text-align: center; padding: 4px 2px; border-bottom: 2px solid #000; }
-      .logo { width: 60px; height: auto; margin-bottom: 2px; }
-      .shop-name { font-size: 16px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
-      .shop-sub { font-size: 11px; font-weight: 700; margin-top: 1px; }
-      .shop-slogan { font-size: 10px; font-weight: 700; margin-top: 2px; }
-
-      .ticket-num-block { text-align: center; padding: 4px 0; border-bottom: 2px dashed #000; }
-      .ticket-num { font-size: 18px; font-weight: 900; letter-spacing: 0.5px; }
-
-      .qr-block { text-align: center; padding: 4px 0; border-bottom: 2px dashed #000; }
-      .qr-block img { width: 100px; height: 100px; }
-      .qr-caption { font-size: 10px; font-weight: 700; margin-top: 2px; }
-
-      .section { padding: 4px 0; border-bottom: 2px dashed #000; }
-      .section:last-child { border-bottom: none; }
-      .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
-
-      .row { display: flex; justify-content: space-between; margin: 2px 0; font-size: 12px; }
-      .row .label { color: #000; font-weight: 700; }
-      .row .value { font-weight: 900; text-align: right; }
-
-      .article { padding: 3px 0; border-bottom: 1px dotted #000; }
-      .article:last-child { border-bottom: none; }
-      .article-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 900; }
-      .article-detail { font-size: 11px; font-weight: 700; margin-top: 1px; padding-left: 6px; }
-      .article-condition { font-size: 11px; font-weight: 900; margin-top: 1px; padding-left: 6px; }
-
-      .total-line { display: flex; justify-content: space-between; margin: 2px 0; font-size: 12px; font-weight: 700; }
-      .total-main { display: flex; justify-content: space-between; font-size: 16px; font-weight: 900; padding: 3px 0; border-top: 2px solid #000; border-bottom: 2px solid #000; margin: 3px 0; }
-
-      .remaining-box { border: 2px solid #000; padding: 4px; text-align: center; margin: 5px 0; }
-      .remaining-label { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
-      .remaining-amount { font-size: 17px; font-weight: 900; margin-top: 1px; }
-      .paid-box { border: 2px solid #000; padding: 4px; text-align: center; margin: 5px 0; }
-      .paid-label { font-size: 12px; font-weight: 900; text-transform: uppercase; }
-
-      .important-box { border: 2px solid #000; padding: 4px; text-align: center; margin: 5px 0; }
-      .important-title { font-size: 11px; font-weight: 900; text-transform: uppercase; line-height: 1.2; }
-      .important-sub { font-size: 9px; font-weight: 700; margin-top: 2px; }
-
-      .legal-box { border: 2px solid #000; padding: 3px; text-align: center; margin: 5px 0; }
-      .legal-text { font-size: 9px; font-weight: 700; line-height: 1.2; }
-
-      .footer { text-align: center; padding: 4px 0; font-size: 11px; }
-      .footer-merci { font-size: 13px; font-weight: 900; margin: 2px 0; }
-      .footer-line { margin: 1px 0; font-size: 11px; font-weight: 700; }
-      .footer-print-date { font-size: 9px; font-weight: 700; margin-top: 3px; border-top: 1px dotted #000; padding-top: 2px; }
-
+      body { font-family: Arial, sans-serif; font-size: 13px; background: #fff; color: #000; }
+      .ticket { width: 100%; margin: 0; padding: 10px; }
+      .header { background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; text-align: center; padding: 18px 10px; border-radius: 8px 8px 0 0; }
+      .title { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+      .subtitle { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+      .ticket-num { background: #fff; color: #7c3aed; font-size: 22px; font-weight: bold; text-align: center; padding: 12px; margin: 0; border-left: 3px solid #7c3aed; border-right: 3px solid #7c3aed; letter-spacing: 2px; }
+      .section { border: 1px solid #e5e7eb; border-top: none; padding: 12px; }
+      .section-title { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #7c3aed; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+      .row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 12px; }
+      .row .label { color: #6b7280; }
+      .row .value { font-weight: 600; text-align: right; max-width: 60%; }
+      .article { border-bottom: 1px dashed #e5e7eb; padding: 6px 0; font-size: 12px; }
+      .article-name { font-weight: bold; color: #111; }
+      .article-detail { color: #6b7280; font-size: 11px; }
+      .article-price { font-weight: bold; color: #7c3aed; float: right; }
+      .totals { border: 2px solid #7c3aed; padding: 12px; }
+      .total-line { display: flex; justify-content: space-between; margin: 3px 0; font-size: 12px; }
+      .total-main { font-size: 18px; font-weight: bold; color: #7c3aed; border-top: 2px solid #7c3aed; padding-top: 7px; margin-top: 7px; display: flex; justify-content: space-between; }
+      .remaining { background: #fef2f2; color: #dc2626; font-weight: bold; text-align: center; padding: 7px; font-size: 13px; margin-top: 5px; border-radius: 4px; }
+      .paid { background: #f0fdf4; color: #16a34a; font-weight: bold; text-align: center; padding: 7px; font-size: 13px; margin-top: 5px; border-radius: 4px; }
+      .footer { border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 12px; text-align: center; background: #f9fafb; }
+      .footer-note { font-size: 11px; color: #6b7280; margin: 2px 0; }
+      .footer-important { font-size: 12px; font-weight: bold; color: #7c3aed; margin: 4px 0; }
       @media print { body { margin: 0; width: 80mm; } }
     </style></head><body>
     <div class="ticket">
-
       <div class="header">
-        ${config.logo ? `<img src="${config.logo}" alt="logo" class="logo" />` : ''}
-        <div class="shop-name">${config.name || 'PRESSINGMANAGER'}</div>
-        <div class="shop-sub">${config.slogan || 'Console de gestion'}</div>
-        <div class="shop-slogan">Reçu de dépôt - Ticket client</div>
+        ${config.logo ? `<img src="${config.logo}" alt="logo" style="width: 140px;height: auto;object-fit:cover;border-radius:8px;margin-bottom:6px" />` : ''}
+        <div class="title">${config.name || 'PRESSINGMANAGER'}</div>
+        <div class="subtitle">${config.slogan || 'Recu de depot - Ticket client'}</div>
       </div>
-
-      <div class="ticket-num-block">
-        <div class="ticket-num">#${order.ticket_number}</div>
+      <div class="ticket-num">#${order.ticket_number}</div>
+      <div style="text-align:center;padding:10px;border:1px solid #e5e7eb;border-top:none">
+        <img src="${qrDataUrl}" alt="QR Code" style="width:100px;height:100px" />
+        <p style="font-size:9px;color:#6b7280;margin-top:4px">Scannez pour voir le detail</p>
       </div>
-
-      <div class="qr-block">
-        <img src="${qrDataUrl}" alt="QR Code" />
-        <div class="qr-caption">Scannez pour voir le détail</div>
-      </div>
-
       <div class="section">
         <div class="section-title">Informations client</div>
-        <div class="row"><span class="label">Client</span><span class="value">${order.client?.first_name || ''} ${order.client?.last_name || ''}</span></div>
-        <div class="row"><span class="label">Téléphone</span><span class="value">${order.client?.phone || ''}</span></div>
-        <div class="row"><span class="label">Date dépôt</span><span class="value">${new Date(order.received_at).toLocaleDateString('fr-FR')} à ${new Date(order.received_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
-        <div class="row"><span class="label">Date prévue</span><span class="value">${order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'À définir'}</span></div>
+        <div class="row"><span class="label">Client</span><span class="value">${order.client?.first_name} ${order.client?.last_name}</span></div>
+        <div class="row"><span class="label">Téléphone</span><span class="value">${order.client?.phone}</span></div>
+        <div class="row"><span class="label">Date depot</span><span class="value">${new Date(order.received_at).toLocaleDateString('fr-FR')} a ${new Date(order.received_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
+        <div class="row"><span class="label">Date prevue</span><span class="value">${order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'A definir'}</span></div>
       </div>
-
       <div class="section">
         <div class="section-title">Articles (${order.clothes.length})</div>
-        ${order.clothes.map((c: any) => `
+        ${order.clothes.map((c) => `
           <div class="article">
-            <div class="article-header">
-              <span>${c.quantity}x ${c.type?.charAt(0).toUpperCase() + (c.type?.slice(1) || '')}</span>
-              <span>${((c.price || 0) * (c.quantity || 1)).toLocaleString('fr-FR')} XOF</span>
-            </div>
+            <span class="article-price">${((c.price || 0) * (c.quantity || 1)).toLocaleString('fr-FR')} XOF</span>
+            <div class="article-name">${c.quantity}x ${c.type?.charAt(0).toUpperCase() + (c.type?.slice(1) || '')}</div>
             <div class="article-detail">${c.service?.replace(/_/g, ' ')} ${c.color ? '- ' + c.color : ''} ${c.brand ? '- ' + c.brand : ''}</div>
-            ${c.condition_on_arrival && c.condition_on_arrival !== 'bon' ? `<div class="article-condition">⚠ État reçu : ${c.condition_on_arrival.toUpperCase()}</div>` : ''}
-            ${c.special_instructions ? `<div class="article-detail">Note : ${c.special_instructions}</div>` : ''}
           </div>
         `).join('')}
       </div>
-
-      <div class="section">
+      <div class="totals">
         <div class="section-title">Récapitulatif paiement</div>
         <div class="total-line"><span>Sous-total</span><span>${order.subtotal.toLocaleString('fr-FR')} XOF</span></div>
-        ${order.discount > 0 ? `<div class="total-line"><span>Remise client</span><span>-${order.discount.toLocaleString('fr-FR')} XOF</span></div>` : ''}
+        ${order.discount > 0 ? `<div class="total-line" style="color:#16a34a"><span>Remise client</span><span>-${order.discount.toLocaleString('fr-FR')} XOF</span></div>` : ''}
         <div class="total-main"><span>TOTAL</span><span>${order.total.toLocaleString('fr-FR')} XOF</span></div>
-        ${order.deposit > 0 ? `<div class="total-line"><span>Acompte versé</span><span>${order.deposit.toLocaleString('fr-FR')} XOF</span></div>` : ''}
-        <div class="total-line"><span>Mode de paiement</span><span>${order.payment_method?.replace('_', ' ') || 'Espèces'}</span></div>
+        ${order.deposit > 0 ? `<div class="total-line" style="color:#2563eb;margin-top:4px"><span>Acompte versé</span><span>${order.deposit.toLocaleString('fr-FR')} XOF</span></div>` : ''}
+        ${order.remaining > 0
+          ? `<div class="remaining">Reste à payer: ${order.remaining.toLocaleString('fr-FR')} XOF</div>`
+          : `<div class="paid">Commande entièrement payee</div>`
+        }
+        <div class="total-line" style="margin-top:4px;font-size:10px;color:#6b7280"><span>Mode de paiement</span><span>${order.payment_method?.replace('_', ' ')}</span></div>
       </div>
-
-      ${order.remaining > 0
-        ? `<div class="remaining-box">
-             <div class="remaining-label">Reste à payer</div>
-             <div class="remaining-amount">${order.remaining.toLocaleString('fr-FR')} XOF</div>
-           </div>`
-        : `<div class="paid-box">
-             <div class="paid-label">✓ Commande entièrement payée</div>
-           </div>`
-      }
-
-      <div class="important-box">
-        <div class="important-title">⚠ Conservez ce ticket pour récupérer vos articles</div>
-        <div class="important-sub">Sans ce ticket, le retrait peut être refusé</div>
-      </div>
-
-      <div class="legal-box">
-        <div class="legal-text">Passé 1 mois après la date de retrait prévue, le pressing n'est plus responsable des vêtements non récupérés.</div>
-      </div>
-
       <div class="footer">
-        <div class="footer-merci">Merci pour votre confiance !</div>
-        ${config.phone ? `<div class="footer-line">📞 ${config.phone}</div>` : ''}
-        ${config.address ? `<div class="footer-line">📍 ${config.address}</div>` : ''}
-        <div class="footer-print-date">Imprimé le ${new Date().toLocaleString('fr-FR')}</div>
+        <div class="footer-important">Conservez ce ticket pour recuperer vos articles</div>
+        <div class="footer-note">${config.footer || 'Merci pour votre confiance !'}</div>
+        ${config.phone ? `<div class="footer-note">${config.phone}</div>` : ''}
+        ${config.address ? `<div class="footer-note">${config.address}</div>` : ''}
+        <div class="footer-note" style="margin-top:6px">Imprime le ${new Date().toLocaleString('fr-FR')}</div>
       </div>
-
     </div>
     <script>window.onload = () => { window.print(); }</script>
     </body></html>`)
@@ -630,6 +572,9 @@ export const OrdersPageModern: React.FC = () => {
     }
   }
 
+  // ============================================
+  // Génère le message WhatsApp selon le statut
+  // ============================================
   const getWhatsAppMessage = (order: Order): string => {
     const clientName = order.client?.first_name || 'cher client'
     const shopName = config.name || 'PressingManager'
