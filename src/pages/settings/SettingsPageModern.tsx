@@ -6,12 +6,13 @@ import { supabase } from '../../lib/supabase'
 import { toast } from '../../lib/toast'
 import { useNavigate } from 'react-router-dom'
 import {
-  Building2, Palette, Printer, Coins, Bell, Settings2, Database,
+  Building2, Palette, Printer, Coins, Bell, Settings2, Database, Tag,
   Save, Upload, X, AlertTriangle, CheckCircle2, Eye, RotateCcw,
   ChevronRight, Sparkles, Smartphone, Search, History, Clock,
   TrendingUp, Wand2, Circle, Zap
 } from 'lucide-react'
 import { Field, Input, Select, Textarea, Button, Modal } from '../../components/ui'
+import { ServicesSettings } from './ServicesSettings'
 
 // ============================================
 // CONSTANTES
@@ -24,6 +25,7 @@ const SECTIONS = [
   { key: 'notifications', label: 'Notifications',      icon: Bell,       desc: 'Templates SMS et WhatsApp' },
   { key: 'rules',         label: 'Regles metier',      icon: Settings2,  desc: 'Delais, majorations, fidelite' },
   { key: 'system',        label: 'Systeme',            icon: Database,   desc: 'Sauvegarde, export, reset' },
+  { key: 'services',      label: 'Services & Tarifs',  icon: Tag,        desc: 'Vêtements, services et prix' },
   { key: 'history',       label: 'Historique',         icon: History,    desc: 'Audit et versions' },
 ] as const
 
@@ -742,6 +744,9 @@ export const SettingsPageModern: React.FC = () => {
           </div>
         )
 
+      case 'services':
+        return <ServicesSettings />
+
       case 'history':
         return (
           <div className="card-modern animate-fade-in">
@@ -1033,4 +1038,3 @@ export const SettingsPageModern: React.FC = () => {
 }
 
 export default SettingsPageModern
-
