@@ -17,9 +17,7 @@ import { CashierPageModern } from './pages/cashier/CashierPageModern'
 import { UsersPage } from './pages/users/UsersPage'
 import { ScanPage } from './pages/scan/ScanPage'
 import { AtelierPageModern } from './pages/atelier/AtelierPageModern'
-import {
-  MultiAgencyPage,
-} from './pages/AllPages'
+import { MultiAgencyPage } from './pages/AllPages'
 import { ServicesPageModern } from './pages/services/ServicesPageModern'
 import { HRPageModern } from './pages/hr/HRPageModern'
 import { DeliveryPageModern } from './pages/delivery/DeliveryPageModern'
@@ -38,8 +36,6 @@ const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (!user) return <Navigate to="/login" replace />
 
-  // Si l'utilisateur n'a pas terminé son onboarding, rediriger vers /onboarding
-  // sauf s'il y est déjà (évite une boucle infinie)
   if (settings && !settings.onboarding_completed && location !== '/onboarding') {
     return <Navigate to="/onboarding" replace />
   }
@@ -55,7 +51,6 @@ function App() {
   const { setConfig } = useShopConfig()
   useTheme()
 
-  // Charger les settings du pressing au démarrage (necessaire pour l'onboarding)
   const { loadSettings: loadAppSettings } = useSettingsStore()
   useEffect(() => {
     if (user) {
@@ -63,10 +58,6 @@ function App() {
     }
   }, [user])
 
-  // Vérifie que le pressing (tenant) n'est pas suspendu ET que son
-  // abonnement n'est pas expiré, avant de laisser l'utilisateur accéder
-  // à l'application. Dans les deux cas, la session est fermée
-  // immédiatement, même si les identifiants étaient corrects.
   const checkTenantStatus = async (tenantId: string): Promise<boolean> => {
     if (!tenantId) return true
     try {
@@ -103,18 +94,35 @@ function App() {
     }
   }
 
+  // ============================================================
+  // Chargement de la config du pressing
+  // - En localhost → config générique "PressingManager"
+  // - Sur sous-domaine (ex: aboisso.pressing-manager.com) → config du pressing
+  // ============================================================
   useEffect(() => {
     const loadTenantConfig = async () => {
       try {
         const hostname = window.location.hostname
         const parts = hostname.split('.')
-        const isCustomSubdomain = parts.length >= 3 &&
+
+        // Détection : sommes-nous en localhost ?
+        const isLocalhost =
+          hostname === 'localhost' ||
+          hostname === '127.0.0.1' ||
+          hostname.endsWith('.local') ||
+          hostname.startsWith('192.168.') ||
+          hostname.startsWith('10.')
+
+        // Détection : sommes-nous sur un sous-domaine client ?
+        const isCustomSubdomain = !isLocalhost &&
+          parts.length >= 3 &&
           parts[0] !== 'www' &&
           parts[0] !== 'app' &&
           parts[0] !== 'admin' &&
-          parts[0] !== 'localhost'
+          parts[0] !== 'api'
 
         if (isCustomSubdomain) {
+          // Production : charge le pressing du sous-domaine
           const slug = parts[0]
           const { data: tenant } = await supabase
             .from('tenants')
@@ -137,6 +145,36 @@ function App() {
               msgPret: tenant.msg_pret || '',
             })
           }
+        } else if (isLocalhost) {
+          // Local : config générique neutre
+          setConfig({
+            name: 'PressingManager',
+            slogan: 'Console de gestion',
+            logo: '',
+            primaryColor: '#7c3aed',
+            phone: '',
+            email: '',
+            address: '',
+            currency: 'XOF',
+            footer: 'Merci pour votre confiance !',
+            msgReception: '',
+            msgPret: '',
+          })
+        } else {
+          // Domaine racine en production → config générique
+          setConfig({
+            name: 'PressingManager',
+            slogan: 'Console de gestion',
+            logo: '',
+            primaryColor: '#7c3aed',
+            phone: '',
+            email: '',
+            address: '',
+            currency: 'XOF',
+            footer: 'Merci pour votre confiance !',
+            msgReception: '',
+            msgPret: '',
+          })
         }
       } catch (err) {
         console.error('Erreur chargement tenant:', err)
@@ -191,7 +229,6 @@ function App() {
     init()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // 🎯 Détection du lien de réinitialisation de mot de passe
       if (event === 'PASSWORD_RECOVERY') {
         window.location.href = '/reset-password'
         return
