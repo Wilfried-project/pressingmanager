@@ -204,11 +204,13 @@ export const OrdersPageModern: React.FC = () => {
 
   const isDepositDisabled = form.payment_status === 'paye' || form.payment_status === 'non_paye'
 
-  const addCloth = () => setClothes([...clothes, {
+  // ✅ CORRECTION 1 : Nouvel article en HAUT de la liste
+  const addCloth = () => setClothes([{
     type: 'chemise', color: '', brand: '', size: '', material: '',
     quantity: '' as any, service: 'lavage_simple', price: '' as any,
     special_instructions: '', condition_on_arrival: 'bon', defects: [], photos: []
-  }])
+  }, ...clothes])
+
   const updateCloth = (i: number, d: Partial<Cloth>) => { const n = [...clothes]; n[i] = { ...n[i], ...d }; setClothes(n) }
   const removeCloth = (i: number) => setClothes(clothes.filter((_, idx) => idx !== i))
 
