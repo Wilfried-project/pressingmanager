@@ -4,8 +4,9 @@ import { useAuthStore, useOrderStore, useStockStore, useNotificationStore, useSh
 import { supabase } from '../../lib/supabase'
 import { BottomTabBar } from './BottomTabBar'
 import { MobileHeader } from './MobileHeader'
+import { AutoLogout } from '../AutoLogout'
 
-// Icône Material Symbols (Google) â€” celle utilisée par le design Stitch.
+// Icône Material Symbols (Google) — celle utilisée par le design Stitch.
 const Icon: React.FC<{ name: string; size?: number; className?: string }> = ({ name, size = 20, className = '' }) => (
   <span className={`material-symbols-outlined ${className}`} style={{ fontSize: size }}>{name}</span>
 )
@@ -72,100 +73,101 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed left-0 top-0 h-screen w-64 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto transition-transform duration-200`}>
-        <div className="p-space-lg">
-          <div className="flex items-center gap-space-md mb-space-xl px-space-xs">
-            {config.logo
-              ? <img src={config.logo} alt="logo" className="h-8 w-auto object-contain" />
-              : <div className="w-8 h-8 bg-primary-container rounded-lg flex items-center justify-center text-on-primary"><Icon name="local_laundry_service" size={18} /></div>
-            }
-            <div className="flex flex-col">
-              <span className="font-headline-md text-headline-md font-bold text-on-surface tracking-tight leading-none">{config.name || 'PressingManager'}</span>
-              <span className="font-label-sm text-label-sm text-primary uppercase tracking-widest mt-space-2xs">{user?.full_name || ''}</span>
-            </div>
-          </div>
-          <nav className="flex flex-col gap-space-md">
-            {Object.entries(groups).map(([groupLabel, items]) => (
-              <div key={groupLabel} className="flex flex-col gap-space-2xs">
-                <span className="font-label-sm text-label-sm text-outline px-space-md uppercase font-bold tracking-wider">{groupLabel}</span>
-                {items.map(item => {
-                  const isActive = location.pathname === item.path
-                  return (
-                    <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-space-md px-space-md py-space-sm rounded-lg transition-all ${isActive ? 'bg-primary-container text-on-primary font-label-lg shadow-[0_4px_12px_rgba(124,58,237,0.2)]' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
-                      <Icon name={item.icon} size={20} />
-                      <span className="font-label-md text-label-md">{item.label}</span>
-                    </Link>
-                  )
-                })}
-              </div>
-            ))}
-          </nav>
-        </div>
-        <div className="p-space-md bg-surface-container-low mx-space-md mb-space-lg rounded-DEFAULT flex items-center justify-between">
-          <div className="flex items-center gap-space-sm">
-            <span className="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse" />
-            <span className="font-label-sm text-label-sm text-on-surface font-semibold">Atelier en ligne</span>
-          </div>
-          <span className="font-label-sm text-label-sm text-outline font-numeric-currency">v1.0.0</span>
-        </div>
-      </aside>
-
-      {/* Contenu + en-tête */}
-      <div className="lg:pl-64">
-        <MobileHeader />
-        <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40">
-          <div className="h-16 w-full px-space-md lg:px-space-xl flex items-center justify-between gap-space-lg">
-            <div className="flex items-center gap-space-md">
-              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 hover:bg-surface-container rounded-lg text-on-surface-variant">
-                <Icon name={sidebarOpen ? 'close' : 'menu'} size={22} />
-              </button>
-              <div className="hidden md:flex items-center flex-1 max-w-xl relative">
-                <span className="material-symbols-outlined absolute left-space-md text-outline pointer-events-none" style={{ fontSize: 20 }}>search</span>
-                <input className="w-full pl-10 pr-space-lg py-space-xs bg-surface-container-lowest text-on-surface font-body-md text-body-md rounded-full shadow-[0_1px_3px_rgba(15,23,42,0.05)] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline" placeholder="Rechercher un ticket, client, téléphone..." type="text" />
+    <AutoLogout>
+      <div className="min-h-screen bg-background">
+        {/* Sidebar */}
+        <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed left-0 top-0 h-screen w-64 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto transition-transform duration-200`}>
+          <div className="p-space-lg">
+            <div className="flex items-center gap-space-md mb-space-xl px-space-xs">
+              {config.logo
+                ? <img src={config.logo} alt="logo" className="h-8 w-auto object-contain" />
+                : <div className="w-8 h-8 bg-primary-container rounded-lg flex items-center justify-center text-on-primary"><Icon name="local_laundry_service" size={18} /></div>
+              }
+              <div className="flex flex-col">
+                <span className="font-headline-md text-headline-md font-bold text-on-surface tracking-tight leading-none">{config.name || 'PressingManager'}</span>
+                <span className="font-label-sm text-label-sm text-primary uppercase tracking-widest mt-space-2xs">{user?.full_name || ''}</span>
               </div>
             </div>
-            <div className="flex items-center gap-space-md">
-              {alertCount > 0 && (
-                <button onClick={() => navigate('/orders')} className="hidden sm:flex items-center gap-space-xs px-space-md py-space-xs bg-error-container text-on-error-container rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                  <span className="material-symbols-outlined text-error" style={{ fontSize: 18 }}>warning</span>
-                  <span className="font-label-sm text-label-sm font-bold">{alertCount} alerte(s)</span>
-                </button>
-              )}
-              <button onClick={() => navigate('/orders')} className="hidden sm:flex items-center gap-space-xs px-space-lg py-space-xs bg-primary-container text-on-primary font-label-md text-label-md rounded-full hover:bg-primary shadow-[0_2px_8px_rgba(124,58,237,0.25)] active:scale-95 transition-all">
-                <Icon name="add" size={18} />
-                <span>Nouvelle Commande</span>
-              </button>
-              <div className="flex items-center gap-space-sm pl-space-sm">
-                <div className="text-right hidden sm:flex flex-col">
-                  <span className="font-label-md text-label-md text-on-surface font-semibold leading-tight">{user?.full_name || 'Admin'}</span>
-                  <span className="font-label-sm text-label-sm text-outline leading-tight capitalize">{user?.role || 'admin'}</span>
+            <nav className="flex flex-col gap-space-md">
+              {Object.entries(groups).map(([groupLabel, items]) => (
+                <div key={groupLabel} className="flex flex-col gap-space-2xs">
+                  <span className="font-label-sm text-label-sm text-outline px-space-md uppercase font-bold tracking-wider">{groupLabel}</span>
+                  {items.map(item => {
+                    const isActive = location.pathname === item.path
+                    return (
+                      <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center gap-space-md px-space-md py-space-sm rounded-lg transition-all ${isActive ? 'bg-primary-container text-on-primary font-label-lg shadow-[0_4px_12px_rgba(124,58,237,0.2)]' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
+                        <Icon name={item.icon} size={20} />
+                        <span className="font-label-md text-label-md">{item.label}</span>
+                      </Link>
+                    )
+                  })}
                 </div>
-                <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-bold text-sm shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-                  {user?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'A'}
-                </div>
-                <button onClick={handleLogout} className="p-1.5 hover:bg-error-container text-outline hover:text-error rounded-full transition" title="Déconnexion">
-                  <Icon name="logout" size={16} />
+              ))}
+            </nav>
+          </div>
+          <div className="p-space-md bg-surface-container-low mx-space-md mb-space-lg rounded-DEFAULT flex items-center justify-between">
+            <div className="flex items-center gap-space-sm">
+              <span className="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse" />
+              <span className="font-label-sm text-label-sm text-on-surface font-semibold">Atelier en ligne</span>
+            </div>
+            <span className="font-label-sm text-label-sm text-outline font-numeric-currency">v1.0.0</span>
+          </div>
+        </aside>
+
+        {/* Contenu + en-tête */}
+        <div className="lg:pl-64">
+          <MobileHeader />
+          <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40">
+            <div className="h-16 w-full px-space-md lg:px-space-xl flex items-center justify-between gap-space-lg">
+              <div className="flex items-center gap-space-md">
+                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 hover:bg-surface-container rounded-lg text-on-surface-variant">
+                  <Icon name={sidebarOpen ? 'close' : 'menu'} size={22} />
                 </button>
+                <div className="hidden md:flex items-center flex-1 max-w-xl relative">
+                  <span className="material-symbols-outlined absolute left-space-md text-outline pointer-events-none" style={{ fontSize: 20 }}>search</span>
+                  <input className="w-full pl-10 pr-space-lg py-space-xs bg-surface-container-lowest text-on-surface font-body-md text-body-md rounded-full shadow-[0_1px_3px_rgba(15,23,42,0.05)] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline" placeholder="Rechercher un ticket, client, téléphone..." type="text" />
+                </div>
+              </div>
+              <div className="flex items-center gap-space-md">
+                {alertCount > 0 && (
+                  <button onClick={() => navigate('/orders')} className="hidden sm:flex items-center gap-space-xs px-space-md py-space-xs bg-error-container text-on-error-container rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                    <span className="material-symbols-outlined text-error" style={{ fontSize: 18 }}>warning</span>
+                    <span className="font-label-sm text-label-sm font-bold">{alertCount} alerte(s)</span>
+                  </button>
+                )}
+                <button onClick={() => navigate('/orders')} className="hidden sm:flex items-center gap-space-xs px-space-lg py-space-xs bg-primary-container text-on-primary font-label-md text-label-md rounded-full hover:bg-primary shadow-[0_2px_8px_rgba(124,58,237,0.25)] active:scale-95 transition-all">
+                  <Icon name="add" size={18} />
+                  <span>Nouvelle Commande</span>
+                </button>
+                <div className="flex items-center gap-space-sm pl-space-sm">
+                  <div className="text-right hidden sm:flex flex-col">
+                    <span className="font-label-md text-label-md text-on-surface font-semibold leading-tight">{user?.full_name || 'Admin'}</span>
+                    <span className="font-label-sm text-label-sm text-outline leading-tight capitalize">{user?.role || 'admin'}</span>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-bold text-sm shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+                    {user?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'A'}
+                  </div>
+                  <button onClick={handleLogout} className="p-1.5 hover:bg-error-container text-outline hover:text-error rounded-full transition" title="Déconnexion">
+                    <Icon name="logout" size={16} />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <main className="w-full pt-16 bg-background min-h-screen pb-20 lg:pb-0">
-          <div className="max-w-[1440px] w-full mx-auto px-space-lg lg:px-space-xl py-space-xl">
-            {children}
-          </div>
-        </main>
+          <main className="w-full pt-16 bg-background min-h-screen pb-20 lg:pb-0">
+            <div className="max-w-[1440px] w-full mx-auto px-space-lg lg:px-space-xl py-space-xl">
+              {children}
+            </div>
+          </main>
 
-        {/* Barre de navigation mobile (bottom tab bar) */}
-        <BottomTabBar />
+          {/* Barre de navigation mobile (bottom tab bar) */}
+          <BottomTabBar />
+        </div>
+
+        {sidebarOpen && <div className="fixed inset-0 bg-black/50 lg:hidden z-40" onClick={() => setSidebarOpen(false)} />}
       </div>
-
-      {sidebarOpen && <div className="fixed inset-0 bg-black/50 lg:hidden z-40" onClick={() => setSidebarOpen(false)} />}
-    </div>
+    </AutoLogout>
   )
 }
-

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore, useShopConfig } from '../../lib/store'
 import { Loader, Eye, EyeOff } from 'lucide-react'
@@ -12,6 +12,8 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState('')
   const [isForgot, setIsForgot] = useState(false)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const expired = searchParams.get('expired')
   const { setUser, setSession } = useAuthStore()
   const { config } = useShopConfig()
 
@@ -62,6 +64,14 @@ export const LoginPage: React.FC = () => {
             <p className="text-purple-200 mt-1 text-sm">{config.slogan || 'Logiciel de gestion professionnel'}</p>
           </div>
           <div className="p-8">
+            {expired && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2">
+                <span className="text-amber-600 text-lg leading-none mt-0.5">⏱️</span>
+                <p className="text-sm text-amber-800">
+                  Votre session a expiré après 30 minutes d'inactivité. Veuillez vous reconnecter.
+                </p>
+              </div>
+            )}
             {error && (
               <div className={`mb-4 p-3 rounded-xl text-sm font-medium border ${error.includes('✅') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>{error}</div>
             )}
