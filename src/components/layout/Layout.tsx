@@ -20,7 +20,6 @@ export const ALL_MODULES = [
   { path: '/loyalty', label: 'Fidélité', icon: 'loyalty', group: 'Clients & Ventes' },
   { path: '/stock', label: 'Stock', icon: 'inventory_2', group: 'Opérations' },
   { path: '/delivery', label: 'Livraisons', icon: 'local_shipping', group: 'Opérations' },
-  { path: '/notifications', label: 'Notifications', icon: 'notifications', group: 'Opérations' },
   { path: '/agenda', label: 'Agenda', icon: 'calendar_month', group: 'Opérations' },
   { path: '/atelier', label: 'Atelier', icon: 'qr_code_scanner', group: 'Opérations' },
   { path: '/hr', label: 'Employés & RH', icon: 'badge', group: 'Équipe & Finance' },

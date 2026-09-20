@@ -3,6 +3,8 @@ import { clientsService, ordersService } from '../../lib/db'
 import { toast } from '../../lib/toast'
 import { Modal, Field, Input, Select, Textarea, Button, KpiCard, StatusBadge, Avatar } from '../../components/ui'
 import type { Client } from '../../types'
+import { WhatsAppButton } from '../../components/ui/WhatsAppButton'
+import { useShopConfig } from '../../lib/store'
 import {
   Users, Star, ShieldCheck, TrendingUp, Search, Filter, Plus, Eye, Pencil, Trash2,
   Download, Upload, ArrowRight
@@ -41,6 +43,8 @@ export const ClientsPageModern: React.FC = () => {
   const [viewClient, setViewClient] = useState<Client | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [error, setError] = useState('')
+
+  const { config } = useShopConfig()
 
   useEffect(() => { loadData() }, [])
 
@@ -153,6 +157,20 @@ export const ClientsPageModern: React.FC = () => {
     setEditClient(null)
     setShowForm(false)
     setError('')
+  }
+
+  // Message WhatsApp par défaut pour un client
+  const getClientWhatsAppMessage = (client: Client) => {
+    return `Bonjour ${client.first_name} 👋
+
+Bienvenue chez ${config.name || 'notre pressing'} !
+
+Nous sommes ravis de vous compter parmi nos clients.
+
+📍 ${config.address || ''}
+📞 ${config.phone || ''}
+
+À très bientôt !`
   }
 
   const exportCSV = () => {
@@ -355,6 +373,13 @@ export const ClientsPageModern: React.FC = () => {
                       </td>
                       <td className="py-4 px-5 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
+                          <WhatsAppButton
+                            phone={(client as any).whatsapp || client.phone}
+                            clientName={`${client.first_name} ${client.last_name || ''}`.trim()}
+                            defaultMessage={getClientWhatsAppMessage(client)}
+                            label="WhatsApp"
+                            variant="icon"
+                          />
                           <button onClick={() => setViewClient(client)} className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-primary hover:text-white transition-all flex items-center justify-center text-on-surface-variant" title="Voir">
                             <Eye size={15} />
                           </button>
@@ -474,6 +499,14 @@ export const ClientsPageModern: React.FC = () => {
               </div>
             )}
             <div className="flex gap-3">
+              <WhatsAppButton
+                phone={(viewClient as any).whatsapp || viewClient.phone}
+                clientName={`${viewClient.first_name} ${viewClient.last_name || ''}`.trim()}
+                defaultMessage={getClientWhatsAppMessage(viewClient)}
+                label="Envoyer WhatsApp"
+                variant="button"
+                className="flex-1"
+              />
               <Button className="flex-1" onClick={() => { setViewClient(null); handleEdit(viewClient) }} icon={<Pencil size={16} />}>Modifier</Button>
               <Button variant="secondary" className="flex-1" onClick={() => setViewClient(null)}>Fermer</Button>
             </div>
@@ -485,4 +518,3 @@ export const ClientsPageModern: React.FC = () => {
 }
 
 export default ClientsPageModern
-

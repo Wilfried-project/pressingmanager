@@ -21,7 +21,6 @@ import {
   MultiAgencyPage,
 } from './pages/AllPages'
 import { ServicesPageModern } from './pages/services/ServicesPageModern'
-import { NotificationsPageModern } from './pages/notifications/NotificationsPageModern'
 import { HRPageModern } from './pages/hr/HRPageModern'
 import { DeliveryPageModern } from './pages/delivery/DeliveryPageModern'
 import { AgendaPageModern } from './pages/agenda/AgendaPageModern'
@@ -290,7 +289,6 @@ function App() {
         <Route path="/billing" element={<Protected><BillingPage /></Protected>} />
         <Route path="/stock" element={<Protected><StockPageModern /></Protected>} />
         <Route path="/hr" element={<Protected><HRPageModern /></Protected>} />
-        <Route path="/notifications" element={<Protected><NotificationsPageModern /></Protected>} />
         <Route path="/loyalty" element={<Protected><LoyaltyPageModern /></Protected>} />
         <Route path="/agenda" element={<Protected><AgendaPageModern /></Protected>} />
         <Route path="/multiagency" element={<Protected><MultiAgencyPage /></Protected>} />

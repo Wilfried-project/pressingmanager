@@ -13,6 +13,7 @@ import {
   Search, Filter, Clock, Package, CheckCircle2, Truck, XCircle, ArrowRight
 } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
+import { WhatsAppButton } from '../../components/ui/WhatsAppButton'
 
 const CLOTH_TYPES: { value: ClothType; label: string; icon: string }[] = [
   { value: 'chemise', label: 'Chemise', icon: '' }, { value: 'pantalon', label: 'Pantalon', icon: '' },
@@ -571,7 +572,69 @@ export const OrdersPageModern: React.FC = () => {
     }
   }
 
-  
+  // ============================================
+  // Génère le message WhatsApp selon le statut
+  // ============================================
+  const getWhatsAppMessage = (order: Order): string => {
+    const clientName = order.client?.first_name || 'cher client'
+    const shopName = config.name || 'PressingManager'
+    const shopPhone = config.phone || ''
+    const shopAddress = config.address || ''
+
+    if (order.status === 'en_attente' || order.status === 'en_cours') {
+      return `Bonjour ${clientName} 👋
+
+Nous avons bien reçu votre linge chez ${shopName} !
+
+📋 Commande N°${order.ticket_number}
+💰 Total : ${order.total.toLocaleString('fr-FR')} XOF
+📅 Prêt prévu le : ${order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'à définir'}
+
+📍 ${shopAddress}
+📞 ${shopPhone}
+
+Merci de votre confiance !`
+    }
+
+    if (order.status === 'pret') {
+      return `Bonjour ${clientName} 🎉
+
+Votre linge est PRÊT ! Vous pouvez venir le récupérer.
+
+📋 Commande N°${order.ticket_number}
+💰 ${order.remaining > 0 ? `Reste à payer : ${order.remaining.toLocaleString('fr-FR')} XOF` : 'Commande entièrement payée ✅'}
+
+📍 ${shopAddress}
+🕐 Horaires : 8h - 19h
+
+À très bientôt !`
+    }
+
+    if (order.status === 'livre') {
+      return `Bonjour ${clientName} 🙏
+
+Merci d'avoir choisi ${shopName} !
+
+Votre commande N°${order.ticket_number} a bien été livrée ✅
+
+Nous espérons vous revoir bientôt pour prendre soin de votre linge.
+
+📍 ${shopAddress}
+📞 ${shopPhone}`
+    }
+
+    if (order.status === 'annule') {
+      return `Bonjour ${clientName},
+
+Votre commande N°${order.ticket_number} a été annulée.
+
+Si c'est une erreur ou pour plus d'informations, contactez-nous :
+
+📞 ${shopPhone}`
+    }
+
+    return `Bonjour ${clientName}, concernant votre commande N°${order.ticket_number} chez ${shopName}.`
+  }
 
   const statusGroups = useMemo(() => ({
     en_attente: orders.filter(o => o.status === 'en_attente').length,
@@ -757,6 +820,13 @@ export const OrdersPageModern: React.FC = () => {
                     </td>
                     <td className="py-4 px-5">
                       <div className="flex items-center justify-end gap-1.5">
+                        <WhatsAppButton
+                          phone={order.client?.phone || ''}
+                          clientName={`${order.client?.first_name || ''} ${order.client?.last_name || ''}`.trim()}
+                          defaultMessage={getWhatsAppMessage(order)}
+                          label="WhatsApp"
+                          variant="compact"
+                        />
                         <button
                           onClick={() => setViewOrder(order)}
                           className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-primary hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
@@ -1119,9 +1189,6 @@ export const OrdersPageModern: React.FC = () => {
               ))}
             </div>
 
-            {/* ============================================ */}
-            {/* STATUT GLOBAL DE LA COMMANDE (remplace le workflow par vêtement) */}
-            {/* ============================================ */}
             <div className="card-modern !p-4">
               <p className="text-sm font-bold text-on-surface mb-3">Statut de la commande</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
@@ -1163,9 +1230,6 @@ export const OrdersPageModern: React.FC = () => {
               )}
             </div>
 
-            {/* ============================================ */}
-            {/* LISTE DES ARTICLES (sans workflow) */}
-            {/* ============================================ */}
             <div>
               <p className="text-sm font-bold text-on-surface mb-3">Articles ({viewOrder.clothes.length})</p>
               <div className="space-y-2">
@@ -1201,7 +1265,15 @@ export const OrdersPageModern: React.FC = () => {
               {viewOrder.remaining > 0 && <div className="flex justify-between font-bold text-red-600"><span>Restant à payer</span><span>{viewOrder.remaining.toLocaleString('fr-FR')} XOF</span></div>}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
+              <WhatsAppButton
+                phone={viewOrder.client?.phone || ''}
+                clientName={`${viewOrder.client?.first_name || ''} ${viewOrder.client?.last_name || ''}`.trim()}
+                defaultMessage={getWhatsAppMessage(viewOrder)}
+                label="Envoyer WhatsApp"
+                variant="button"
+                className="flex-1"
+              />
               <Button icon={<Printer size={16} />} variant="ghost" className="flex-1" onClick={() => printTicket(viewOrder).catch(console.error)}>Réimprimer ticket</Button>
               {viewOrder.remaining > 0 && (
                 <Button icon={<CreditCard size={16} />} variant="warning" className="flex-1"
@@ -1219,10 +1291,3 @@ export const OrdersPageModern: React.FC = () => {
 }
 
 export default OrdersPageModern
-
-
-
-
-
-
-
