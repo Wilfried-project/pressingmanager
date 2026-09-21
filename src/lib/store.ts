@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, Agency, Client, Order, Cloth, StockItem, StockMovement, Employee, Attendance, Leave, Delivery, Transaction, Notification, LoyaltyCard, Coupon, AgendaEvent, CashSession, CashTransaction } from '../types'
+import { ordersService } from './db'
 
 // AUTH
 interface AuthStore {
@@ -53,6 +54,8 @@ export const useClientStore = create<ClientStore>()(persist((set, get) => ({
 // ORDERS
 interface OrderStore {
   orders: Order[]
+  loading: boolean
+  loadOrders: () => Promise<void>
   addOrder: (o: Order) => void; updateOrder: (id: string, d: Partial<Order>) => void
   deleteOrder: (id: string) => void; getOrderById: (id: string) => Order | undefined
   getTodayOrders: () => Order[]; getOrdersByStatus: (s: Order['status']) => Order[]
@@ -60,6 +63,20 @@ interface OrderStore {
 }
 export const useOrderStore = create<OrderStore>()(persist((set, get) => ({
   orders: [],
+  loading: false,
+
+  // ✅ NOUVEAU : charge les commandes depuis Supabase
+  loadOrders: async () => {
+    set({ loading: true })
+    try {
+      const data = await ordersService.getAll()
+      set({ orders: data as Order[], loading: false })
+    } catch (err) {
+      console.error('Erreur chargement commandes:', err)
+      set({ loading: false })
+    }
+  },
+
   addOrder: (o) => set(s => ({ orders: [...s.orders, o] })),
   updateOrder: (id, d) => set(s => ({ orders: s.orders.map(o => o.id === id ? { ...o, ...d } : o) })),
   deleteOrder: (id) => set(s => ({ orders: s.orders.filter(o => o.id !== id) })),
@@ -204,6 +221,7 @@ export const useAgendaStore = create<AgendaStore>()(persist((set, get) => ({
   deleteEvent: (id) => set(s => ({ events: s.events.filter(e => e.id !== id) })),
   getEventsByDate: (date) => get().events.filter(e => e.date === date)
 }), { name: 'pm-agenda' }))
+
 // SHOP CONFIG
 export interface ShopConfig {
   name: string; slogan: string; logo: string
@@ -219,8 +237,8 @@ export const useShopConfig = create<ShopConfigStore>()(persist((set) => ({
     name: 'Mon Pressing', slogan: 'Logiciel de gestion professionnelle',
     logo: '', primaryColor: '#7c3aed', phone: '', email: '',
     address: '', currency: 'XOF', footer: 'Merci pour votre confiance !',
-msgReception: '👋 Bonjour {prenom},\n\nNous avons bien réceptionné vos *{nb} article(s)* déposés dans notre pressing.\n\n📋 *Récapitulatif*\n• N° Ticket : *#{ticket}*\n• Date de livraison : *{date}*\n• Montant total : *{total} XOF*\n\nVous serez notifié(e) dès que vos articles seront prêts.\n\nMerci de votre confiance ! 🙏\n_{nom}_',
-msgPret: '🎉 Bonjour {prenom},\n\nBonne nouvelle ! Vos *{nb} article(s)* sont prêts et vous attendent.\n\n📋 *Récapitulatif*\n• N° Ticket : *#{ticket}*\n• Montant restant : *{reste} XOF*\n\n⏰ Nos horaires : Lun–Sam, 8h–18h\n📍 {adresse}\n\nÀ très bientôt ! 😊\n_{nom}_'
+    msgReception: '👋 Bonjour {prenom},\n\nNous avons bien réceptionné vos *{nb} article(s)* déposés dans notre pressing.\n\n📋 *Récapitulatif*\n• N° Ticket : *#{ticket}*\n• Date de livraison : *{date}*\n• Montant total : *{total} XOF*\n\nVous serez notifié(e) dès que vos articles seront prêts.\n\nMerci de votre confiance ! 🙏\n_{nom}_',
+    msgPret: '🎉 Bonjour {prenom},\n\nBonne nouvelle ! Vos *{nb} article(s)* sont prêts et vous attendent.\n\n📋 *Récapitulatif*\n• N° Ticket : *#{ticket}*\n• Montant restant : *{reste} XOF*\n\n⏰ Nos horaires : Lun–Sam, 8h–18h\n📍 {adresse}\n\nÀ très bientôt ! 😊\n_{nom}_'
   },
   setConfig: (c) => set(s => ({ config: { ...s.config, ...c } }))
 }), { name: 'pm-shop-config' }))

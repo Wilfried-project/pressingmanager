@@ -73,10 +73,15 @@ const PAYMENT_TO_BADGE: Record<string, any> = {
 }
 
 export const OrdersPageModern: React.FC = () => {
-  const { orders, addOrder, updateOrder, deleteOrder } = useOrderStore()
+  const { orders, addOrder, updateOrder, deleteOrder, loadOrders, loading: ordersLoading } = useOrderStore()
   const { clients: localClients, addClient } = useClientStore()
   const [dbClients, setDbClients] = useState<Client[]>([])
   const [customPrices, setCustomPrices] = useState<any[]>([])
+
+  // ✅ NOUVEAU : charge les commandes depuis Supabase
+  useEffect(() => {
+    loadOrders()
+  }, [])
 
   useEffect(() => {
     servicePriceService.getAll().then(setCustomPrices).catch(() => setCustomPrices([]))
@@ -204,7 +209,6 @@ export const OrdersPageModern: React.FC = () => {
 
   const isDepositDisabled = form.payment_status === 'paye' || form.payment_status === 'non_paye'
 
-  // ✅ CORRECTION 1 : Nouvel article en HAUT de la liste
   const addCloth = () => setClothes([{
     type: 'chemise', color: '', brand: '', size: '', material: '',
     quantity: '' as any, service: 'lavage_simple', price: '' as any,
@@ -718,6 +722,12 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
               <Package size={12} />
               {orders.length} au total
             </span>
+            {ordersLoading && (
+              <span className="badge-modern bg-blue-50 text-blue-700">
+                <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                Chargement...
+              </span>
+            )}
           </div>
           <p className="text-sm text-on-surface-variant mt-1">
             Suivi complet des depots, traitements et livraisons
