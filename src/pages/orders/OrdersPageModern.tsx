@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig, useAgendaStore } from '../../lib/store'
 import { clientsService, ordersService, generateTicketNumber, servicePriceService, cashService } from '../../lib/db'
 import { toast } from '../../lib/toast'
+import { supabase } from '../../lib/supabase'
 import {
   PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea,
   Badge, EmptyState, Table, Card, StatusBadge, Avatar,
@@ -77,6 +78,8 @@ export const OrdersPageModern: React.FC = () => {
   const { clients: localClients, addClient } = useClientStore()
   const [dbClients, setDbClients] = useState<Client[]>([])
   const [customPrices, setCustomPrices] = useState<any[]>([])
+  const [customServices, setCustomServices] = useState<any[]>([])
+  const [customClothTypes, setCustomClothTypes] = useState<any[]>([])
 
   // ✅ NOUVEAU : charge les commandes depuis Supabase
   useEffect(() => {
@@ -85,6 +88,26 @@ export const OrdersPageModern: React.FC = () => {
 
   useEffect(() => {
     servicePriceService.getAll().then(setCustomPrices).catch(() => setCustomPrices([]))
+
+    // Charge les services et vêtements personnalisés
+    const loadCustomItems = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        const { data: emp } = await supabase.from('employees').select('tenant_id').eq('user_id', session.user.id).single()
+        if (!emp?.tenant_id) return
+
+        const [servicesRes, clothRes] = await Promise.all([
+          supabase.from('custom_services').select('*').eq('tenant_id', emp.tenant_id).eq('is_active', true).order('created_at'),
+          supabase.from('custom_cloth_types').select('*').eq('tenant_id', emp.tenant_id).eq('is_active', true).order('created_at'),
+        ])
+        setCustomServices(servicesRes.data || [])
+        setCustomClothTypes(clothRes.data || [])
+      } catch (err) {
+        console.error('Erreur chargement services/vêtements custom:', err)
+      }
+    }
+    loadCustomItems()
   }, [])
 
   useEffect(() => {
@@ -99,18 +122,45 @@ export const OrdersPageModern: React.FC = () => {
     return SERVICES.find(s => s.value === serviceType)?.basePrice || 0
   }
 
-  const allClothTypes = [
-    ...CLOTH_TYPES,
-    ...Array.from(new Set(customPrices.map(p => p.cloth_type)))
+  // ✅ FUSION : vêtements par défaut + personnalisés
+  const allClothTypes = useMemo(() => {
+    const base = CLOTH_TYPES.map(ct => ({ ...ct, isCustom: false }))
+    const fromPrices = Array.from(new Set(customPrices.map(p => p.cloth_type)))
       .filter(t => !CLOTH_TYPES.some(ct => ct.value === t))
-      .map(t => ({ value: t as ClothType, label: t.charAt(0).toUpperCase() + t.slice(1), icon: '' }))
-  ]
-  const allServiceTypes = [
-    ...SERVICES,
-    ...Array.from(new Set(customPrices.map(p => p.service_type)))
+      .map(t => ({ value: t as ClothType, label: t.charAt(0).toUpperCase() + t.slice(1), icon: '', isCustom: true }))
+    const fromCustom = customClothTypes.map(cct => ({
+      value: cct.label.toLowerCase().replace(/\s+/g, '_') as ClothType,
+      label: cct.label,
+      icon: '',
+      isCustom: true,
+    }))
+    // Fusionner sans doublons
+    const all = [...base]
+    ;[...fromPrices, ...fromCustom].forEach(item => {
+      if (!all.some(x => x.value === item.value)) all.push(item)
+    })
+    return all
+  }, [customPrices, customClothTypes])
+
+  // ✅ FUSION : services par défaut + personnalisés
+  const allServiceTypes = useMemo(() => {
+    const base = SERVICES.map(s => ({ ...s, isCustom: false }))
+    const fromPrices = Array.from(new Set(customPrices.map(p => p.service_type)))
       .filter(s => !SERVICES.some(sv => sv.value === s))
-      .map(s => ({ value: s as ServiceType, label: s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' '), basePrice: 0 }))
-  ]
+      .map(s => ({ value: s as ServiceType, label: s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' '), basePrice: 0, isCustom: true }))
+    const fromCustom = customServices.map(cs => ({
+      value: cs.label.toLowerCase().replace(/\s+/g, '_') as ServiceType,
+      label: cs.label,
+      basePrice: cs.base_price || 0,
+      isCustom: true,
+    }))
+    const all = [...base]
+    ;[...fromPrices, ...fromCustom].forEach(item => {
+      if (!all.some(x => x.value === item.value)) all.push(item)
+    })
+    return all
+  }, [customPrices, customServices])
+
   const [loadingClients, setLoadingClients] = useState(false)
 
   useEffect(() => {
@@ -473,75 +523,59 @@ export const OrdersPageModern: React.FC = () => {
       @page { size: 80mm auto; margin: 0; }
       body { font-family: 'Courier New', 'Arial', sans-serif; font-size: 13px; background: #fff; color: #000; font-weight: 700; line-height: 1.2; }
       .ticket { width: 100%; margin: 0; padding: 4px; }
-
       .header { text-align: center; padding: 4px 2px; border-bottom: 2px solid #000; }
       .logo { width: 60px; height: auto; margin-bottom: 2px; }
       .shop-name { font-size: 16px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
       .shop-sub { font-size: 11px; font-weight: 700; margin-top: 1px; }
       .shop-slogan { font-size: 10px; font-weight: 700; margin-top: 2px; }
-
       .ticket-num-block { text-align: center; padding: 4px 0; border-bottom: 2px dashed #000; }
       .ticket-num { font-size: 18px; font-weight: 900; letter-spacing: 0.5px; }
-
       .qr-block { text-align: center; padding: 4px 0; border-bottom: 2px dashed #000; }
       .qr-block img { width: 100px; height: 100px; }
       .qr-caption { font-size: 10px; font-weight: 700; margin-top: 2px; }
-
       .section { padding: 4px 0; border-bottom: 2px dashed #000; }
       .section:last-child { border-bottom: none; }
       .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
-
       .row { display: flex; justify-content: space-between; margin: 2px 0; font-size: 12px; }
       .row .label { color: #000; font-weight: 700; }
       .row .value { font-weight: 900; text-align: right; }
-
       .article { padding: 3px 0; border-bottom: 1px dotted #000; }
       .article:last-child { border-bottom: none; }
       .article-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 900; }
       .article-detail { font-size: 11px; font-weight: 700; margin-top: 1px; padding-left: 6px; }
       .article-condition { font-size: 11px; font-weight: 900; margin-top: 1px; padding-left: 6px; }
-
       .total-line { display: flex; justify-content: space-between; margin: 2px 0; font-size: 12px; font-weight: 700; }
       .total-main { display: flex; justify-content: space-between; font-size: 16px; font-weight: 900; padding: 3px 0; border-top: 2px solid #000; border-bottom: 2px solid #000; margin: 3px 0; }
-
       .remaining-box { border: 2px solid #000; padding: 4px; text-align: center; margin: 5px 0; }
       .remaining-label { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
       .remaining-amount { font-size: 17px; font-weight: 900; margin-top: 1px; }
       .paid-box { border: 2px solid #000; padding: 4px; text-align: center; margin: 5px 0; }
       .paid-label { font-size: 12px; font-weight: 900; text-transform: uppercase; }
-
       .important-box { border: 2px solid #000; padding: 4px; text-align: center; margin: 5px 0; }
       .important-title { font-size: 11px; font-weight: 900; text-transform: uppercase; line-height: 1.2; }
       .important-sub { font-size: 9px; font-weight: 700; margin-top: 2px; }
-
       .legal-box { border: 2px solid #000; padding: 3px; text-align: center; margin: 5px 0; }
       .legal-text { font-size: 9px; font-weight: 700; line-height: 1.2; }
-
       .footer { text-align: center; padding: 4px 0; font-size: 11px; }
       .footer-merci { font-size: 13px; font-weight: 900; margin: 2px 0; }
       .footer-line { margin: 1px 0; font-size: 11px; font-weight: 700; }
       .footer-print-date { font-size: 9px; font-weight: 700; margin-top: 3px; border-top: 1px dotted #000; padding-top: 2px; }
-
       @media print { body { margin: 0; width: 80mm; } }
     </style></head><body>
     <div class="ticket">
-
       <div class="header">
         ${config.logo ? `<img src="${config.logo}" alt="logo" class="logo" />` : ''}
         <div class="shop-name">${config.name || 'PRESSINGMANAGER'}</div>
         <div class="shop-sub">${config.slogan || 'Console de gestion'}</div>
         <div class="shop-slogan">Reçu de dépôt - Ticket client</div>
       </div>
-
       <div class="ticket-num-block">
         <div class="ticket-num">#${order.ticket_number}</div>
       </div>
-
       <div class="qr-block">
         <img src="${qrDataUrl}" alt="QR Code" />
         <div class="qr-caption">Scannez pour voir le détail</div>
       </div>
-
       <div class="section">
         <div class="section-title">Informations client</div>
         <div class="row"><span class="label">Client</span><span class="value">${order.client?.first_name || ''} ${order.client?.last_name || ''}</span></div>
@@ -549,7 +583,6 @@ export const OrdersPageModern: React.FC = () => {
         <div class="row"><span class="label">Date dépôt</span><span class="value">${new Date(order.received_at).toLocaleDateString('fr-FR')} à ${new Date(order.received_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
         <div class="row"><span class="label">Date prévue</span><span class="value">${order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'À définir'}</span></div>
       </div>
-
       <div class="section">
         <div class="section-title">Articles (${order.clothes.length})</div>
         ${order.clothes.map((c: any) => `
@@ -564,7 +597,6 @@ export const OrdersPageModern: React.FC = () => {
           </div>
         `).join('')}
       </div>
-
       <div class="section">
         <div class="section-title">Récapitulatif paiement</div>
         <div class="total-line"><span>Sous-total</span><span>${order.subtotal.toLocaleString('fr-FR')} XOF</span></div>
@@ -573,7 +605,6 @@ export const OrdersPageModern: React.FC = () => {
         ${order.deposit > 0 ? `<div class="total-line"><span>Acompte versé</span><span>${order.deposit.toLocaleString('fr-FR')} XOF</span></div>` : ''}
         <div class="total-line"><span>Mode de paiement</span><span>${order.payment_method?.replace('_', ' ') || 'Espèces'}</span></div>
       </div>
-
       ${order.remaining > 0
         ? `<div class="remaining-box">
              <div class="remaining-label">Reste à payer</div>
@@ -583,23 +614,19 @@ export const OrdersPageModern: React.FC = () => {
              <div class="paid-label">✓ Commande entièrement payée</div>
            </div>`
       }
-
       <div class="important-box">
         <div class="important-title">⚠ Conservez ce ticket pour récupérer vos articles</div>
         <div class="important-sub">Sans ce ticket, le retrait peut être refusé</div>
       </div>
-
       <div class="legal-box">
         <div class="legal-text">Passé 1 mois après la date de retrait prévue, le pressing n'est plus responsable des vêtements non récupérés.</div>
       </div>
-
       <div class="footer">
         <div class="footer-merci">Merci pour votre confiance !</div>
         ${config.phone ? `<div class="footer-line">📞 ${config.phone}</div>` : ''}
         ${config.address ? `<div class="footer-line">📍 ${config.address}</div>` : ''}
         <div class="footer-print-date">Imprimé le ${new Date().toLocaleString('fr-FR')}</div>
       </div>
-
     </div>
     <script>window.onload = () => { window.print(); }</script>
     </body></html>`)
