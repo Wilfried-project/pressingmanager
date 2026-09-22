@@ -121,22 +121,17 @@ export const ordersService = {
     return data || []
   },
 
+  // ✅ NOUVEAU : utilise la fonction RPC transactionnelle
+  // Impossible que les articles aient un mauvais order_id
   async create(order: any, clothes: any[]) {
-    const tenant_id = await getTenantId()
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .insert({ ...order, tenant_id })
-      .select()
-      .single()
-    if (orderError) throw orderError
+    const { data: orderId, error } = await supabase
+      .rpc('create_order_with_clothes', {
+        p_order: order,
+        p_clothes: clothes,
+      })
 
-    if (clothes.length > 0) {
-      const { error: clothesError } = await supabase
-        .from('clothes')
-        .insert(clothes.map(c => ({ ...c, order_id: orderData.id, tenant_id })))
-      if (clothesError) throw clothesError
-    }
-    return orderData
+    if (error) throw error
+    return { id: orderId }
   },
 
   async update(id: string, updates: any) {
