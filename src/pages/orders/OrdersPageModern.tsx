@@ -495,19 +495,26 @@ export const OrdersPageModern: React.FC = () => {
     setShowForm(false)
   }
 
+  // ✅ CORRIGÉ : attend la persistance Supabase
   const handlePaymentOnPickup = async () => {
     if (!showPaymentModal) return
     const order = showPaymentModal
     const newDeposit = order.deposit + paymentAmount
     const newRemaining = order.total - newDeposit
     const newStatus: PaymentStatus = newRemaining <= 0 ? 'paye' : 'acompte'
-    updateOrder(order.id, {
-      deposit: newDeposit,
-      remaining: Math.max(0, newRemaining),
-      payment_status: newStatus,
-      payment_method: paymentMethod,
-      ...(newRemaining <= 0 ? { status: 'livre', delivered_at: new Date().toISOString() } : {})
-    })
+
+    try {
+      await updateOrder(order.id, {
+        deposit: newDeposit,
+        remaining: Math.max(0, newRemaining),
+        payment_status: newStatus,
+        payment_method: paymentMethod,
+        ...(newRemaining <= 0 ? { status: 'livre', delivered_at: new Date().toISOString() } : {})
+      })
+    } catch (err) {
+      toast.error('Erreur', { description: 'Impossible de mettre à jour le paiement' })
+      return
+    }
 
     if (paymentAmount > 0) {
       ;(async () => {
@@ -1383,13 +1390,18 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                   return (
                     <button
                       key={s.key}
-                      onClick={() => {
-                        updateOrder(viewOrder.id, {
-                          status: s.key as Order['status'],
-                          ...(s.key === 'livre' ? { delivered_at: new Date().toISOString() } : {})
-                        })
-                        setViewOrder({ ...viewOrder, status: s.key as Order['status'] })
-                        if (s.key === 'pret') sendReadyNotification(viewOrder)
+                      onClick={async () => {
+                        try {
+                          await updateOrder(viewOrder.id, {
+                            status: s.key as Order['status'],
+                            ...(s.key === 'livre' ? { delivered_at: new Date().toISOString() } : {})
+                          })
+                          setViewOrder({ ...viewOrder, status: s.key as Order['status'] })
+                          if (s.key === 'pret') sendReadyNotification(viewOrder)
+                          toast.success('Statut mis à jour')
+                        } catch (err) {
+                          toast.error('Erreur', { description: 'Impossible de changer le statut' })
+                        }
                       }}
                       className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
                         isActive

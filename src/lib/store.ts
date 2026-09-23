@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, Agency, Client, Order, Cloth, StockItem, StockMovement, Employee, Attendance, Leave, Delivery, Transaction, Notification, LoyaltyCard, Coupon, AgendaEvent, CashSession, CashTransaction } from '../types'
 import { ordersService } from './db'
+import { supabase } from './supabase'
 
 // AUTH
 interface AuthStore {
@@ -56,8 +57,10 @@ interface OrderStore {
   orders: Order[]
   loading: boolean
   loadOrders: () => Promise<void>
-  addOrder: (o: Order) => void; updateOrder: (id: string, d: Partial<Order>) => void
-  deleteOrder: (id: string) => void; getOrderById: (id: string) => Order | undefined
+  addOrder: (o: Order) => void
+  updateOrder: (id: string, d: Partial<Order>) => Promise<void>
+  deleteOrder: (id: string) => void
+  getOrderById: (id: string) => Order | undefined
   getTodayOrders: () => Order[]; getOrdersByStatus: (s: Order['status']) => Order[]
   getLateOrders: () => Order[]; getTodayRevenue: () => number; getMonthRevenue: () => number
 }
@@ -65,7 +68,6 @@ export const useOrderStore = create<OrderStore>()(persist((set, get) => ({
   orders: [],
   loading: false,
 
-  // ✅ NOUVEAU : charge les commandes depuis Supabase
   loadOrders: async () => {
     set({ loading: true })
     try {
@@ -78,7 +80,40 @@ export const useOrderStore = create<OrderStore>()(persist((set, get) => ({
   },
 
   addOrder: (o) => set(s => ({ orders: [...s.orders, o] })),
-  updateOrder: (id, d) => set(s => ({ orders: s.orders.map(o => o.id === id ? { ...o, ...d } : o) })),
+
+  // ✅ CORRIGÉ : met à jour le store local ET Supabase
+  updateOrder: async (id, d) => {
+    // 1. Mise à jour locale immédiate (interface réactive)
+    set(s => ({ orders: s.orders.map(o => o.id === id ? { ...o, ...d } : o) }))
+
+    // 2. Mise à jour Supabase (persistance)
+    try {
+      // Filtrer les champs qui ne doivent PAS être envoyés à Supabase
+      // (champs calculés ou relations locales)
+      const { client, clothes, ...dbFields } = d as any
+
+      const { error } = await supabase
+        .from('orders')
+        .update(dbFields)
+        .eq('id', id)
+
+      if (error) {
+        console.error('Erreur updateOrder Supabase:', error)
+        throw error
+      }
+    } catch (err) {
+      console.error('Erreur updateOrder:', err)
+      // Rollback : recharger depuis Supabase pour retrouver l'état réel
+      try {
+        const data = await ordersService.getAll()
+        set({ orders: data as Order[] })
+      } catch (reloadErr) {
+        console.error('Erreur rollback updateOrder:', reloadErr)
+      }
+      throw err
+    }
+  },
+
   deleteOrder: (id) => set(s => ({ orders: s.orders.filter(o => o.id !== id) })),
   getOrderById: (id) => get().orders.find(o => o.id === id),
   getTodayOrders: () => { const t = new Date().toISOString().split('T')[0]; return get().orders.filter(o => o.created_at.startsWith(t)) },
