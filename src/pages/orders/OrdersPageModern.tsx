@@ -11,7 +11,7 @@ import {
 } from '../../components/ui'
 import {
   Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard,
-  Search, Filter, Clock, Package, CheckCircle2, Truck, XCircle, ArrowRight
+  Search, Filter, Clock, Package, CheckCircle2, Truck, XCircle, ArrowRight, AlertCircle
 } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
 import { WhatsAppButton } from '../../components/ui/WhatsAppButton'
@@ -39,7 +39,6 @@ const SERVICES: { value: ServiceType; label: string; basePrice: number }[] = [
 ]
 
 const ORDER_STATUSES = [
-  { key: 'en_attente', label: 'En attente', color: 'amber', icon: 'schedule' },
   { key: 'en_cours',   label: 'En cours',   color: 'blue',  icon: 'local_laundry_service' },
   { key: 'pret',       label: 'Prêt',       color: 'emerald', icon: 'check_circle' },
   { key: 'livre',      label: 'Livré',      color: 'slate', icon: 'inventory' },
@@ -47,7 +46,6 @@ const ORDER_STATUSES = [
 ] as const
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; bar: string }> = {
-  en_attente: { bg: 'bg-amber-50',   text: 'text-amber-700',   bar: 'bg-amber-500' },
   en_cours:   { bg: 'bg-blue-50',    text: 'text-blue-700',    bar: 'bg-blue-500' },
   pret:       { bg: 'bg-emerald-50', text: 'text-emerald-700', bar: 'bg-emerald-500' },
   livre:      { bg: 'bg-slate-100',  text: 'text-slate-600',   bar: 'bg-slate-400' },
@@ -55,14 +53,14 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; bar: string }> =
 }
 
 const STATUS_TO_BADGE: Record<string, any> = {
-  recu: 'pending', en_attente: 'pending', tri: 'inProgress', pretraitement: 'inProgress',
+  recu: 'inProgress', en_attente: 'inProgress', tri: 'inProgress', pretraitement: 'inProgress',
   detachage: 'inProgress', lavage: 'inProgress', essorage: 'inProgress', sechage: 'inProgress',
   repassage: 'inProgress', controle: 'inProgress', retouche: 'inProgress', emballage: 'inProgress',
-  stock: 'inProgress', pret: 'ready', livre: 'delivered', annule: 'cancelled'
+  stock: 'inProgress', en_cours: 'inProgress', pret: 'ready', livre: 'delivered', annule: 'cancelled'
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  recu: 'Reçu', en_attente: 'En attente', tri: 'Tri', pretraitement: 'Prétraitement',
+  recu: 'Reçu', en_attente: 'En cours', tri: 'Tri', pretraitement: 'Prétraitement',
   detachage: 'Détachage', lavage: 'Lavage', essorage: 'Essorage', sechage: 'Séchage',
   repassage: 'Repassage', controle: 'Contrôle', retouche: 'Retouche', emballage: 'Emballage',
   stock: 'Stock', pret: 'Prêt', livre: 'Livré', annule: 'Annulé',
@@ -82,32 +80,21 @@ type RibbonInfo = {
 }
 
 function getRibbon(order: Order): RibbonInfo {
-  // ✖️ Annulé
   if (order.status === 'annule') {
     return { className: 'cancelled', label: 'ANNULÉ' }
   }
-
-  // Livré + payé → PAYÉ & LIVRÉ (vert)
   if (order.status === 'livre' && order.payment_status === 'paye') {
     return { className: 'paid', label: 'PAYÉ & LIVRÉ' }
   }
-
-  // Livré + pas payé → NON PAYÉ (rouge)
   if (order.status === 'livre' && order.payment_status !== 'paye') {
     return { className: 'unpaid', label: 'NON PAYÉ' }
   }
-
-  // Pas livré + payé → PAYÉ, PAS LIVRÉ (bleu)
   if (order.payment_status === 'paye') {
     return { className: 'paid-not-delivered', label: 'PAYÉ, PAS LIVRÉ' }
   }
-
-  // Pas livré + acompte → ACOMPTE (orange)
   if (order.payment_status === 'acompte') {
     return { className: 'partial', label: 'ACOMPTE' }
   }
-
-  // Sinon : pas livré + pas payé → NON PAYÉ (rouge)
   return { className: 'unpaid', label: 'NON PAYÉ' }
 }
 
@@ -119,7 +106,6 @@ export const OrdersPageModern: React.FC = () => {
   const [customServices, setCustomServices] = useState<any[]>([])
   const [customClothTypes, setCustomClothTypes] = useState<any[]>([])
 
-  // ✅ NOUVEAU : charge les commandes depuis Supabase
   useEffect(() => {
     loadOrders()
   }, [])
@@ -127,7 +113,6 @@ export const OrdersPageModern: React.FC = () => {
   useEffect(() => {
     servicePriceService.getAll().then(setCustomPrices).catch(() => setCustomPrices([]))
 
-    // Charge les services et vêtements personnalisés
     const loadCustomItems = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
@@ -160,7 +145,6 @@ export const OrdersPageModern: React.FC = () => {
     return SERVICES.find(s => s.value === serviceType)?.basePrice || 0
   }
 
-  // ✅ FUSION : vêtements par défaut + personnalisés
   const allClothTypes = useMemo(() => {
     const base = CLOTH_TYPES.map(ct => ({ ...ct, isCustom: false }))
     const fromPrices = Array.from(new Set(customPrices.map(p => p.cloth_type)))
@@ -172,7 +156,6 @@ export const OrdersPageModern: React.FC = () => {
       icon: '',
       isCustom: true,
     }))
-    // Fusionner sans doublons
     const all = [...base]
     ;[...fromPrices, ...fromCustom].forEach(item => {
       if (!all.some(x => x.value === item.value)) all.push(item)
@@ -180,7 +163,6 @@ export const OrdersPageModern: React.FC = () => {
     return all
   }, [customPrices, customClothTypes])
 
-  // ✅ FUSION : services par défaut + personnalisés
   const allServiceTypes = useMemo(() => {
     const base = SERVICES.map(s => ({ ...s, isCustom: false }))
     const fromPrices = Array.from(new Set(customPrices.map(p => p.service_type)))
@@ -256,10 +238,14 @@ export const OrdersPageModern: React.FC = () => {
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetail[]>([])
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
+  // ✅ FILTRES : support "impaye" en plus des statuts
   const filtered = useMemo(() => orders.filter(o => {
     const ms = o.ticket_number.toLowerCase().includes(search.toLowerCase()) ||
       `${o.client?.first_name} ${o.client?.last_name}`.toLowerCase().includes(search.toLowerCase())
-    return ms && (!filterStatus || o.status === filterStatus)
+    if (!ms) return false
+    if (!filterStatus) return true
+    if (filterStatus === 'impaye') return o.remaining > 0 && o.status !== 'annule'
+    return o.status === filterStatus
   }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [orders, search, filterStatus])
 
   const filteredClients = useMemo(() =>
@@ -367,10 +353,11 @@ export const OrdersPageModern: React.FC = () => {
     const depositFinal = form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit
     const remainingFinal = total - depositFinal
 
+    // ✅ CORRIGÉ : status directement 'en_cours' (plus de 'en_attente')
     const order: Order = {
       id: crypto.randomUUID(), ticket_number: ticket, agency_id: 'default',
       client_id: client.id, client, clothes: clothesFull,
-      status: 'en_attente', priority: form.priority,
+      status: 'en_cours', priority: form.priority,
       received_at: now, expected_at: form.expected_at,
       subtotal, discount, total, deposit: depositFinal, remaining: remainingFinal,
       payment_method: form.payment_method, payment_status: form.payment_status,
@@ -384,7 +371,7 @@ export const OrdersPageModern: React.FC = () => {
         id: order.id,
         ticket_number: ticket,
         client_id: client.id,
-        status: 'en_attente',
+        status: 'en_cours',  // ✅ Directement en_cours
         priority: form.priority,
         received_at: now,
         expected_at: form.expected_at,
@@ -495,7 +482,6 @@ export const OrdersPageModern: React.FC = () => {
     setShowForm(false)
   }
 
-  // ✅ CORRIGÉ : attend la persistance Supabase
   const handlePaymentOnPickup = async () => {
     if (!showPaymentModal) return
     const order = showPaymentModal
@@ -554,16 +540,12 @@ export const OrdersPageModern: React.FC = () => {
     setPaymentAmount(0)
   }
 
-  // ============================================
-  // ⭐ IMPRESSION TICKET — AVEC BANNIÈRE DE STATUT
-  // ============================================
   const printTicket = async (order: Order) => {
     const scanUrl = `${window.location.origin}/scan/${encodeURIComponent(order.ticket_number)}`
     const qrDataUrl = await QRCode.toDataURL(scanUrl, { width: 180, margin: 1, color: { dark: '#000000', light: '#ffffff' } })
     const win = window.open('', '_blank')
     if (!win) return
 
-    // ⭐ Calcul de la bannière de statut
     const ribbon = getRibbon(order)
 
     win.document.write(`<!DOCTYPE html><html><head><title>Ticket ${order.ticket_number}</title>
@@ -571,48 +553,14 @@ export const OrdersPageModern: React.FC = () => {
       * { margin: 0; padding: 0; box-sizing: border-box; }
       @page { size: 80mm auto; margin: 0; }
       body { font-family: 'Courier New', 'Arial', sans-serif; font-size: 13px; background: #fff; color: #000; font-weight: 700; line-height: 1.2; }
-
-      /* ⭐ TICKET CONTAINER : pour positionner la bannière */
-      .ticket-container {
-        position: relative;
-        overflow: hidden;
-        width: 100%;
-      }
-
-      /* ⭐ BANNIÈRE DE STATUT (style Odoo) */
-      .status-ribbon {
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 130px;
-        height: 130px;
-        overflow: hidden;
-        pointer-events: none;
-        z-index: 10;
-      }
-      .status-ribbon span {
-        position: absolute;
-        top: 32px;
-        right: -38px;
-        width: 180px;
-        padding: 7px 0;
-        transform: rotate(45deg);
-        text-align: center;
-        font-size: 11px;
-        font-weight: 900;
-        letter-spacing: 1.2px;
-        text-transform: uppercase;
-        color: #ffffff;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.25);
-        font-family: 'Arial', sans-serif;
-      }
-      /* Couleurs selon le statut */
-      .status-ribbon.paid span                { background: #10b981; } /* Vert */
-      .status-ribbon.paid-not-delivered span  { background: #3b82f6; } /* Bleu */
-      .status-ribbon.partial span             { background: #f59e0b; } /* Orange */
-      .status-ribbon.unpaid span              { background: #ef4444; } /* Rouge */
-      .status-ribbon.cancelled span           { background: #1f2937; } /* Noir */
-
+      .ticket-container { position: relative; overflow: hidden; width: 100%; }
+      .status-ribbon { position: absolute; top: 0; right: 0; width: 130px; height: 130px; overflow: hidden; pointer-events: none; z-index: 10; }
+      .status-ribbon span { position: absolute; top: 32px; right: -38px; width: 180px; padding: 7px 0; transform: rotate(45deg); text-align: center; font-size: 11px; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase; color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.25); font-family: 'Arial', sans-serif; }
+      .status-ribbon.paid span                { background: #10b981; }
+      .status-ribbon.paid-not-delivered span  { background: #3b82f6; }
+      .status-ribbon.partial span             { background: #f59e0b; }
+      .status-ribbon.unpaid span              { background: #ef4444; }
+      .status-ribbon.cancelled span           { background: #1f2937; }
       .ticket { width: 100%; margin: 0; padding: 4px; }
       .header { text-align: center; padding: 4px 2px; border-bottom: 2px solid #000; }
       .logo { width: 60px; height: auto; margin-bottom: 2px; }
@@ -654,7 +602,6 @@ export const OrdersPageModern: React.FC = () => {
       @media print { body { margin: 0; width: 80mm; } }
     </style></head><body>
     <div class="ticket-container">
-      <!-- ⭐ BANNIÈRE DE STATUT -->
       <div class="status-ribbon ${ribbon.className}">
         <span>${ribbon.label}</span>
       </div>
@@ -761,13 +708,14 @@ export const OrdersPageModern: React.FC = () => {
     }
   }
 
+  // ✅ CORRIGÉ : plus de 'en_attente'
   const getWhatsAppMessage = (order: Order): string => {
     const clientName = order.client?.first_name || 'cher client'
     const shopName = config.name || 'PressingManager'
     const shopPhone = config.phone || ''
     const shopAddress = config.address || ''
 
-    if (order.status === 'en_attente' || order.status === 'en_cours') {
+    if (order.status === 'en_cours') {
       return `Bonjour ${clientName} 👋
 
 Nous avons bien reçu votre linge chez ${shopName} !
@@ -822,12 +770,13 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
     return `Bonjour ${clientName}, concernant votre commande N°${order.ticket_number} chez ${shopName}.`
   }
 
+  // ✅ STATS : remplace 'en_attente' par 'impaye'
   const statusGroups = useMemo(() => ({
-    en_attente: orders.filter(o => o.status === 'en_attente').length,
     en_cours: orders.filter(o => o.status === 'en_cours').length,
     pret: orders.filter(o => o.status === 'pret').length,
     livre: orders.filter(o => o.status === 'livre').length,
     annule: orders.filter(o => o.status === 'annule').length,
+    impaye: orders.filter(o => o.remaining > 0 && o.status !== 'annule').length,
   }), [orders])
 
   return (
@@ -870,11 +819,11 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
       {/* ===== KPI STATUTS ===== */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
-          { s: 'en_attente', l: 'En attente', icon: Clock, color: 'bg-amber-50 text-amber-600', numColor: 'text-amber-600', bar: 'bg-amber-500' },
           { s: 'en_cours', l: 'En cours', icon: Package, color: 'bg-blue-50 text-blue-600', numColor: 'text-blue-600', bar: 'bg-blue-500' },
           { s: 'pret', l: 'Prets', icon: CheckCircle2, color: 'bg-emerald-50 text-emerald-600', numColor: 'text-emerald-600', bar: 'bg-emerald-500' },
           { s: 'livre', l: 'Livres', icon: Truck, color: 'bg-slate-100 text-slate-600', numColor: 'text-slate-600', bar: 'bg-slate-400' },
           { s: 'annule', l: 'Annules', icon: XCircle, color: 'bg-red-50 text-red-600', numColor: 'text-red-600', bar: 'bg-red-500' },
+          { s: 'impaye', l: 'Impayes', icon: AlertCircle, color: 'bg-orange-50 text-orange-600', numColor: 'text-orange-600', bar: 'bg-orange-500' },
         ].map(({ s, l, icon: Icon, color, numColor, bar }) => {
           const count = statusGroups[s as keyof typeof statusGroups]
           const pct = orders.length > 0 ? Math.round((count / orders.length) * 100) : 0
@@ -928,11 +877,11 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
             className="w-full lg:w-48 px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-on-surface cursor-pointer transition"
           >
             <option value="">Tous les statuts</option>
-            <option value="en_attente">En attente</option>
             <option value="en_cours">En cours</option>
             <option value="pret">Pret</option>
             <option value="livre">Livre</option>
             <option value="annule">Annule</option>
+            <option value="impaye">Impayes</option>
           </select>
         </div>
       </div>
@@ -1005,7 +954,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                       </div>
                     </td>
                     <td className="py-4 px-5">
-                      <StatusBadge status={STATUS_TO_BADGE[order.status] || 'pending'} label={STATUS_LABELS[order.status] || order.status} />
+                      <StatusBadge status={STATUS_TO_BADGE[order.status] || 'inProgress'} label={STATUS_LABELS[order.status] || order.status} />
                     </td>
                     <td className="py-4 px-5 text-sm text-on-surface-variant">
                       {order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : '-'}
@@ -1383,7 +1332,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
 
             <div className="card-modern !p-4">
               <p className="text-sm font-bold text-on-surface mb-3">Statut de la commande</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                 {ORDER_STATUSES.map(s => {
                   const isActive = viewOrder.status === s.key
                   const colors = STATUS_COLORS[s.key]
