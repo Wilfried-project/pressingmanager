@@ -25,7 +25,7 @@ const SECTIONS = [
   { key: 'notifications', label: 'Notifications',      icon: Bell,       desc: 'Templates SMS et WhatsApp' },
   { key: 'rules',         label: 'Regles metier',      icon: Settings2,  desc: 'Delais, majorations, fidelite' },
   { key: 'system',        label: 'Systeme',            icon: Database,   desc: 'Sauvegarde, export, reset' },
-  { key: 'services',      label: 'Services & Tarifs',  icon: Tag,        desc: 'Vêtements, services et prix' },
+  { key: 'services',      label: 'Prestations',  icon: Tag,        desc: 'Vêtements, services et prix' },
   { key: 'history',       label: 'Historique',         icon: History,    desc: 'Audit et versions' },
 ] as const
 

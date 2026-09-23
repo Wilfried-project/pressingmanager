@@ -3,43 +3,9 @@ import { supabase } from '../../lib/supabase'
 import { useShopConfig } from '../../lib/store'
 import { toast } from '../../lib/toast'
 import {
-  Plus, Trash2, Save, X, Tag, Shirt, DollarSign,
-  Search, ShoppingBag
+  Plus, Trash2, Save, X, Shirt, DollarSign,
+  Search, ShoppingBag, Sparkles, AlertCircle
 } from 'lucide-react'
-
-// ============================================
-// Types de base (par défaut, non supprimables)
-// ============================================
-const DEFAULT_CLOTH_TYPES = [
-  { value: 'chemise', label: 'Chemise' },
-  { value: 'pantalon', label: 'Pantalon' },
-  { value: 'robe', label: 'Robe' },
-  { value: 'costume', label: 'Costume' },
-  { value: 'veste', label: 'Veste' },
-  { value: 'manteau', label: 'Manteau' },
-  { value: 'jupe', label: 'Jupe' },
-  { value: 'pull', label: 'Pull' },
-  { value: 'tshirt', label: 'T-Shirt' },
-  { value: 'cravate', label: 'Cravate' },
-  { value: 'couverture', label: 'Couverture' },
-  { value: 'rideau', label: 'Rideau' },
-  { value: 'nappe', label: 'Nappe' },
-  { value: 'tapis', label: 'Tapis' },
-  { value: 'couette', label: 'Couette' },
-  { value: 'chaussures', label: 'Chaussures' },
-  { value: 'sac', label: 'Sac' },
-  { value: 'autre', label: 'Autre' },
-]
-
-const DEFAULT_SERVICES = [
-  { value: 'lavage_simple', label: 'Lavage simple', defaultPrice: 1500 },
-  { value: 'lavage_express', label: 'Lavage express', defaultPrice: 2500 },
-  { value: 'repassage', label: 'Repassage', defaultPrice: 750 },
-  { value: 'nettoyage_sec', label: 'Nettoyage à sec', defaultPrice: 3500 },
-  { value: 'detachage', label: 'Détachage', defaultPrice: 1500 },
-  { value: 'impermeabilisant', label: 'Imperméabilisant', defaultPrice: 2500 },
-  { value: 'service_vip', label: 'Service VIP complet', defaultPrice: 8000 },
-]
 
 interface ServicePrice {
   id?: string
@@ -47,7 +13,6 @@ interface ServicePrice {
   cloth_type: string
   service_type: string
   price: number
-  created_at?: string
 }
 
 interface CustomItem {
@@ -55,45 +20,20 @@ interface CustomItem {
   tenant_id: string
   label: string
   base_price?: number
-  icon?: string
   is_active: boolean
-  created_at: string
 }
 
-// ✅ NOUVEAU : types pour la fusion
-interface ServiceItem {
-  value: string
-  label: string
-  defaultPrice: number
-  isCustom: boolean
-  id?: string
-}
-
-interface ClothItem {
-  value: string
-  label: string
-  isCustom: boolean
-  id?: string
-}
-
-// ============================================
-// COMPOSANT
-// ============================================
 export const ServicesSettings: React.FC = () => {
-  const { config } = useShopConfig()
   const [tenantId, setTenantId] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  // Données
   const [prices, setPrices] = useState<ServicePrice[]>([])
   const [customServices, setCustomServices] = useState<CustomItem[]>([])
   const [customClothTypes, setCustomClothTypes] = useState<CustomItem[]>([])
 
-  // Recherche
   const [searchCloth, setSearchCloth] = useState('')
 
-  // Modals
   const [editPrice, setEditPrice] = useState<{ cloth_type: string; service_type: string; price: number } | null>(null)
   const [showAddService, setShowAddService] = useState(false)
   const [showAddCloth, setShowAddCloth] = useState(false)
@@ -102,7 +42,7 @@ export const ServicesSettings: React.FC = () => {
   const [newClothLabel, setNewClothLabel] = useState('')
 
   // ============================================
-  // Charger le tenant_id
+  // Charger tenant_id
   // ============================================
   useEffect(() => {
     const loadTenant = async () => {
@@ -118,9 +58,6 @@ export const ServicesSettings: React.FC = () => {
     loadTenant()
   }, [])
 
-  // ============================================
-  // Charger toutes les données
-  // ============================================
   const loadAll = async () => {
     if (!tenantId) return
     setLoading(true)
@@ -143,90 +80,40 @@ export const ServicesSettings: React.FC = () => {
   useEffect(() => { loadAll() }, [tenantId])
 
   // ============================================
-  // Fusionner services par défaut + personnalisés
+  // Helper : convertir un label en value
   // ============================================
-  const allServices = useMemo<ServiceItem[]>(() => {
-    const base: ServiceItem[] = DEFAULT_SERVICES.map(s => ({
-      value: s.value,
-      label: s.label,
-      defaultPrice: s.defaultPrice,
-      isCustom: false,
-    }))
-    const custom: ServiceItem[] = customServices.map(cs => ({
-      value: cs.label.toLowerCase().replace(/\s+/g, '_'),
-      label: cs.label,
-      defaultPrice: cs.base_price || 0,
-      isCustom: true,
-      id: cs.id,
-    }))
-    return [...base, ...custom]
-  }, [customServices])
+  const labelToValue = (label: string): string =>
+    label.toLowerCase().replace(/\s+/g, '_')
 
   // ============================================
-  // Fusionner vêtements par défaut + personnalisés
-  // ============================================
-  const allClothTypes = useMemo<ClothItem[]>(() => {
-    const base: ClothItem[] = DEFAULT_CLOTH_TYPES.map(ct => ({
-      value: ct.value,
-      label: ct.label,
-      isCustom: false,
-    }))
-    const custom: ClothItem[] = customClothTypes.map(cct => ({
-      value: cct.label.toLowerCase().replace(/\s+/g, '_'),
-      label: cct.label,
-      isCustom: true,
-      id: cct.id,
-    }))
-    return [...base, ...custom]
-  }, [customClothTypes])
-
-  // ============================================
-  // Sauvegarder un prix
+  // Actions
   // ============================================
   const handleSavePrice = async () => {
     if (!editPrice || !tenantId) return
-    if (editPrice.price <= 0) {
-      toast.error('Le prix doit être supérieur à 0')
-      return
-    }
-
+    if (editPrice.price <= 0) { toast.error('Le prix doit être supérieur à 0'); return }
     setSaving(true)
     try {
-      const existing = prices.find(
-        p => p.cloth_type === editPrice.cloth_type && p.service_type === editPrice.service_type
-      )
-
+      const existing = prices.find(p => p.cloth_type === editPrice.cloth_type && p.service_type === editPrice.service_type)
       if (existing) {
-        const { error } = await supabase
-          .from('service_prices')
-          .update({ price: editPrice.price })
-          .eq('id', existing.id)
+        const { error } = await supabase.from('service_prices').update({ price: editPrice.price }).eq('id', existing.id)
         if (error) throw error
       } else {
-        const { error } = await supabase
-          .from('service_prices')
-          .insert({
-            tenant_id: tenantId,
-            cloth_type: editPrice.cloth_type,
-            service_type: editPrice.service_type,
-            price: editPrice.price,
-          })
+        const { error } = await supabase.from('service_prices').insert({
+          tenant_id: tenantId,
+          cloth_type: editPrice.cloth_type,
+          service_type: editPrice.service_type,
+          price: editPrice.price,
+        })
         if (error) throw error
       }
-
       toast.success('Prix enregistré !')
       setEditPrice(null)
       await loadAll()
     } catch (err: any) {
       toast.error('Erreur', { description: err.message })
-    } finally {
-      setSaving(false)
-    }
+    } finally { setSaving(false) }
   }
 
-  // ============================================
-  // Supprimer un prix
-  // ============================================
   const handleDeletePrice = async (id: string) => {
     if (!confirm('Supprimer ce prix ?')) return
     try {
@@ -234,19 +121,11 @@ export const ServicesSettings: React.FC = () => {
       if (error) throw error
       toast.success('Prix supprimé')
       await loadAll()
-    } catch (err: any) {
-      toast.error('Erreur', { description: err.message })
-    }
+    } catch (err: any) { toast.error('Erreur', { description: err.message }) }
   }
 
-  // ============================================
-  // Ajouter un service personnalisé
-  // ============================================
   const handleAddService = async () => {
-    if (!newServiceLabel.trim() || !tenantId) {
-      toast.error('Nom du service requis')
-      return
-    }
+    if (!newServiceLabel.trim() || !tenantId) { toast.error('Nom du service requis'); return }
     setSaving(true)
     try {
       const { error } = await supabase.from('custom_services').insert({
@@ -256,20 +135,12 @@ export const ServicesSettings: React.FC = () => {
       })
       if (error) throw error
       toast.success('Service ajouté !')
-      setNewServiceLabel('')
-      setNewServicePrice(1500)
-      setShowAddService(false)
+      setNewServiceLabel(''); setNewServicePrice(1500); setShowAddService(false)
       await loadAll()
-    } catch (err: any) {
-      toast.error('Erreur', { description: err.message })
-    } finally {
-      setSaving(false)
-    }
+    } catch (err: any) { toast.error('Erreur', { description: err.message }) }
+    finally { setSaving(false) }
   }
 
-  // ============================================
-  // Supprimer un service personnalisé
-  // ============================================
   const handleDeleteService = async (id: string, label: string) => {
     if (!confirm(`Supprimer le service "${label}" ?\n\nLes prix associés seront aussi supprimés.`)) return
     try {
@@ -277,19 +148,11 @@ export const ServicesSettings: React.FC = () => {
       if (error) throw error
       toast.success('Service supprimé')
       await loadAll()
-    } catch (err: any) {
-      toast.error('Erreur', { description: err.message })
-    }
+    } catch (err: any) { toast.error('Erreur', { description: err.message }) }
   }
 
-  // ============================================
-  // Ajouter un type de vêtement personnalisé
-  // ============================================
   const handleAddCloth = async () => {
-    if (!newClothLabel.trim() || !tenantId) {
-      toast.error('Nom du vêtement requis')
-      return
-    }
+    if (!newClothLabel.trim() || !tenantId) { toast.error('Nom du vêtement requis'); return }
     setSaving(true)
     try {
       const { error } = await supabase.from('custom_cloth_types').insert({
@@ -298,19 +161,12 @@ export const ServicesSettings: React.FC = () => {
       })
       if (error) throw error
       toast.success('Vêtement ajouté !')
-      setNewClothLabel('')
-      setShowAddCloth(false)
+      setNewClothLabel(''); setShowAddCloth(false)
       await loadAll()
-    } catch (err: any) {
-      toast.error('Erreur', { description: err.message })
-    } finally {
-      setSaving(false)
-    }
+    } catch (err: any) { toast.error('Erreur', { description: err.message }) }
+    finally { setSaving(false) }
   }
 
-  // ============================================
-  // Supprimer un type de vêtement personnalisé
-  // ============================================
   const handleDeleteCloth = async (id: string, label: string) => {
     if (!confirm(`Supprimer le vêtement "${label}" ?\n\nLes prix associés seront aussi supprimés.`)) return
     try {
@@ -318,42 +174,41 @@ export const ServicesSettings: React.FC = () => {
       if (error) throw error
       toast.success('Vêtement supprimé')
       await loadAll()
-    } catch (err: any) {
-      toast.error('Erreur', { description: err.message })
-    }
+    } catch (err: any) { toast.error('Erreur', { description: err.message }) }
   }
 
-  // ============================================
-  // Helper : récupérer le prix
-  // ============================================
   const getPrice = (clothType: string, serviceType: string): number | null => {
     const found = prices.find(p => p.cloth_type === clothType && p.service_type === serviceType)
     return found ? found.price : null
   }
 
-  // ============================================
-  // Filtrer les vêtements
-  // ============================================
   const filteredClothTypes = useMemo(() => {
-    if (!searchCloth) return allClothTypes
-    return allClothTypes.filter(ct =>
+    if (!searchCloth) return customClothTypes
+    return customClothTypes.filter(ct =>
       ct.label.toLowerCase().includes(searchCloth.toLowerCase())
     )
-  }, [allClothTypes, searchCloth])
+  }, [customClothTypes, searchCloth])
 
+  const filteredServices = useMemo(() => {
+    return customServices
+  }, [customServices])
+
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
           <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-primary-fixed text-primary text-xs font-bold tracking-wider uppercase">
-            <Tag size={12} />
-            Personnalisation
+            <Sparkles size={12} />
+            Configuration
           </span>
         </div>
-        <h1 className="text-2xl font-bold text-on-surface tracking-tight">Services & Tarifs</h1>
+        <h1 className="text-2xl font-bold text-on-surface tracking-tight">Prestations</h1>
         <p className="text-sm text-on-surface-variant mt-0.5">
-          Gérez vos services, types de vêtements et prix
+          Gérez vos vêtements, services et prix — tout apparaît automatiquement dans les commandes
         </p>
       </div>
 
@@ -363,109 +218,141 @@ export const ServicesSettings: React.FC = () => {
           <DollarSign size={18} className="text-blue-600" />
         </div>
         <div>
-          <p className="font-bold text-sm text-blue-900">Comment ça marche ?</p>
+          <p className="font-bold text-sm text-blue-900">Tout au même endroit</p>
           <p className="text-xs text-blue-800 mt-1 leading-relaxed">
-            Ajoutez vos propres services et vêtements, puis définissez les prix dans la grille.
-            Les prix s'appliquent automatiquement lors de la création d'une commande.
+            1. Ajoutez vos <strong>vêtements</strong> et vos <strong>services</strong>.
+            2. Définissez les <strong>prix</strong> dans la grille.
+            3. Ils apparaissent automatiquement dans le formulaire de commande.
           </p>
         </div>
       </div>
 
-      {/* ========== SECTION 1 : Services ========== */}
-      <div className="card-modern">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-              <ShoppingBag size={20} className="text-purple-600" />
+      {/* ========== SECTION 1 : VÊTEMENTS + SERVICES CÔTE À CÔTE ========== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* VÊTEMENTS */}
+        <div className="card-modern">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                <Shirt size={20} className="text-emerald-600" />
+              </div>
+              <div>
+                <h2 className="font-bold text-on-surface">Vêtements</h2>
+                <p className="text-xs text-on-surface-variant">
+                  {customClothTypes.length === 0 ? 'Aucun vêtement' : `${customClothTypes.length} type(s)`}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-bold text-on-surface">Services</h2>
-              <p className="text-xs text-on-surface-variant">{allServices.length} services disponibles</p>
-            </div>
+            <button
+              onClick={() => setShowAddCloth(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition"
+            >
+              <Plus size={14} /> Ajouter
+            </button>
           </div>
-          <button
-            onClick={() => setShowAddService(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm transition"
-          >
-            <Plus size={16} />
-            Ajouter un service
-          </button>
+
+          {customClothTypes.length === 0 ? (
+            <div className="text-center py-12 bg-surface-container-low rounded-xl">
+              <Shirt size={32} className="text-on-surface-variant/30 mx-auto mb-3" />
+              <p className="text-sm text-on-surface-variant font-medium mb-1">Aucun vêtement</p>
+              <p className="text-xs text-on-surface-variant mb-4">Commencez par ajouter vos vêtements</p>
+              <button
+                onClick={() => setShowAddCloth(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 transition"
+              >
+                <Plus size={14} /> Ajouter un vêtement
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-1.5 max-h-96 overflow-y-auto">
+              {customClothTypes.map(ct => (
+                <div
+                  key={ct.id}
+                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm bg-surface-container-low"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Shirt size={14} className="text-emerald-600" />
+                    <span className="font-medium text-on-surface truncate">{ct.label}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteCloth(ct.id, ct.label)}
+                    className="w-7 h-7 rounded-full bg-red-100 text-red-600 hover:bg-red-500 hover:text-white transition flex items-center justify-center shrink-0"
+                    title="Supprimer ce vêtement"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {allServices.map(s => (
-            <div
-              key={s.value}
-              className={`group inline-flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg text-xs font-medium ${
-                s.isCustom
-                  ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                  : 'bg-surface-container text-on-surface'
-              }`}
-            >
-              <span>{s.label}</span>
-              <span className="text-[10px] opacity-60">({s.defaultPrice} XOF)</span>
-              {s.isCustom && (
-                <button
-                  onClick={() => s.id && handleDeleteService(s.id, s.label)}
-                  className="w-4 h-4 rounded opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition flex items-center justify-center"
-                  title="Supprimer ce service"
-                >
-                  <X size={10} />
-                </button>
-              )}
+        {/* SERVICES */}
+        <div className="card-modern">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                <ShoppingBag size={20} className="text-purple-600" />
+              </div>
+              <div>
+                <h2 className="font-bold text-on-surface">Services</h2>
+                <p className="text-xs text-on-surface-variant">
+                  {customServices.length === 0 ? 'Aucun service' : `${customServices.length} service(s)`}
+                </p>
+              </div>
             </div>
-          ))}
+            <button
+              onClick={() => setShowAddService(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition"
+            >
+              <Plus size={14} /> Ajouter
+            </button>
+          </div>
+
+          {customServices.length === 0 ? (
+            <div className="text-center py-12 bg-surface-container-low rounded-xl">
+              <ShoppingBag size={32} className="text-on-surface-variant/30 mx-auto mb-3" />
+              <p className="text-sm text-on-surface-variant font-medium mb-1">Aucun service</p>
+              <p className="text-xs text-on-surface-variant mb-4">Ajoutez vos prestations</p>
+              <button
+                onClick={() => setShowAddService(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 text-white font-semibold text-sm hover:bg-purple-700 transition"
+              >
+                <Plus size={14} /> Ajouter un service
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-1.5 max-h-96 overflow-y-auto">
+              {customServices.map(s => (
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm bg-surface-container-low"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <DollarSign size={14} className="text-purple-600" />
+                    <span className="font-medium text-on-surface truncate">{s.label}</span>
+                    <span className="text-[11px] text-on-surface-variant font-semibold">
+                      {(s.base_price || 0).toLocaleString('fr-FR')} XOF
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteService(s.id, s.label)}
+                    className="w-7 h-7 rounded-full bg-red-100 text-red-600 hover:bg-red-500 hover:text-white transition flex items-center justify-center shrink-0"
+                    title="Supprimer ce service"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ========== SECTION 2 : Types de vêtements ========== */}
-      <div className="card-modern">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-              <Shirt size={20} className="text-emerald-600" />
-            </div>
-            <div>
-              <h2 className="font-bold text-on-surface">Types de vêtements</h2>
-              <p className="text-xs text-on-surface-variant">{allClothTypes.length} types disponibles</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowAddCloth(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition"
-          >
-            <Plus size={16} />
-            Ajouter un vêtement
-          </button>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {allClothTypes.map(ct => (
-            <div
-              key={ct.value}
-              className={`group inline-flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg text-xs font-medium ${
-                ct.isCustom
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-surface-container text-on-surface'
-              }`}
-            >
-              <Shirt size={12} className={ct.isCustom ? 'text-emerald-600' : 'text-purple-600'} />
-              <span>{ct.label}</span>
-              {ct.isCustom && (
-                <button
-                  onClick={() => ct.id && handleDeleteCloth(ct.id, ct.label)}
-                  className="w-4 h-4 rounded opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition flex items-center justify-center"
-                  title="Supprimer ce vêtement"
-                >
-                  <X size={10} />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ========== SECTION 3 : Grille tarifaire ========== */}
+      {/* ========== SECTION 2 : GRILLE TARIFAIRE ========== */}
       <div className="card-modern">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
@@ -474,25 +361,41 @@ export const ServicesSettings: React.FC = () => {
             </div>
             <div>
               <h2 className="font-bold text-on-surface">Grille tarifaire</h2>
-              <p className="text-xs text-on-surface-variant">{prices.length} prix personnalisés</p>
+              <p className="text-xs text-on-surface-variant">
+                {customClothTypes.length === 0 || customServices.length === 0
+                  ? 'Ajoutez des vêtements et services pour voir la grille'
+                  : `${customClothTypes.length} × ${customServices.length} combinaisons`}
+              </p>
             </div>
           </div>
-          <div className="relative w-full lg:w-64">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-            <input
-              type="text"
-              value={searchCloth}
-              onChange={e => setSearchCloth(e.target.value)}
-              placeholder="Rechercher un vêtement..."
-              className="w-full pl-9 pr-4 py-2 bg-surface-container-low border border-outline-variant/30 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
-            />
-          </div>
+          {customClothTypes.length > 0 && (
+            <div className="relative w-full lg:w-64">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+              <input
+                type="text"
+                value={searchCloth}
+                onChange={e => setSearchCloth(e.target.value)}
+                placeholder="Rechercher un vêtement..."
+                className="w-full pl-9 pr-4 py-2 bg-surface-container-low border border-outline-variant/30 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+            </div>
+          )}
         </div>
 
         {loading ? (
           <div className="text-center py-12">
             <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-sm text-on-surface-variant mt-3">Chargement...</p>
+          </div>
+        ) : customClothTypes.length === 0 || customServices.length === 0 ? (
+          <div className="text-center py-12 bg-surface-container-low rounded-xl">
+            <AlertCircle size={40} className="text-on-surface-variant/30 mx-auto mb-3" />
+            <p className="text-sm text-on-surface-variant font-medium mb-1">
+              Grille tarifaire indisponible
+            </p>
+            <p className="text-xs text-on-surface-variant">
+              Ajoutez au moins 1 vêtement et 1 service pour définir vos prix
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto -mx-5">
@@ -502,65 +405,71 @@ export const ServicesSettings: React.FC = () => {
                   <th className="py-3 px-5 text-left text-xs font-bold text-on-surface-variant uppercase tracking-wider sticky left-0 bg-surface-container-low z-10">
                     Vêtement
                   </th>
-                  {allServices.map(svc => (
-                    <th key={svc.value} className="py-3 px-3 text-center text-xs font-bold text-on-surface-variant uppercase tracking-wider whitespace-nowrap">
+                  {filteredServices.map(svc => (
+                    <th key={svc.id} className="py-3 px-3 text-center text-xs font-bold text-on-surface-variant uppercase tracking-wider whitespace-nowrap">
                       {svc.label}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filteredClothTypes.map(ct => (
-                  <tr key={ct.value} className="border-b border-outline-variant/20 hover:bg-primary-fixed/10 transition">
-                    <td className="py-3 px-5 sticky left-0 bg-white z-10 font-semibold text-sm text-on-surface">
-                      <div className="flex items-center gap-2">
-                        <Shirt size={12} className="text-purple-600" />
-                        {ct.label}
-                      </div>
-                    </td>
-                    {allServices.map(svc => {
-                      const price = getPrice(ct.value, svc.value)
-                      const existing = prices.find(p => p.cloth_type === ct.value && p.service_type === svc.value)
-                      return (
-                        <td key={svc.value} className="py-2 px-2 text-center">
-                          <div className="flex items-center justify-center gap-1 group">
-                            <button
-                              onClick={() => setEditPrice({
-                                cloth_type: ct.value,
-                                service_type: svc.value,
-                                price: price || svc.defaultPrice
-                              })}
-                              className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all min-w-[70px] ${
-                                price
-                                  ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                                  : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high border border-transparent'
-                              }`}
-                            >
-                              {price ? price.toLocaleString('fr-FR') : svc.defaultPrice.toLocaleString('fr-FR')}
-                            </button>
-                            {existing && (
+                {filteredClothTypes.map(ct => {
+                  const ctValue = labelToValue(ct.label)
+                  return (
+                    <tr key={ct.id} className="border-b border-outline-variant/20 hover:bg-primary-fixed/10 transition">
+                      <td className="py-3 px-5 sticky left-0 bg-white z-10 font-semibold text-sm text-on-surface">
+                        <div className="flex items-center gap-2">
+                          <Shirt size={12} className="text-purple-600" />
+                          {ct.label}
+                        </div>
+                      </td>
+                      {filteredServices.map(svc => {
+                        const svcValue = labelToValue(svc.label)
+                        const price = getPrice(ctValue, svcValue)
+                        const existing = prices.find(p => p.cloth_type === ctValue && p.service_type === svcValue)
+                        return (
+                          <td key={svc.id} className="py-2 px-2 text-center">
+                            <div className="flex items-center justify-center gap-1 group">
                               <button
-                                onClick={() => existing.id && handleDeletePrice(existing.id)}
-                                className="w-6 h-6 rounded opacity-0 group-hover:opacity-100 hover:bg-red-100 text-red-600 transition flex items-center justify-center"
-                                title="Supprimer ce prix"
+                                onClick={() => setEditPrice({
+                                  cloth_type: ctValue,
+                                  service_type: svcValue,
+                                  price: price || svc.base_price || 0
+                                })}
+                                className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all min-w-[70px] ${
+                                  price
+                                    ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                                    : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high border border-transparent'
+                                }`}
                               >
-                                <Trash2 size={12} />
+                                {price ? price.toLocaleString('fr-FR') : (svc.base_price || 0).toLocaleString('fr-FR')}
                               </button>
-                            )}
-                          </div>
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
+                              {existing && (
+                                <button
+                                  onClick={() => existing.id && handleDeletePrice(existing.id)}
+                                  className="w-6 h-6 rounded opacity-0 group-hover:opacity-100 hover:bg-red-100 text-red-600 transition flex items-center justify-center"
+                                  title="Supprimer ce prix"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
         )}
 
-        <p className="text-xs text-on-surface-variant mt-3 italic">
-          💡 Cliquez sur un prix pour le modifier. Les prix sans fond vert utilisent le prix par défaut.
-        </p>
+        {customClothTypes.length > 0 && customServices.length > 0 && (
+          <p className="text-xs text-on-surface-variant mt-3 italic">
+            💡 Cliquez sur un prix pour le modifier. Les prix sans fond vert utilisent le prix par défaut du service.
+          </p>
+        )}
       </div>
 
       {/* ============================================ */}
@@ -573,7 +482,7 @@ export const ServicesSettings: React.FC = () => {
               <div>
                 <h3 className="font-bold text-lg">Modifier le prix</h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {allClothTypes.find(c => c.value === editPrice.cloth_type)?.label} · {allServices.find(s => s.value === editPrice.service_type)?.label}
+                  {customClothTypes.find(c => labelToValue(c.label) === editPrice.cloth_type)?.label} · {customServices.find(s => labelToValue(s.label) === editPrice.service_type)?.label}
                 </p>
               </div>
               <button onClick={() => setEditPrice(null)} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -594,18 +503,13 @@ export const ServicesSettings: React.FC = () => {
                 />
               </div>
               <div className="flex gap-3 pt-2">
-                <button
-                  onClick={handleSavePrice}
-                  disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition disabled:opacity-50"
-                >
+                <button onClick={handleSavePrice} disabled={saving}
+                  className="flex-1 flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition disabled:opacity-50">
                   {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save size={16} />}
                   Enregistrer
                 </button>
-                <button
-                  onClick={() => setEditPrice(null)}
-                  className="flex-1 border-2 border-gray-200 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-50 transition"
-                >
+                <button onClick={() => setEditPrice(null)}
+                  className="flex-1 border-2 border-gray-200 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-50 transition">
                   Annuler
                 </button>
               </div>
@@ -627,7 +531,7 @@ export const ServicesSettings: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">Nouveau service</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Ajouter un service personnalisé</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Ajouter une prestation</p>
                 </div>
               </div>
               <button onClick={() => setShowAddService(false)} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -637,39 +541,24 @@ export const ServicesSettings: React.FC = () => {
             <div className="p-5 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nom du service *</label>
-                <input
-                  type="text"
-                  value={newServiceLabel}
-                  onChange={e => setNewServiceLabel(e.target.value)}
-                  placeholder="Ex: Lavage à la main"
-                  autoFocus
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
+                <input type="text" value={newServiceLabel} onChange={e => setNewServiceLabel(e.target.value)}
+                  placeholder="Ex: Lavage à la main" autoFocus
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Prix par défaut (XOF)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={newServicePrice}
-                  onChange={e => setNewServicePrice(parseFloat(e.target.value) || 0)}
+                <input type="number" min="0" value={newServicePrice} onChange={e => setNewServicePrice(parseFloat(e.target.value) || 0)}
                   onFocus={e => e.target.value === '0' && (e.target.value = '')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
               </div>
               <div className="flex gap-3 pt-2">
-                <button
-                  onClick={handleAddService}
-                  disabled={saving || !newServiceLabel.trim()}
-                  className="flex-1 flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition disabled:opacity-50"
-                >
+                <button onClick={handleAddService} disabled={saving || !newServiceLabel.trim()}
+                  className="flex-1 flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition disabled:opacity-50">
                   {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Plus size={16} />}
                   Ajouter
                 </button>
-                <button
-                  onClick={() => { setShowAddService(false); setNewServiceLabel(''); setNewServicePrice(1500) }}
-                  className="flex-1 border-2 border-gray-200 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-50 transition"
-                >
+                <button onClick={() => { setShowAddService(false); setNewServiceLabel(''); setNewServicePrice(1500) }}
+                  className="flex-1 border-2 border-gray-200 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-50 transition">
                   Annuler
                 </button>
               </div>
@@ -701,28 +590,18 @@ export const ServicesSettings: React.FC = () => {
             <div className="p-5 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nom du vêtement *</label>
-                <input
-                  type="text"
-                  value={newClothLabel}
-                  onChange={e => setNewClothLabel(e.target.value)}
-                  placeholder="Ex: Cravate en soie"
-                  autoFocus
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                />
+                <input type="text" value={newClothLabel} onChange={e => setNewClothLabel(e.target.value)}
+                  placeholder="Ex: Cravate en soie" autoFocus
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
               </div>
               <div className="flex gap-3 pt-2">
-                <button
-                  onClick={handleAddCloth}
-                  disabled={saving || !newClothLabel.trim()}
-                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-50"
-                >
+                <button onClick={handleAddCloth} disabled={saving || !newClothLabel.trim()}
+                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition disabled:opacity-50">
                   {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Plus size={16} />}
                   Ajouter
                 </button>
-                <button
-                  onClick={() => { setShowAddCloth(false); setNewClothLabel('') }}
-                  className="flex-1 border-2 border-gray-200 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-50 transition"
-                >
+                <button onClick={() => { setShowAddCloth(false); setNewClothLabel('') }}
+                  className="flex-1 border-2 border-gray-200 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-50 transition">
                   Annuler
                 </button>
               </div>

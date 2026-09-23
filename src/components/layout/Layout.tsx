@@ -25,7 +25,6 @@ export const ALL_MODULES = [
   { path: '/hr', label: 'Employés & RH', icon: 'badge', group: 'Équipe & Finance' },
   { path: '/accounting', label: 'Comptabilité', icon: 'account_balance_wallet', group: 'Équipe & Finance' },
   { path: '/reports', label: 'Rapports', icon: 'monitoring', group: 'Équipe & Finance' },
-  { path: '/services', label: 'Services & Tarifs', icon: 'sell', group: 'Configuration' },
   { path: '/settings', label: 'Paramètres', icon: 'settings', group: 'Configuration' },
   { path: '/users', label: 'Utilisateurs', icon: 'manage_accounts', group: 'Configuration' },
 ]
