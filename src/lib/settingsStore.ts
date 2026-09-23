@@ -120,6 +120,7 @@ interface SettingsState {
   originalSnapshot: string | null
 
   // Actions
+  setDirty: (value: boolean) => void
   loadSettings: () => Promise<void>
   loadHistory: () => Promise<void>
   saveSettings: (partial?: Partial<TenantSettings>) => Promise<boolean>
@@ -183,6 +184,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   error: null,
   dirty: false,
   originalSnapshot: null,
+
+  // ⭐ AJOUT : permet de marquer manuellement le formulaire comme modifié
+  setDirty: (value: boolean) => set({ dirty: value }),
 
   loadSettings: async () => {
     set({ loading: true, error: null })

@@ -83,6 +83,7 @@ export const SettingsPageModern: React.FC = () => {
     loadSettings, loadHistory, saveSettings, rollbackToVersion,
     updateTheme, updatePrint, updateRules, updateTemplates,
     discardChanges, getCompletion, getLastModified,
+    setDirty,  // ⭐ AJOUT : on récupère setDirty du store
   } = useSettingsStore()
 
   const [activeSection, setActiveSection] = useState<SectionKey>('general')
@@ -94,6 +95,7 @@ export const SettingsPageModern: React.FC = () => {
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showPresets, setShowPresets] = useState(false)
+  const [initialForm, setInitialForm] = useState<any>(null)  // ⭐ AJOUT : snapshot du form initial
 
   const [form, setForm] = useState({
     name: config.name || '',
@@ -111,7 +113,24 @@ export const SettingsPageModern: React.FC = () => {
   })
 
   // ============================================
-  // CALLBACKS (declares AVANT les useEffect)
+  // ⭐ AJOUT : Détection automatique des changements
+  // Marque le formulaire comme "dirty" dès qu'un champ change
+  // ============================================
+  useEffect(() => {
+    // Sauvegarder le snapshot initial au premier chargement
+    if (!initialForm) {
+      setInitialForm(form)
+      return
+    }
+    // Comparer form actuel vs snapshot initial
+    const hasChanged = JSON.stringify(form) !== JSON.stringify(initialForm)
+    if (hasChanged) {
+      setDirty(true)
+    }
+  }, [form, initialForm, setDirty])
+
+  // ============================================
+  // CALLBACKS
   // ============================================
   const handleSaveAll = React.useCallback(async () => {
     setConfig(form)
@@ -138,9 +157,13 @@ export const SettingsPageModern: React.FC = () => {
 
     await saveSettings()
 
+    // ⭐ Après sauvegarde, on remet le snapshot à jour
+    setInitialForm(form)
+    setDirty(false)
+
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
-  }, [form, config, setConfig, saveSettings])
+  }, [form, config, setConfig, saveSettings, setDirty])
 
   // ============================================
   // EFFECTS
@@ -217,9 +240,14 @@ export const SettingsPageModern: React.FC = () => {
       const logoUrl = urlData.publicUrl
       setForm(f => ({ ...f, logo: logoUrl }))
       setConfig({ ...config, logo: logoUrl })
+      // ⭐ AJOUT : marquer explicitement comme dirty
+      setDirty(true)
     } catch (err) {
       const reader = new FileReader()
-      reader.onload = () => setForm(f => ({ ...f, logo: reader.result as string }))
+      reader.onload = () => {
+        setForm(f => ({ ...f, logo: reader.result as string }))
+        setDirty(true)  // ⭐ AJOUT
+      }
       reader.readAsDataURL(file)
     }
   }
@@ -344,7 +372,7 @@ export const SettingsPageModern: React.FC = () => {
                     {form.logo && (
                       <button
                         type="button"
-                        onClick={() => setForm(f => ({ ...f, logo: '' }))}
+                        onClick={() => { setForm(f => ({ ...f, logo: '' })); setDirty(true) }}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition"
                       >
                         <X size={15} /> Supprimer
@@ -357,16 +385,16 @@ export const SettingsPageModern: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Nom du pressing" required>
-                  <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Pressing Elegance" />
+                  <Input value={form.name} onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setDirty(true) }} placeholder="Ex: Pressing Elegance" />
                 </Field>
                 <Field label="Slogan">
-                  <Input value={form.slogan} onChange={e => setForm(f => ({ ...f, slogan: e.target.value }))} placeholder="Ex: Vos habits, notre passion !" />
+                  <Input value={form.slogan} onChange={e => { setForm(f => ({ ...f, slogan: e.target.value })); setDirty(true) }} placeholder="Ex: Vos habits, notre passion !" />
                 </Field>
                 <Field label="Telephone">
-                  <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+225 07 XX XX XX XX" />
+                  <Input value={form.phone} onChange={e => { setForm(f => ({ ...f, phone: e.target.value })); setDirty(true) }} placeholder="+225 07 XX XX XX XX" />
                 </Field>
                 <Field label="Email">
-                  <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="contact@monpressing.ci" />
+                  <Input type="email" value={form.email} onChange={e => { setForm(f => ({ ...f, email: e.target.value })); setDirty(true) }} placeholder="contact@monpressing.ci" />
                 </Field>
                 <Field label="N RCCM">
                   <Input value={form.rccm} onChange={e => setForm(f => ({ ...f, rccm: e.target.value }))} placeholder="CI-ABJ-2026-B-XXXXX" />
@@ -377,11 +405,11 @@ export const SettingsPageModern: React.FC = () => {
               </div>
 
               <Field label="Adresse complete">
-                <Textarea value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="Adresse complete de votre pressing..." rows={2} />
+                <Textarea value={form.address} onChange={e => { setForm(f => ({ ...f, address: e.target.value })); setDirty(true) }} placeholder="Adresse complete de votre pressing..." rows={2} />
               </Field>
 
               <Field label="Message de pied de ticket">
-                <Input value={form.footer} onChange={e => setForm(f => ({ ...f, footer: e.target.value }))} placeholder="Ex: Merci pour votre confiance !" />
+                <Input value={form.footer} onChange={e => { setForm(f => ({ ...f, footer: e.target.value })); setDirty(true) }} placeholder="Ex: Merci pour votre confiance !" />
               </Field>
             </div>
           </div>
@@ -560,7 +588,7 @@ export const SettingsPageModern: React.FC = () => {
             <CardHeader icon={Coins} title="Monnaie & Parametres regionaux" subtitle="Devise, langue, fuseau horaire et formats" />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Devise principale">
-                <Select value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}>
+                <Select value={form.currency} onChange={e => { setForm(f => ({ ...f, currency: e.target.value })); setDirty(true) }}>
                   {CURRENCIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </Select>
               </Field>
@@ -606,7 +634,7 @@ export const SettingsPageModern: React.FC = () => {
               </div>
 
               <Field label="Message de reception (a la creation de commande)">
-                <Textarea value={form.msgReception} onChange={e => setForm(f => ({ ...f, msgReception: e.target.value }))} rows={5} placeholder="Bonjour {prenom}, votre commande {ticket}..." />
+                <Textarea value={form.msgReception} onChange={e => { setForm(f => ({ ...f, msgReception: e.target.value })); setDirty(true) }} rows={5} placeholder="Bonjour {prenom}, votre commande {ticket}..." />
               </Field>
 
               {form.msgReception && (
@@ -619,7 +647,7 @@ export const SettingsPageModern: React.FC = () => {
               )}
 
               <Field label="Message vetements prets">
-                <Textarea value={form.msgPret} onChange={e => setForm(f => ({ ...f, msgPret: e.target.value }))} rows={5} placeholder="Bonjour {prenom}, vos vetements sont prets !..." />
+                <Textarea value={form.msgPret} onChange={e => { setForm(f => ({ ...f, msgPret: e.target.value })); setDirty(true) }} rows={5} placeholder="Bonjour {prenom}, vos vetements sont prets !..." />
               </Field>
 
               {form.msgPret && (
