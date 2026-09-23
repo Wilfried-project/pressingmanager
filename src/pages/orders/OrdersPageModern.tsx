@@ -73,6 +73,44 @@ const PAYMENT_TO_BADGE: Record<string, any> = {
   paye: 'paid', acompte: 'partial', non_paye: 'unpaid'
 }
 
+// ============================================
+// ⭐ FONCTION : Bannière de statut (style Odoo)
+// ============================================
+type RibbonInfo = {
+  className: 'paid' | 'paid-not-delivered' | 'partial' | 'unpaid' | 'cancelled'
+  label: string
+}
+
+function getRibbon(order: Order): RibbonInfo {
+  // ✖️ Annulé
+  if (order.status === 'annule') {
+    return { className: 'cancelled', label: 'ANNULÉ' }
+  }
+
+  // Livré + payé → PAYÉ & LIVRÉ (vert)
+  if (order.status === 'livre' && order.payment_status === 'paye') {
+    return { className: 'paid', label: 'PAYÉ & LIVRÉ' }
+  }
+
+  // Livré + pas payé → NON PAYÉ (rouge)
+  if (order.status === 'livre' && order.payment_status !== 'paye') {
+    return { className: 'unpaid', label: 'NON PAYÉ' }
+  }
+
+  // Pas livré + payé → PAYÉ, PAS LIVRÉ (bleu)
+  if (order.payment_status === 'paye') {
+    return { className: 'paid-not-delivered', label: 'PAYÉ, PAS LIVRÉ' }
+  }
+
+  // Pas livré + acompte → ACOMPTE (orange)
+  if (order.payment_status === 'acompte') {
+    return { className: 'partial', label: 'ACOMPTE' }
+  }
+
+  // Sinon : pas livré + pas payé → NON PAYÉ (rouge)
+  return { className: 'unpaid', label: 'NON PAYÉ' }
+}
+
 export const OrdersPageModern: React.FC = () => {
   const { orders, addOrder, updateOrder, deleteOrder, loadOrders, loading: ordersLoading } = useOrderStore()
   const { clients: localClients, addClient } = useClientStore()
@@ -510,18 +548,64 @@ export const OrdersPageModern: React.FC = () => {
   }
 
   // ============================================
-  // IMPRESSION TICKET — Compact + texte original + mention légale
+  // ⭐ IMPRESSION TICKET — AVEC BANNIÈRE DE STATUT
   // ============================================
   const printTicket = async (order: Order) => {
     const scanUrl = `${window.location.origin}/scan/${encodeURIComponent(order.ticket_number)}`
     const qrDataUrl = await QRCode.toDataURL(scanUrl, { width: 180, margin: 1, color: { dark: '#000000', light: '#ffffff' } })
     const win = window.open('', '_blank')
     if (!win) return
+
+    // ⭐ Calcul de la bannière de statut
+    const ribbon = getRibbon(order)
+
     win.document.write(`<!DOCTYPE html><html><head><title>Ticket ${order.ticket_number}</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       @page { size: 80mm auto; margin: 0; }
       body { font-family: 'Courier New', 'Arial', sans-serif; font-size: 13px; background: #fff; color: #000; font-weight: 700; line-height: 1.2; }
+
+      /* ⭐ TICKET CONTAINER : pour positionner la bannière */
+      .ticket-container {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+      }
+
+      /* ⭐ BANNIÈRE DE STATUT (style Odoo) */
+      .status-ribbon {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 130px;
+        height: 130px;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .status-ribbon span {
+        position: absolute;
+        top: 32px;
+        right: -38px;
+        width: 180px;
+        padding: 7px 0;
+        transform: rotate(45deg);
+        text-align: center;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+        font-family: 'Arial', sans-serif;
+      }
+      /* Couleurs selon le statut */
+      .status-ribbon.paid span                { background: #10b981; } /* Vert */
+      .status-ribbon.paid-not-delivered span  { background: #3b82f6; } /* Bleu */
+      .status-ribbon.partial span             { background: #f59e0b; } /* Orange */
+      .status-ribbon.unpaid span              { background: #ef4444; } /* Rouge */
+      .status-ribbon.cancelled span           { background: #1f2937; } /* Noir */
+
       .ticket { width: 100%; margin: 0; padding: 4px; }
       .header { text-align: center; padding: 4px 2px; border-bottom: 2px solid #000; }
       .logo { width: 60px; height: auto; margin-bottom: 2px; }
@@ -562,70 +646,77 @@ export const OrdersPageModern: React.FC = () => {
       .footer-print-date { font-size: 9px; font-weight: 700; margin-top: 3px; border-top: 1px dotted #000; padding-top: 2px; }
       @media print { body { margin: 0; width: 80mm; } }
     </style></head><body>
-    <div class="ticket">
-      <div class="header">
-        ${config.logo ? `<img src="${config.logo}" alt="logo" class="logo" />` : ''}
-        <div class="shop-name">${config.name || 'PRESSINGMANAGER'}</div>
-        <div class="shop-sub">${config.slogan || 'Console de gestion'}</div>
-        <div class="shop-slogan">Reçu de dépôt - Ticket client</div>
+    <div class="ticket-container">
+      <!-- ⭐ BANNIÈRE DE STATUT -->
+      <div class="status-ribbon ${ribbon.className}">
+        <span>${ribbon.label}</span>
       </div>
-      <div class="ticket-num-block">
-        <div class="ticket-num">#${order.ticket_number}</div>
-      </div>
-      <div class="qr-block">
-        <img src="${qrDataUrl}" alt="QR Code" />
-        <div class="qr-caption">Scannez pour voir le détail</div>
-      </div>
-      <div class="section">
-        <div class="section-title">Informations client</div>
-        <div class="row"><span class="label">Client</span><span class="value">${order.client?.first_name || ''} ${order.client?.last_name || ''}</span></div>
-        <div class="row"><span class="label">Téléphone</span><span class="value">${order.client?.phone || ''}</span></div>
-        <div class="row"><span class="label">Date dépôt</span><span class="value">${new Date(order.received_at).toLocaleDateString('fr-FR')} à ${new Date(order.received_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
-        <div class="row"><span class="label">Date prévue</span><span class="value">${order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'À définir'}</span></div>
-      </div>
-      <div class="section">
-        <div class="section-title">Articles (${order.clothes.length})</div>
-        ${order.clothes.map((c: any) => `
-          <div class="article">
-            <div class="article-header">
-              <span>${c.quantity}x ${c.type?.charAt(0).toUpperCase() + (c.type?.slice(1) || '')}</span>
-              <span>${((c.price || 0) * (c.quantity || 1)).toLocaleString('fr-FR')} XOF</span>
+
+      <div class="ticket">
+        <div class="header">
+          ${config.logo ? `<img src="${config.logo}" alt="logo" class="logo" />` : ''}
+          <div class="shop-name">${config.name || 'PRESSINGMANAGER'}</div>
+          <div class="shop-sub">${config.slogan || 'Console de gestion'}</div>
+          <div class="shop-slogan">Reçu de dépôt - Ticket client</div>
+        </div>
+        <div class="ticket-num-block">
+          <div class="ticket-num">#${order.ticket_number}</div>
+        </div>
+        <div class="qr-block">
+          <img src="${qrDataUrl}" alt="QR Code" />
+          <div class="qr-caption">Scannez pour voir le détail</div>
+        </div>
+        <div class="section">
+          <div class="section-title">Informations client</div>
+          <div class="row"><span class="label">Client</span><span class="value">${order.client?.first_name || ''} ${order.client?.last_name || ''}</span></div>
+          <div class="row"><span class="label">Téléphone</span><span class="value">${order.client?.phone || ''}</span></div>
+          <div class="row"><span class="label">Date dépôt</span><span class="value">${new Date(order.received_at).toLocaleDateString('fr-FR')} à ${new Date(order.received_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></div>
+          <div class="row"><span class="label">Date prévue</span><span class="value">${order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : 'À définir'}</span></div>
+        </div>
+        <div class="section">
+          <div class="section-title">Articles (${order.clothes.length})</div>
+          ${order.clothes.map((c: any) => `
+            <div class="article">
+              <div class="article-header">
+                <span>${c.quantity}x ${c.type?.charAt(0).toUpperCase() + (c.type?.slice(1) || '')}</span>
+                <span>${((c.price || 0) * (c.quantity || 1)).toLocaleString('fr-FR')} XOF</span>
+              </div>
+              <div class="article-detail">${c.service?.replace(/_/g, ' ')} ${c.color ? '- ' + c.color : ''} ${c.brand ? '- ' + c.brand : ''}</div>
+              ${c.condition_on_arrival && c.condition_on_arrival !== 'bon' ? `<div class="article-condition">⚠ État reçu : ${c.condition_on_arrival.toUpperCase()}</div>` : ''}
+              ${c.special_instructions ? `<div class="article-detail">Note : ${c.special_instructions}</div>` : ''}
             </div>
-            <div class="article-detail">${c.service?.replace(/_/g, ' ')} ${c.color ? '- ' + c.color : ''} ${c.brand ? '- ' + c.brand : ''}</div>
-            ${c.condition_on_arrival && c.condition_on_arrival !== 'bon' ? `<div class="article-condition">⚠ État reçu : ${c.condition_on_arrival.toUpperCase()}</div>` : ''}
-            ${c.special_instructions ? `<div class="article-detail">Note : ${c.special_instructions}</div>` : ''}
-          </div>
-        `).join('')}
-      </div>
-      <div class="section">
-        <div class="section-title">Récapitulatif paiement</div>
-        <div class="total-line"><span>Sous-total</span><span>${order.subtotal.toLocaleString('fr-FR')} XOF</span></div>
-        ${order.discount > 0 ? `<div class="total-line"><span>Remise client</span><span>-${order.discount.toLocaleString('fr-FR')} XOF</span></div>` : ''}
-        <div class="total-main"><span>TOTAL</span><span>${order.total.toLocaleString('fr-FR')} XOF</span></div>
-        ${order.deposit > 0 ? `<div class="total-line"><span>Acompte versé</span><span>${order.deposit.toLocaleString('fr-FR')} XOF</span></div>` : ''}
-        <div class="total-line"><span>Mode de paiement</span><span>${order.payment_method?.replace('_', ' ') || 'Espèces'}</span></div>
-      </div>
-      ${order.remaining > 0
-        ? `<div class="remaining-box">
-             <div class="remaining-label">Reste à payer</div>
-             <div class="remaining-amount">${order.remaining.toLocaleString('fr-FR')} XOF</div>
-           </div>`
-        : `<div class="paid-box">
-             <div class="paid-label">✓ Commande entièrement payée</div>
-           </div>`
-      }
-      <div class="important-box">
-        <div class="important-title">⚠ Conservez ce ticket pour récupérer vos articles</div>
-        <div class="important-sub">Sans ce ticket, le retrait peut être refusé</div>
-      </div>
-      <div class="legal-box">
-        <div class="legal-text">Passé 1 mois après la date de retrait prévue, le pressing n'est plus responsable des vêtements non récupérés.</div>
-      </div>
-      <div class="footer">
-        <div class="footer-merci">Merci pour votre confiance !</div>
-        ${config.phone ? `<div class="footer-line">📞 ${config.phone}</div>` : ''}
-        ${config.address ? `<div class="footer-line">📍 ${config.address}</div>` : ''}
-        <div class="footer-print-date">Imprimé le ${new Date().toLocaleString('fr-FR')}</div>
+          `).join('')}
+        </div>
+        <div class="section">
+          <div class="section-title">Récapitulatif paiement</div>
+          <div class="total-line"><span>Sous-total</span><span>${order.subtotal.toLocaleString('fr-FR')} XOF</span></div>
+          ${order.discount > 0 ? `<div class="total-line"><span>Remise client</span><span>-${order.discount.toLocaleString('fr-FR')} XOF</span></div>` : ''}
+          <div class="total-main"><span>TOTAL</span><span>${order.total.toLocaleString('fr-FR')} XOF</span></div>
+          ${order.deposit > 0 ? `<div class="total-line"><span>Acompte versé</span><span>${order.deposit.toLocaleString('fr-FR')} XOF</span></div>` : ''}
+          <div class="total-line"><span>Mode de paiement</span><span>${order.payment_method?.replace('_', ' ') || 'Espèces'}</span></div>
+        </div>
+        ${order.remaining > 0
+          ? `<div class="remaining-box">
+               <div class="remaining-label">Reste à payer</div>
+               <div class="remaining-amount">${order.remaining.toLocaleString('fr-FR')} XOF</div>
+             </div>`
+          : `<div class="paid-box">
+               <div class="paid-label">✓ Commande entièrement payée</div>
+             </div>`
+        }
+        <div class="important-box">
+          <div class="important-title">⚠ Conservez ce ticket pour récupérer vos articles</div>
+          <div class="important-sub">Sans ce ticket, le retrait peut être refusé</div>
+        </div>
+        <div class="legal-box">
+          <div class="legal-text">Passé 1 mois après la date de retrait prévue, le pressing n'est plus responsable des vêtements non récupérés.</div>
+        </div>
+        <div class="footer">
+          <div class="footer-merci">Merci pour votre confiance !</div>
+          ${config.phone ? `<div class="footer-line">📞 ${config.phone}</div>` : ''}
+          ${config.address ? `<div class="footer-line">📍 ${config.address}</div>` : ''}
+          <div class="footer-print-date">Imprimé le ${new Date().toLocaleString('fr-FR')}</div>
+        </div>
       </div>
     </div>
     <script>window.onload = () => { window.print(); }</script>
