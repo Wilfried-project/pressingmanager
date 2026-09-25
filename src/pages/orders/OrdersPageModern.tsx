@@ -71,30 +71,17 @@ const PAYMENT_TO_BADGE: Record<string, any> = {
   paye: 'paid', acompte: 'partial', non_paye: 'unpaid'
 }
 
-// ============================================
-// ⭐ FONCTION : Bannière de statut (style Odoo)
-// ============================================
 type RibbonInfo = {
   className: 'paid' | 'paid-not-delivered' | 'partial' | 'unpaid' | 'cancelled'
   label: string
 }
 
 function getRibbon(order: Order): RibbonInfo {
-  if (order.status === 'annule') {
-    return { className: 'cancelled', label: 'ANNULÉ' }
-  }
-  if (order.status === 'livre' && order.payment_status === 'paye') {
-    return { className: 'paid', label: 'PAYÉ & LIVRÉ' }
-  }
-  if (order.status === 'livre' && order.payment_status !== 'paye') {
-    return { className: 'unpaid', label: 'NON PAYÉ' }
-  }
-  if (order.payment_status === 'paye') {
-    return { className: 'paid-not-delivered', label: 'PAYÉ, PAS LIVRÉ' }
-  }
-  if (order.payment_status === 'acompte') {
-    return { className: 'partial', label: 'ACOMPTE' }
-  }
+  if (order.status === 'annule') return { className: 'cancelled', label: 'ANNULÉ' }
+  if (order.status === 'livre' && order.payment_status === 'paye') return { className: 'paid', label: 'PAYÉ & LIVRÉ' }
+  if (order.status === 'livre' && order.payment_status !== 'paye') return { className: 'unpaid', label: 'NON PAYÉ' }
+  if (order.payment_status === 'paye') return { className: 'paid-not-delivered', label: 'PAYÉ, PAS LIVRÉ' }
+  if (order.payment_status === 'acompte') return { className: 'partial', label: 'ACOMPTE' }
   return { className: 'unpaid', label: 'NON PAYÉ' }
 }
 
@@ -106,29 +93,23 @@ export const OrdersPageModern: React.FC = () => {
   const [customServices, setCustomServices] = useState<any[]>([])
   const [customClothTypes, setCustomClothTypes] = useState<any[]>([])
 
-  useEffect(() => {
-    loadOrders()
-  }, [])
+  useEffect(() => { loadOrders() }, [])
 
   useEffect(() => {
     servicePriceService.getAll().then(setCustomPrices).catch(() => setCustomPrices([]))
-
     const loadCustomItems = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return
         const { data: emp } = await supabase.from('employees').select('tenant_id').eq('user_id', session.user.id).single()
         if (!emp?.tenant_id) return
-
         const [servicesRes, clothRes] = await Promise.all([
           supabase.from('custom_services').select('*').eq('tenant_id', emp.tenant_id).eq('is_active', true).order('created_at'),
           supabase.from('custom_cloth_types').select('*').eq('tenant_id', emp.tenant_id).eq('is_active', true).order('created_at'),
         ])
         setCustomServices(servicesRes.data || [])
         setCustomClothTypes(clothRes.data || [])
-      } catch (err) {
-        console.error('Erreur chargement services/vêtements custom:', err)
-      }
+      } catch (err) { console.error('Erreur chargement services/vêtements custom:', err) }
     }
     loadCustomItems()
   }, [])
@@ -152,9 +133,7 @@ export const OrdersPageModern: React.FC = () => {
       .map(t => ({ value: t as ClothType, label: t.charAt(0).toUpperCase() + t.slice(1), icon: '', isCustom: true }))
     const fromCustom = customClothTypes.map(cct => ({
       value: cct.label.toLowerCase().replace(/\s+/g, '_') as ClothType,
-      label: cct.label,
-      icon: '',
-      isCustom: true,
+      label: cct.label, icon: '', isCustom: true,
     }))
     const all = [...base]
     ;[...fromPrices, ...fromCustom].forEach(item => {
@@ -170,9 +149,7 @@ export const OrdersPageModern: React.FC = () => {
       .map(s => ({ value: s as ServiceType, label: s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' '), basePrice: 0, isCustom: true }))
     const fromCustom = customServices.map(cs => ({
       value: cs.label.toLowerCase().replace(/\s+/g, '_') as ServiceType,
-      label: cs.label,
-      basePrice: cs.base_price || 0,
-      isCustom: true,
+      label: cs.label, basePrice: cs.base_price || 0, isCustom: true,
     }))
     const all = [...base]
     ;[...fromPrices, ...fromCustom].forEach(item => {
@@ -189,11 +166,7 @@ export const OrdersPageModern: React.FC = () => {
       try {
         const data = await clientsService.getAll()
         setDbClients(data as Client[])
-      } catch {
-        // Fallback sur les clients locaux
-      } finally {
-        setLoadingClients(false)
-      }
+      } catch {} finally { setLoadingClients(false) }
     }
     loadClients()
   }, [])
@@ -238,7 +211,6 @@ export const OrdersPageModern: React.FC = () => {
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetail[]>([])
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  // ✅ FILTRES : support "impaye" en plus des statuts
   const filtered = useMemo(() => orders.filter(o => {
     const ms = o.ticket_number.toLowerCase().includes(search.toLowerCase()) ||
       `${o.client?.first_name} ${o.client?.last_name}`.toLowerCase().includes(search.toLowerCase())
@@ -265,9 +237,7 @@ export const OrdersPageModern: React.FC = () => {
       const ds = d.toISOString().split('T')[0]
       const ordersThisDay = orders.filter(o => o.expected_at?.startsWith(ds)).length
       const eventsThisDay = events.filter(e => e.date === ds).length
-      if (ordersThisDay + eventsThisDay < MAX_PER_DAY) {
-        return `${ds}T09:00`
-      }
+      if (ordersThisDay + eventsThisDay < MAX_PER_DAY) return `${ds}T09:00`
     }
     const d = new Date()
     d.setDate(d.getDate() + 15)
@@ -317,13 +287,9 @@ export const OrdersPageModern: React.FC = () => {
     }
     try {
       const client = await clientsService.create({
-        first_name: newClient.first_name,
-        last_name: newClient.last_name,
-        phone: newClient.phone,
-        email: newClient.email,
-        loyalty_points: 0,
-        discount_rate: 0,
-        is_blacklisted: false,
+        first_name: newClient.first_name, last_name: newClient.last_name,
+        phone: newClient.phone, email: newClient.email,
+        loyalty_points: 0, discount_rate: 0, is_blacklisted: false,
         whatsapp: newClient.phone, address: "", balance: 0, credit: 0, notes: "",
       })
       addClient(client as Client)
@@ -353,7 +319,6 @@ export const OrdersPageModern: React.FC = () => {
     const depositFinal = form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit
     const remainingFinal = total - depositFinal
 
-    // ✅ CORRIGÉ : status directement 'en_cours' (plus de 'en_attente')
     const order: Order = {
       id: crypto.randomUUID(), ticket_number: ticket, agency_id: 'default',
       client_id: client.id, client, clothes: clothesFull,
@@ -368,41 +333,22 @@ export const OrdersPageModern: React.FC = () => {
 
     try {
       await ordersService.create({
-        id: order.id,
-        ticket_number: ticket,
-        client_id: client.id,
-        status: 'en_cours',  // ✅ Directement en_cours
-        priority: form.priority,
-        received_at: now,
-        expected_at: form.expected_at,
-        subtotal,
-        discount,
-        total,
-        deposit: depositFinal,
-        remaining: remainingFinal,
-        payment_method: form.payment_method,
-        payment_status: form.payment_status,
-        notes: form.notes,
-        created_by: user?.full_name || 'Admin'
+        id: order.id, ticket_number: ticket, client_id: client.id,
+        status: 'en_cours', priority: form.priority,
+        received_at: now, expected_at: form.expected_at,
+        subtotal, discount, total,
+        deposit: depositFinal, remaining: remainingFinal,
+        payment_method: form.payment_method, payment_status: form.payment_status,
+        notes: form.notes, created_by: user?.full_name || 'Admin'
       }, clothesFull.map(c => ({
-        id: c.id,
-        type: c.type,
-        color: c.color,
-        brand: c.brand,
-        size: c.size,
-        material: c.material,
-        quantity: c.quantity,
-        service: c.service,
-        price: c.price,
-        status: 'recu',
+        id: c.id, type: c.type, color: c.color, brand: c.brand,
+        size: c.size, material: c.material, quantity: c.quantity,
+        service: c.service, price: c.price, status: 'recu',
         special_instructions: c.special_instructions,
         condition_on_arrival: c.condition_on_arrival,
-        photos: c.photos,
-        qr_code: c.qr_code
+        photos: c.photos, qr_code: c.qr_code
       })))
-    } catch (err) {
-      console.error('Erreur sauvegarde Supabase:', err)
-    }
+    } catch (err) { console.error('Erreur sauvegarde Supabase:', err) }
 
     if (depositFinal > 0) {
       ;(async () => {
@@ -411,10 +357,8 @@ export const OrdersPageModern: React.FC = () => {
           const openSession = allSessions.find((s: any) => s.status === 'open')
           if (openSession) {
             await cashService.addTransaction({
-              id: crypto.randomUUID(),
-              session_id: openSession.id,
-              type: 'entree',
-              amount: depositFinal,
+              id: crypto.randomUUID(), session_id: openSession.id,
+              type: 'entree', amount: depositFinal,
               reason: `${remainingFinal <= 0 ? 'Paiement complet' : 'Acompte'} commande #${ticket} - ${client.first_name} ${client.last_name}`,
               created_by: user?.full_name || 'Admin',
               created_at: new Date().toISOString()
@@ -426,11 +370,8 @@ export const OrdersPageModern: React.FC = () => {
 
     if (depositFinal > 0) {
       addTransaction({
-        id: crypto.randomUUID(),
-        agency_id: 'default',
-        type: 'recette',
-        category: 'Vente pressing',
-        amount: depositFinal,
+        id: crypto.randomUUID(), agency_id: 'default',
+        type: 'recette', category: 'Vente pressing', amount: depositFinal,
         description: `${remainingFinal <= 0 ? 'Paiement complet' : 'Acompte'} commande #${ticket} - ${client.first_name} ${client.last_name}`,
         date: new Date().toISOString().split('T')[0],
         created_by: user?.full_name || 'Admin'
@@ -491,10 +432,8 @@ export const OrdersPageModern: React.FC = () => {
 
     try {
       await updateOrder(order.id, {
-        deposit: newDeposit,
-        remaining: Math.max(0, newRemaining),
-        payment_status: newStatus,
-        payment_method: paymentMethod,
+        deposit: newDeposit, remaining: Math.max(0, newRemaining),
+        payment_status: newStatus, payment_method: paymentMethod,
         ...(newRemaining <= 0 ? { status: 'livre', delivered_at: new Date().toISOString() } : {})
       })
     } catch (err) {
@@ -509,10 +448,8 @@ export const OrdersPageModern: React.FC = () => {
           const openSession = allSessions.find((s: any) => s.status === 'open')
           if (openSession) {
             await cashService.addTransaction({
-              id: crypto.randomUUID(),
-              session_id: openSession.id,
-              type: 'entree',
-              amount: paymentAmount,
+              id: crypto.randomUUID(), session_id: openSession.id,
+              type: 'entree', amount: paymentAmount,
               reason: `Paiement livraison #${order.ticket_number} - ${order.client?.first_name} ${order.client?.last_name}`,
               created_by: user?.full_name || 'Admin',
               created_at: new Date().toISOString()
@@ -524,11 +461,8 @@ export const OrdersPageModern: React.FC = () => {
 
     if (paymentAmount > 0) {
       addTransaction({
-        id: crypto.randomUUID(),
-        agency_id: 'default',
-        type: 'recette',
-        category: 'Vente pressing',
-        amount: paymentAmount,
+        id: crypto.randomUUID(), agency_id: 'default',
+        type: 'recette', category: 'Vente pressing', amount: paymentAmount,
         description: `Paiement livraison #${order.ticket_number} - ${order.client?.first_name} ${order.client?.last_name}`,
         date: new Date().toISOString().split('T')[0],
         created_by: user?.full_name || 'Admin'
@@ -605,7 +539,6 @@ export const OrdersPageModern: React.FC = () => {
       <div class="status-ribbon ${ribbon.className}">
         <span>${ribbon.label}</span>
       </div>
-
       <div class="ticket">
         <div class="header">
           ${config.logo ? `<img src="${config.logo}" alt="logo" class="logo" />` : ''}
@@ -690,8 +623,7 @@ export const OrdersPageModern: React.FC = () => {
     const notif = {
       id: crypto.randomUUID(), client_id: order.client_id,
       client_name: `${order.client?.first_name} ${order.client?.last_name}`,
-      client_phone: order.client?.phone || '',
-      type: 'whatsapp' as const,
+      client_phone: order.client?.phone || '', type: 'whatsapp' as const,
       message: msgPret || `Bonjour ${order.client?.first_name} ! Vos vêtements sont prets. Ticket: #${order.ticket_number}. - ${config.name || 'PressingManager'}`,
       status: 'pending' as const, created_at: new Date().toISOString()
     }
@@ -708,7 +640,6 @@ export const OrdersPageModern: React.FC = () => {
     }
   }
 
-  // ✅ CORRIGÉ : plus de 'en_attente'
   const getWhatsAppMessage = (order: Order): string => {
     const clientName = order.client?.first_name || 'cher client'
     const shopName = config.name || 'PressingManager'
@@ -770,7 +701,6 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
     return `Bonjour ${clientName}, concernant votre commande N°${order.ticket_number} chez ${shopName}.`
   }
 
-  // ✅ STATS : remplace 'en_attente' par 'impaye'
   const statusGroups = useMemo(() => ({
     en_cours: orders.filter(o => o.status === 'en_cours').length,
     pret: orders.filter(o => o.status === 'pret').length,
@@ -786,10 +716,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1
-              className="text-3xl font-extrabold text-on-surface tracking-tight"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-            >
+            <h1 className="text-3xl font-extrabold text-on-surface tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               Commandes
             </h1>
             <span className="badge-modern bg-primary-fixed text-primary">
@@ -807,10 +734,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
             Suivi complet des depots, traitements et livraisons
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="btn-modern-primary self-start md:self-auto"
-        >
+        <button onClick={() => setShowForm(true)} className="btn-modern-primary self-start md:self-auto">
           <Plus size={18} strokeWidth={2.5} />
           Nouvelle commande
         </button>
@@ -829,13 +753,8 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
           const pct = orders.length > 0 ? Math.round((count / orders.length) * 100) : 0
           const isActive = filterStatus === s
           return (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(isActive ? '' : s)}
-              className={`card-modern flex flex-col justify-between text-left transition-all ${
-                isActive ? 'ring-2 ring-primary ring-offset-2' : ''
-              }`}
-            >
+            <button key={s} onClick={() => setFilterStatus(isActive ? '' : s)}
+              className={`card-modern flex flex-col justify-between text-left transition-all ${isActive ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
               <div className="flex items-start justify-between mb-3">
                 <span className="kpi-label-modern">{l}</span>
                 <div className={`w-9 h-9 rounded-xl ${color} flex items-center justify-center`}>
@@ -847,10 +766,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                 <span className="text-xs text-on-surface-variant font-medium">cmd</span>
               </div>
               <div className="w-full bg-surface-container-high h-1.5 rounded-full mt-3 overflow-hidden">
-                <div
-                  className={`${bar} h-full rounded-full transition-all duration-500`}
-                  style={{ width: `${pct}%` }}
-                />
+                <div className={`${bar} h-full rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
               </div>
             </button>
           )
@@ -861,21 +777,14 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
       <div className="card-modern flex flex-col lg:flex-row items-center gap-3">
         <div className="relative w-full lg:flex-1">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+          <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Numéro ticket, nom client, téléphone..."
-            className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-on-surface placeholder:text-on-surface-variant transition"
-          />
+            className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-on-surface placeholder:text-on-surface-variant transition" />
         </div>
-
         <div className="flex items-center gap-2 w-full lg:w-auto">
           <Filter size={16} className="text-on-surface-variant shrink-0" />
-          <select
-            value={filterStatus}
-            onChange={e => setFilterStatus(e.target.value)}
-            className="w-full lg:w-48 px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-on-surface cursor-pointer transition"
-          >
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+            className="w-full lg:w-48 px-3 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium text-on-surface cursor-pointer transition">
             <option value="">Tous les statuts</option>
             <option value="en_cours">En cours</option>
             <option value="pret">Pret</option>
@@ -897,6 +806,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                   <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Client</th>
                   <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Articles</th>
                   <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Total / Paiement</th>
+                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Créée le</th>
                   <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Statut</th>
                   <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Date limite</th>
                   <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
@@ -904,10 +814,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
               </thead>
               <tbody>
                 {filtered.map(order => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-primary-fixed/20 transition-colors border-b border-outline-variant/20 last:border-0"
-                  >
+                  <tr key={order.id} className="hover:bg-primary-fixed/20 transition-colors border-b border-outline-variant/20 last:border-0">
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-primary-fixed text-primary flex items-center justify-center shrink-0">
@@ -918,17 +825,12 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                     </td>
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-3">
-                        <Avatar
-                          name={`${order.client?.first_name || '?'} ${order.client?.last_name || ''}`}
-                          size="sm"
-                        />
+                        <Avatar name={`${order.client?.first_name || '?'} ${order.client?.last_name || ''}`} size="sm" />
                         <div>
                           <div className="font-semibold text-sm text-on-surface">
                             {order.client?.first_name} {order.client?.last_name}
                           </div>
-                          <div className="text-xs text-on-surface-variant">
-                            {order.client?.phone}
-                          </div>
+                          <div className="text-xs text-on-surface-variant">{order.client?.phone}</div>
                         </div>
                       </div>
                     </td>
@@ -953,6 +855,17 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                         )}
                       </div>
                     </td>
+                    {/* ✅ NOUVELLE COLONNE : Créée le */}
+                    <td className="py-4 px-5 text-sm text-on-surface-variant">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-on-surface">
+                          {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                        </span>
+                        <span className="text-xs text-on-surface-variant">
+                          {new Date(order.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </td>
                     <td className="py-4 px-5">
                       <StatusBadge status={STATUS_TO_BADGE[order.status] || 'inProgress'} label={STATUS_LABELS[order.status] || order.status} />
                     </td>
@@ -968,43 +881,33 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                           label="WhatsApp"
                           variant="compact"
                         />
-                        <button
-                          onClick={() => setViewOrder(order)}
+                        <button onClick={() => setViewOrder(order)}
                           className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-primary hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
-                          title="Voir details"
-                        >
+                          title="Voir details">
                           <Eye size={15} />
                         </button>
-                        <button
-                          onClick={() => printTicket(order).catch(console.error)}
+                        <button onClick={() => printTicket(order).catch(console.error)}
                           className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
-                          title="Imprimer ticket"
-                        >
+                          title="Imprimer ticket">
                           <Printer size={15} />
                         </button>
                         {order.status === 'pret' && (
-                          <button
-                            onClick={() => sendReadyNotification(order)}
+                          <button onClick={() => sendReadyNotification(order)}
                             className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
-                            title="Notifier client"
-                          >
+                            title="Notifier client">
                             <Bell size={15} />
                           </button>
                         )}
                         {order.remaining > 0 && (
-                          <button
-                            onClick={() => { setShowPaymentModal(order); setPaymentAmount(order.remaining) }}
+                          <button onClick={() => { setShowPaymentModal(order); setPaymentAmount(order.remaining) }}
                             className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-amber-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
-                            title="Encaisser paiement"
-                          >
+                            title="Encaisser paiement">
                             <CreditCard size={15} />
                           </button>
                         )}
-                        <button
-                          onClick={() => { if (confirm('Supprimer cette commande ?')) deleteOrder(order.id) }}
+                        <button onClick={() => { if (confirm('Supprimer cette commande ?')) deleteOrder(order.id) }}
                           className="w-8 h-8 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-white hover:bg-red-500 transition-all flex items-center justify-center"
-                          title="Supprimer"
-                        >
+                          title="Supprimer">
                           <Trash2 size={15} />
                         </button>
                       </div>
@@ -1021,10 +924,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
             <Package size={28} className="text-on-surface-variant" />
           </div>
           <p className="text-on-surface-variant mb-4">Aucune commande trouvee</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="btn-modern-primary mx-auto"
-          >
+          <button onClick={() => setShowForm(true)} className="btn-modern-primary mx-auto">
             <Plus size={18} strokeWidth={2.5} />
             Créer une commande
           </button>
@@ -1044,10 +944,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
             Utilisez le pistolet code-barres ou la camera mobile pour passer les commandes a l'etat suivant.
           </p>
         </div>
-        <a
-          href="/atelier"
-          className="btn-modern-primary self-stretch sm:self-auto justify-center"
-        >
+        <a href="/atelier" className="btn-modern-primary self-stretch sm:self-auto justify-center">
           <Camera size={16} strokeWidth={2.5} />
           Demarrer le scan
         </a>
@@ -1113,11 +1010,9 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
             <div className="grid grid-cols-1">
               <Field label="Client" required>
                 <div className="relative">
-                  <Input
-                    placeholder="Rechercher par nom ou téléphone..."
+                  <Input placeholder="Rechercher par nom ou téléphone..."
                     value={clientSearch}
-                    onChange={e => { setClientSearch(e.target.value); setForm({ ...form, client_id: '' }) }}
-                  />
+                    onChange={e => { setClientSearch(e.target.value); setForm({ ...form, client_id: '' }) }} />
                   {clientSearch && !form.client_id && (
                     <div className="absolute z-10 left-0 right-0 top-full mt-1 bg-white border border-outline-variant/40 rounded-xl shadow-lg overflow-hidden">
                       {filteredClients.length > 0 ? (
@@ -1289,13 +1184,11 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                 </Select>
               </Field>
               <Field label="Acompte reçu (XOF)">
-                <Input
-                  type="number" min="0"
+                <Input type="number" min="0"
                   value={form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit}
                   onChange={e => setForm({ ...form, deposit: parseFloat(e.target.value) || 0 })}
                   disabled={isDepositDisabled}
-                  className={isDepositDisabled ? 'bg-surface-container text-on-surface-variant cursor-not-allowed' : ''}
-                />
+                  className={isDepositDisabled ? 'bg-surface-container text-on-surface-variant cursor-not-allowed' : ''} />
               </Field>
             </div>
           </div>
@@ -1319,7 +1212,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
               {[
                 { label: 'Client', value: `${viewOrder.client?.first_name} ${viewOrder.client?.last_name}` },
                 { label: 'Téléphone', value: viewOrder.client?.phone || '-' },
-                { label: 'Recu le', value: new Date(viewOrder.received_at).toLocaleDateString('fr-FR') },
+                { label: 'Créée le', value: new Date(viewOrder.created_at).toLocaleString('fr-FR') },
                 { label: 'Date limite', value: viewOrder.expected_at ? new Date(viewOrder.expected_at).toLocaleDateString('fr-FR') : '-' },
                 { label: 'Paiement', value: viewOrder.payment_method },
               ].map((item, i) => (
@@ -1337,8 +1230,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                   const isActive = viewOrder.status === s.key
                   const colors = STATUS_COLORS[s.key]
                   return (
-                    <button
-                      key={s.key}
+                    <button key={s.key}
                       onClick={async () => {
                         try {
                           await updateOrder(viewOrder.id, {
@@ -1356,8 +1248,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                         isActive
                           ? colors.bg + ' border-current ' + colors.text + ' shadow-md'
                           : 'bg-white border-outline-variant/30 text-on-surface-variant hover:border-primary/40'
-                      }`}
-                    >
+                      }`}>
                       <span className={`material-symbols-outlined text-2xl ${isActive ? colors.text : ''}`}>
                         {s.icon}
                       </span>
