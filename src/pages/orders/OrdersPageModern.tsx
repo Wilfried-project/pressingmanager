@@ -339,7 +339,9 @@ export const OrdersPageModern: React.FC = () => {
         subtotal, discount, total,
         deposit: depositFinal, remaining: remainingFinal,
         payment_method: form.payment_method, payment_status: form.payment_status,
-        notes: form.notes, created_by: user?.full_name || 'Admin'
+        notes: form.notes,
+        created_at: now,   // ⭐ AJOUT : pour que la date soit enregistrée
+        created_by: user?.full_name || 'Admin'
       }, clothesFull.map(c => ({
         id: c.id, type: c.type, color: c.color, brand: c.brand,
         size: c.size, material: c.material, quantity: c.quantity,
@@ -855,7 +857,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                         )}
                       </div>
                     </td>
-                    {/* ✅ NOUVELLE COLONNE : Créée le */}
+                    {/* ✅ COLONNE : Créée le */}
                     <td className="py-4 px-5 text-sm text-on-surface-variant">
                       <div className="flex flex-col">
                         <span className="font-medium text-on-surface">
