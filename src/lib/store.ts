@@ -59,7 +59,7 @@ interface OrderStore {
   loadOrders: () => Promise<void>
   addOrder: (o: Order) => void
   updateOrder: (id: string, d: Partial<Order>) => Promise<void>
-  deleteOrder: (id: string) => void
+  deleteOrder: (id: string) => Promise<void>
   getOrderById: (id: string) => Order | undefined
   getTodayOrders: () => Order[]; getOrdersByStatus: (s: Order['status']) => Order[]
   getLateOrders: () => Order[]; getTodayRevenue: () => number; getMonthRevenue: () => number
@@ -114,7 +114,35 @@ export const useOrderStore = create<OrderStore>()(persist((set, get) => ({
     }
   },
 
-  deleteOrder: (id) => set(s => ({ orders: s.orders.filter(o => o.id !== id) })),
+  // ✅ CORRIGÉ : supprime du store local ET Supabase
+  deleteOrder: async (id) => {
+    // 1. Mise à jour locale immédiate (l'interface réagit vite)
+    set(s => ({ orders: s.orders.filter(o => o.id !== id) }))
+
+    // 2. Suppression Supabase (persistance)
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', id)
+
+      if (error) {
+        console.error('Erreur deleteOrder Supabase:', error)
+        throw error
+      }
+    } catch (err) {
+      console.error('Erreur deleteOrder:', err)
+      // Rollback : recharger depuis Supabase pour retrouver l'état réel
+      try {
+        const data = await ordersService.getAll()
+        set({ orders: data as Order[] })
+      } catch (reloadErr) {
+        console.error('Erreur rollback deleteOrder:', reloadErr)
+      }
+      throw err
+    }
+  },
+
   getOrderById: (id) => get().orders.find(o => o.id === id),
   getTodayOrders: () => { const t = new Date().toISOString().split('T')[0]; return get().orders.filter(o => o.created_at.startsWith(t)) },
   getOrdersByStatus: (status) => get().orders.filter(o => o.status === status),

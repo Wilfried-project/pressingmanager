@@ -340,7 +340,7 @@ export const OrdersPageModern: React.FC = () => {
         deposit: depositFinal, remaining: remainingFinal,
         payment_method: form.payment_method, payment_status: form.payment_status,
         notes: form.notes,
-        created_at: now,   // ⭐ AJOUT : pour que la date soit enregistrée
+        created_at: now,
         created_by: user?.full_name || 'Admin'
       }, clothesFull.map(c => ({
         id: c.id, type: c.type, color: c.color, brand: c.brand,
@@ -907,7 +907,16 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                             <CreditCard size={15} />
                           </button>
                         )}
-                        <button onClick={() => { if (confirm('Supprimer cette commande ?')) deleteOrder(order.id) }}
+                        {/* ✅ CORRIGÉ : suppression async + Supabase */}
+                        <button onClick={async () => {
+                          if (!confirm('Supprimer cette commande ?')) return
+                          try {
+                            await deleteOrder(order.id)
+                            toast.success('Commande supprimée')
+                          } catch (err) {
+                            toast.error('Erreur', { description: 'Impossible de supprimer la commande' })
+                          }
+                        }}
                           className="w-8 h-8 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-white hover:bg-red-500 transition-all flex items-center justify-center"
                           title="Supprimer">
                           <Trash2 size={15} />
