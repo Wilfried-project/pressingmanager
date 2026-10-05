@@ -233,7 +233,6 @@ export const OrdersPageModern: React.FC = () => {
   const { addEvent, events } = useAgendaStore()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
-  // ⭐ NOUVEAU : période et pagination
   const [period, setPeriod] = useState<PeriodKey>('today')
   const [page, setPage] = useState(1)
 
@@ -261,7 +260,6 @@ export const OrdersPageModern: React.FC = () => {
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetail[]>([])
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  // ✅ Compteurs par période
   const periodCounts = useMemo(() => {
     const counts: Record<PeriodKey, number> = { today: 0, yesterday: 0, week: 0, month: 0, all: 0 }
     orders.forEach(o => {
@@ -273,12 +271,9 @@ export const OrdersPageModern: React.FC = () => {
     return counts
   }, [orders])
 
-  // ✅ Filtrage combiné : période + recherche + statut
   const filteredAll = useMemo(() => {
     return orders.filter(o => {
-      // Filtre période
       if (o.created_at && !isInPeriod(o.created_at, period)) return false
-      // Filtre recherche
       const q = search.toLowerCase().trim()
       if (q) {
         const matchTicket = o.ticket_number.toLowerCase().includes(q)
@@ -286,7 +281,6 @@ export const OrdersPageModern: React.FC = () => {
         const matchPhone = (o.client?.phone || '').includes(q)
         if (!matchTicket && !matchClient && !matchPhone) return false
       }
-      // Filtre statut
       if (filterStatus) {
         if (filterStatus === 'impaye') return o.remaining > 0 && o.status !== 'annule'
         return o.status === filterStatus
@@ -295,14 +289,12 @@ export const OrdersPageModern: React.FC = () => {
     }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }, [orders, period, search, filterStatus])
 
-  // ✅ Pagination
   const totalPages = Math.max(1, Math.ceil(filteredAll.length / PAGE_SIZE))
   const filtered = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE
     return filteredAll.slice(start, start + PAGE_SIZE)
   }, [filteredAll, page])
 
-  // ✅ Reset page quand les filtres changent
   useEffect(() => {
     setPage(1)
   }, [period, search, filterStatus])
@@ -1066,25 +1058,65 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
 
           {/* ===== PAGINATION ===== */}
           {totalPages > 1 && (
-            <div className="card-modern flex items-center justify-between gap-4">
-              <div className="text-sm text-on-surface-variant">
-                Page <strong className="text-on-surface">{page}</strong> sur <strong className="text-on-surface">{totalPages}</strong> · <strong className="text-on-surface">{filteredAll.length}</strong> commande(s)
+            <div className="card-modern flex flex-col gap-4">
+              {/* Ligne 1 : Info détaillée */}
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="text-sm text-on-surface-variant">
+                  Page <strong className="text-on-surface">{page}</strong> sur <strong className="text-on-surface">{totalPages}</strong>
+                  <span className="mx-2">·</span>
+                  Affichage <strong className="text-on-surface">{((page - 1) * PAGE_SIZE) + 1}</strong>-<strong className="text-on-surface">{Math.min(page * PAGE_SIZE, filteredAll.length)}</strong> sur <strong className="text-primary">{filteredAll.length}</strong> commande(s)
+                </div>
+                <div className="text-xs text-on-surface-variant">
+                  <strong className="text-on-surface">{PAGE_SIZE}</strong> par page
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+
+              {/* Ligne 2 : Boutons pagination */}
+              <div className="flex items-center justify-center gap-1.5 flex-wrap">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-sm font-semibold text-on-surface disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-sm font-semibold text-on-surface disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
                   <ChevronLeft size={16} />
-                  Précédent
+                  <span className="hidden sm:inline">Précédent</span>
                 </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => {
+                    if (p === 1 || p === totalPages) return true
+                    if (Math.abs(p - page) <= 1) return true
+                    return false
+                  })
+                  .map((p, idx, arr) => {
+                    const prevP = arr[idx - 1]
+                    const showEllipsis = prevP && p - prevP > 1
+                    return (
+                      <React.Fragment key={p}>
+                        {showEllipsis && (
+                          <span className="px-2 text-on-surface-variant font-bold">…</span>
+                        )}
+                        <button
+                          onClick={() => setPage(p)}
+                          className={`min-w-[36px] h-9 px-2 rounded-xl text-sm font-bold transition-all ${
+                            page === p
+                              ? 'bg-primary text-white shadow-sm'
+                              : 'bg-surface-container-low hover:bg-surface-container text-on-surface'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      </React.Fragment>
+                    )
+                  })
+                }
+
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-sm font-semibold text-on-surface disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-sm font-semibold text-on-surface disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
-                  Suivant
+                  <span className="hidden sm:inline">Suivant</span>
                   <ChevronRight size={16} />
                 </button>
               </div>
