@@ -12,7 +12,7 @@ import {
 import {
   Plus, Eye, Trash2, ChevronRight, ChevronLeft, Printer, Bell, Camera, X, CreditCard,
   Search, Filter, Clock, Package, CheckCircle2, Truck, XCircle, ArrowRight, AlertCircle,
-  Calendar, CalendarDays, CalendarRange, Inbox
+  Calendar, CalendarDays, CalendarRange, Inbox, RotateCcw
 } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
 import { WhatsAppButton } from '../../components/ui/WhatsAppButton'
@@ -228,7 +228,7 @@ export const OrdersPageModern: React.FC = () => {
   const { addNotification } = useNotificationStore()
   const { addLoyaltyPoints } = useCS()
   const { user } = useAuthStore()
-  const { addTransaction } = useTransactionStore()
+  const { transactions, addTransaction } = useTransactionStore()
   const { config } = useShopConfig()
   const { addEvent, events } = useAgendaStore()
   const [search, setSearch] = useState('')
@@ -242,6 +242,7 @@ export const OrdersPageModern: React.FC = () => {
   const [paymentAmount, setPaymentAmount] = useState(0)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('especes')
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null)
+  const [cancelPaymentTarget, setCancelPaymentTarget] = useState<{ order: Order; amount: number } | null>(null)
 
   const [clientSearch, setClientSearch] = useState('')
   const [showNewClientForm, setShowNewClientForm] = useState(false)
@@ -515,6 +516,71 @@ export const OrdersPageModern: React.FC = () => {
     } finally {
       setOrderToDelete(null)
     }
+  }
+
+  const findLastPaymentAmount = async (order: Order): Promise<number | null> => {
+    const tag = `#${order.ticket_number}`
+    try {
+      const cashTxs = await cashService.getTransactions()
+      const match = (cashTxs as any[]).find((t: any) => t.type === 'entree' && typeof t.reason === 'string' && t.reason.includes(tag))
+      if (match && Number(match.amount) > 0) return Number(match.amount)
+    } catch (err) { console.error('Recherche transaction caisse:', err) }
+    const related = transactions.filter(t => t.type === 'recette' && t.description.includes(tag))
+    const last = related[related.length - 1]
+    if (last && last.amount > 0) return last.amount
+    return null
+  }
+
+  const openCancelPayment = async (order: Order) => {
+    const amount = await findLastPaymentAmount(order)
+    if (amount == null) {
+      toast.error('Aucun paiement', { description: 'Aucune transaction d\u2019encaissement trouvee pour cette commande' })
+      return
+    }
+    setCancelPaymentTarget({ order, amount: Math.min(amount, order.deposit) })
+  }
+
+  const confirmCancelPayment = async () => {
+    if (!cancelPaymentTarget) return
+    const { order, amount } = cancelPaymentTarget
+    const newDeposit = Math.max(0, order.deposit - amount)
+    const newRemaining = Math.max(0, order.total - newDeposit)
+    const newStatus: PaymentStatus = newDeposit === 0 ? 'non_paye' : 'acompte'
+
+    try {
+      await updateOrder(order.id, { deposit: newDeposit, remaining: newRemaining, payment_status: newStatus })
+    } catch (err) {
+      toast.error('Erreur', { description: 'Impossible d\u2019annuler le paiement' })
+      return
+    }
+
+    ;(async () => {
+      try {
+        const allSessions = await cashService.getSessions()
+        const openSession = allSessions.find((s: any) => s.status === 'open')
+        if (openSession) {
+          await cashService.addTransaction({
+            id: crypto.randomUUID(), session_id: openSession.id,
+            type: 'sortie', amount,
+            reason: `Annulation paiement commande #${order.ticket_number} - ${order.client?.first_name} ${order.client?.last_name}`,
+            created_by: user?.full_name || 'Admin',
+            created_at: new Date().toISOString()
+          })
+        }
+      } catch (err) { console.error('Erreur enregistrement caisse:', err) }
+    })()
+
+    addTransaction({
+      id: crypto.randomUUID(), agency_id: 'default',
+      type: 'depense', category: 'Remboursement', amount,
+      description: `Annulation paiement commande #${order.ticket_number} - ${order.client?.first_name} ${order.client?.last_name}`,
+      date: new Date().toISOString().split('T')[0],
+      created_by: user?.full_name || 'Admin'
+    })
+
+    setViewOrder({ ...order, deposit: newDeposit, remaining: newRemaining, payment_status: newStatus })
+    setCancelPaymentTarget(null)
+    toast.success('Paiement annule', { description: `${amount.toLocaleString('fr-FR')} XOF · Nouvel encaisse: ${newDeposit.toLocaleString('fr-FR')} XOF` })
   }
 
   const handlePaymentOnPickup = async () => {
@@ -1534,6 +1600,12 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                   Encaisser paiement
                 </Button>
               )}
+              {viewOrder.deposit > 0 && (
+                <Button icon={<RotateCcw size={16} />} variant="secondary" className="flex-1 border !border-orange-300 !text-orange-600 hover:!bg-orange-50"
+                  onClick={() => openCancelPayment(viewOrder)}>
+                  Annuler dernier paiement
+                </Button>
+              )}
               {viewOrder.status === 'pret' && <Button icon={<Bell size={16} />} variant="success" className="flex-1" onClick={() => sendReadyNotification(viewOrder)}>Notifier client</Button>}
             </div>
           </div>
@@ -1578,6 +1650,42 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
               <Button variant="secondary" className="flex-1" onClick={() => setOrderToDelete(null)}>
                 Annuler
               </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {cancelPaymentTarget && (
+        <Modal open={!!cancelPaymentTarget} onClose={() => setCancelPaymentTarget(null)} title="Annuler le dernier paiement" size="sm">
+          <div className="space-y-4">
+            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 space-y-2">
+              <div className="flex justify-between text-sm gap-4">
+                <span className="text-on-surface-variant">Ticket</span>
+                <span className="font-bold">#{cancelPaymentTarget.order.ticket_number}</span>
+              </div>
+              <div className="flex justify-between text-sm gap-4">
+                <span className="text-on-surface-variant">Montant a annuler</span>
+                <span className="font-bold text-orange-700">{cancelPaymentTarget.amount.toLocaleString('fr-FR')} XOF</span>
+              </div>
+              <div className="flex justify-between text-sm gap-4">
+                <span className="text-on-surface-variant">Nouvel encaisse</span>
+                <span className="font-bold text-on-surface">{Math.max(0, cancelPaymentTarget.order.deposit - cancelPaymentTarget.amount).toLocaleString('fr-FR')} XOF</span>
+              </div>
+            </div>
+            <p className="text-sm text-on-surface-variant">
+              Une transaction de <strong className="text-on-surface">sortie</strong> sera creee en caisse pour compenser. L&apos;historique existant est conserve.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="secondary" className="flex-1" onClick={() => setCancelPaymentTarget(null)}>
+                Garder le paiement
+              </Button>
+              <button
+                onClick={confirmCancelPayment}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-all"
+              >
+                <RotateCcw size={16} />
+                Confirmer
+              </button>
             </div>
           </div>
         </Modal>
