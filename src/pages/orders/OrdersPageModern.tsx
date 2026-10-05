@@ -10,8 +10,9 @@ import {
   getOrderStatusColor, getPriorityColor, getClothStatusColor
 } from '../../components/ui'
 import {
-  Plus, Eye, Trash2, ChevronRight, Printer, Bell, Camera, X, CreditCard,
-  Search, Filter, Clock, Package, CheckCircle2, Truck, XCircle, ArrowRight, AlertCircle
+  Plus, Eye, Trash2, ChevronRight, ChevronLeft, Printer, Bell, Camera, X, CreditCard,
+  Search, Filter, Clock, Package, CheckCircle2, Truck, XCircle, ArrowRight, AlertCircle,
+  Calendar, CalendarDays, CalendarRange, Inbox
 } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
 import { WhatsAppButton } from '../../components/ui/WhatsAppButton'
@@ -84,6 +85,51 @@ function getRibbon(order: Order): RibbonInfo {
   if (order.payment_status === 'acompte') return { className: 'partial', label: 'ACOMPTE' }
   return { className: 'unpaid', label: 'NON PAYÉ' }
 }
+
+// ============================================
+// ⭐ PÉRIODES (onglets)
+// ============================================
+type PeriodKey = 'today' | 'yesterday' | 'week' | 'month' | 'all'
+
+const PERIODS: { key: PeriodKey; label: string; icon: any }[] = [
+  { key: 'today',     label: "Aujourd'hui", icon: Calendar },
+  { key: 'yesterday', label: 'Hier',        icon: CalendarDays },
+  { key: 'week',      label: '7 jours',     icon: CalendarRange },
+  { key: 'month',     label: '30 jours',    icon: CalendarRange },
+  { key: 'all',       label: 'Tout',        icon: Inbox },
+]
+
+function isInPeriod(dateStr: string, period: PeriodKey): boolean {
+  if (period === 'all') return true
+  const date = new Date(dateStr)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const orderDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+  if (period === 'today') return orderDay.getTime() === today.getTime()
+
+  if (period === 'yesterday') {
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    return orderDay.getTime() === yesterday.getTime()
+  }
+
+  if (period === 'week') {
+    const weekAgo = new Date(today)
+    weekAgo.setDate(weekAgo.getDate() - 6)
+    return orderDay >= weekAgo && orderDay <= today
+  }
+
+  if (period === 'month') {
+    const monthAgo = new Date(today)
+    monthAgo.setDate(monthAgo.getDate() - 29)
+    return orderDay >= monthAgo && orderDay <= today
+  }
+
+  return true
+}
+
+const PAGE_SIZE = 50
 
 export const OrdersPageModern: React.FC = () => {
   const { orders, addOrder, updateOrder, deleteOrder, loadOrders, loading: ordersLoading } = useOrderStore()
@@ -187,6 +233,10 @@ export const OrdersPageModern: React.FC = () => {
   const { addEvent, events } = useAgendaStore()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+  // ⭐ NOUVEAU : période et pagination
+  const [period, setPeriod] = useState<PeriodKey>('today')
+  const [page, setPage] = useState(1)
+
   const [showForm, setShowForm] = useState(false)
   const [viewOrder, setViewOrder] = useState<Order | null>(null)
   const [showPaymentModal, setShowPaymentModal] = useState<Order | null>(null)
@@ -211,14 +261,51 @@ export const OrdersPageModern: React.FC = () => {
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetail[]>([])
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const filtered = useMemo(() => orders.filter(o => {
-    const ms = o.ticket_number.toLowerCase().includes(search.toLowerCase()) ||
-      `${o.client?.first_name} ${o.client?.last_name}`.toLowerCase().includes(search.toLowerCase())
-    if (!ms) return false
-    if (!filterStatus) return true
-    if (filterStatus === 'impaye') return o.remaining > 0 && o.status !== 'annule'
-    return o.status === filterStatus
-  }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [orders, search, filterStatus])
+  // ✅ Compteurs par période
+  const periodCounts = useMemo(() => {
+    const counts: Record<PeriodKey, number> = { today: 0, yesterday: 0, week: 0, month: 0, all: 0 }
+    orders.forEach(o => {
+      if (!o.created_at) return
+      ;(['today', 'yesterday', 'week', 'month', 'all'] as PeriodKey[]).forEach(p => {
+        if (isInPeriod(o.created_at, p)) counts[p]++
+      })
+    })
+    return counts
+  }, [orders])
+
+  // ✅ Filtrage combiné : période + recherche + statut
+  const filteredAll = useMemo(() => {
+    return orders.filter(o => {
+      // Filtre période
+      if (o.created_at && !isInPeriod(o.created_at, period)) return false
+      // Filtre recherche
+      const q = search.toLowerCase().trim()
+      if (q) {
+        const matchTicket = o.ticket_number.toLowerCase().includes(q)
+        const matchClient = `${o.client?.first_name || ''} ${o.client?.last_name || ''}`.toLowerCase().includes(q)
+        const matchPhone = (o.client?.phone || '').includes(q)
+        if (!matchTicket && !matchClient && !matchPhone) return false
+      }
+      // Filtre statut
+      if (filterStatus) {
+        if (filterStatus === 'impaye') return o.remaining > 0 && o.status !== 'annule'
+        return o.status === filterStatus
+      }
+      return true
+    }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  }, [orders, period, search, filterStatus])
+
+  // ✅ Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredAll.length / PAGE_SIZE))
+  const filtered = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE
+    return filteredAll.slice(start, start + PAGE_SIZE)
+  }, [filteredAll, page])
+
+  // ✅ Reset page quand les filtres changent
+  useEffect(() => {
+    setPage(1)
+  }, [period, search, filterStatus])
 
   const filteredClients = useMemo(() =>
     clients.filter(c => !c.is_blacklisted && (
@@ -742,6 +829,36 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
         </button>
       </div>
 
+      {/* ===== ONGLETS PÉRIODE ===== */}
+      <div className="card-modern !p-2">
+        <div className="flex items-center gap-1 overflow-x-auto">
+          {PERIODS.map(p => {
+            const Icon = p.icon
+            const count = periodCounts[p.key]
+            const isActive = period === p.key
+            return (
+              <button
+                key={p.key}
+                onClick={() => setPeriod(p.key)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
+                  isActive
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-on-surface-variant hover:bg-surface-container-low'
+                }`}
+              >
+                <Icon size={15} />
+                <span>{p.label}</span>
+                <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-bold ${
+                  isActive ? 'bg-white/20 text-white' : 'bg-surface-container text-on-surface-variant'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* ===== KPI STATUTS ===== */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
@@ -797,147 +914,197 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
         </div>
       </div>
 
+      {/* ===== INFO RÉSULTATS ===== */}
+      {(search || filterStatus || period !== 'all') && (
+        <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+          <span>
+            <strong className="text-on-surface">{filteredAll.length}</strong> résultat(s)
+            {period !== 'all' && <> dans <strong className="text-primary">{PERIODS.find(p => p.key === period)?.label}</strong></>}
+            {filterStatus && <> · filtre <strong className="text-primary">{
+              filterStatus === 'impaye' ? 'Impayés' :
+              filterStatus === 'en_cours' ? 'En cours' :
+              filterStatus === 'pret' ? 'Prêts' :
+              filterStatus === 'livre' ? 'Livrés' : 'Annulés'
+            }</strong></>}
+            {search && <> · recherche "<strong className="text-primary">{search}</strong>"</>}
+          </span>
+        </div>
+      )}
+
       {/* ===== TABLEAU ===== */}
       {filtered.length > 0 ? (
-        <div className="card-modern !p-0 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-surface-container-low border-b border-outline-variant/30">
-                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Ticket</th>
-                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Client</th>
-                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Articles</th>
-                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Total / Paiement</th>
-                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Créée le</th>
-                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Statut</th>
-                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Date limite</th>
-                  <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(order => (
-                  <tr key={order.id} className="hover:bg-primary-fixed/20 transition-colors border-b border-outline-variant/20 last:border-0">
-                    <td className="py-4 px-5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-primary-fixed text-primary flex items-center justify-center shrink-0">
-                          <Package size={14} strokeWidth={2.5} />
-                        </div>
-                        <span className="font-bold text-primary text-sm">#{order.ticket_number}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-5">
-                      <div className="flex items-center gap-3">
-                        <Avatar name={`${order.client?.first_name || '?'} ${order.client?.last_name || ''}`} size="sm" />
-                        <div>
-                          <div className="font-semibold text-sm text-on-surface">
-                            {order.client?.first_name} {order.client?.last_name}
-                          </div>
-                          <div className="text-xs text-on-surface-variant">{order.client?.phone}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-5">
-                      <span className="badge-modern bg-surface-container text-on-surface-variant">
-                        <Package size={12} />
-                        {order.clothes.length} article(s)
-                      </span>
-                    </td>
-                    <td className="py-4 px-5">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-on-surface text-sm">
-                            {order.total.toLocaleString('fr-FR')} XOF
-                          </span>
-                          <StatusBadge status={PAYMENT_TO_BADGE[order.payment_status] || 'unpaid'} />
-                        </div>
-                        {order.remaining > 0 && (
-                          <span className="text-xs text-red-600 font-medium">
-                            Reste: {order.remaining.toLocaleString('fr-FR')} XOF
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    {/* ✅ COLONNE : Créée le */}
-                    <td className="py-4 px-5 text-sm text-on-surface-variant">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-on-surface">
-                          {new Date(order.created_at).toLocaleDateString('fr-FR')}
-                        </span>
-                        <span className="text-xs text-on-surface-variant">
-                          {new Date(order.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-5">
-                      <StatusBadge status={STATUS_TO_BADGE[order.status] || 'inProgress'} label={STATUS_LABELS[order.status] || order.status} />
-                    </td>
-                    <td className="py-4 px-5 text-sm text-on-surface-variant">
-                      {order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : '-'}
-                    </td>
-                    <td className="py-4 px-5">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <WhatsAppButton
-                          phone={order.client?.phone || ''}
-                          clientName={`${order.client?.first_name || ''} ${order.client?.last_name || ''}`.trim()}
-                          defaultMessage={getWhatsAppMessage(order)}
-                          label="WhatsApp"
-                          variant="compact"
-                        />
-                        <button onClick={() => setViewOrder(order)}
-                          className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-primary hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
-                          title="Voir details">
-                          <Eye size={15} />
-                        </button>
-                        <button onClick={() => printTicket(order).catch(console.error)}
-                          className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
-                          title="Imprimer ticket">
-                          <Printer size={15} />
-                        </button>
-                        {order.status === 'pret' && (
-                          <button onClick={() => sendReadyNotification(order)}
-                            className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
-                            title="Notifier client">
-                            <Bell size={15} />
-                          </button>
-                        )}
-                        {order.remaining > 0 && (
-                          <button onClick={() => { setShowPaymentModal(order); setPaymentAmount(order.remaining) }}
-                            className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-amber-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
-                            title="Encaisser paiement">
-                            <CreditCard size={15} />
-                          </button>
-                        )}
-                        {/* ✅ CORRIGÉ : suppression async + Supabase */}
-                        <button onClick={async () => {
-                          if (!confirm('Supprimer cette commande ?')) return
-                          try {
-                            await deleteOrder(order.id)
-                            toast.success('Commande supprimée')
-                          } catch (err) {
-                            toast.error('Erreur', { description: 'Impossible de supprimer la commande' })
-                          }
-                        }}
-                          className="w-8 h-8 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-white hover:bg-red-500 transition-all flex items-center justify-center"
-                          title="Supprimer">
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
+        <>
+          <div className="card-modern !p-0 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-surface-container-low border-b border-outline-variant/30">
+                    <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Ticket</th>
+                    <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Client</th>
+                    <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Articles</th>
+                    <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Total / Paiement</th>
+                    <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Créée le</th>
+                    <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Statut</th>
+                    <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Date limite</th>
+                    <th className="py-3.5 px-5 text-xs font-bold text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map(order => (
+                    <tr key={order.id} className="hover:bg-primary-fixed/20 transition-colors border-b border-outline-variant/20 last:border-0">
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-primary-fixed text-primary flex items-center justify-center shrink-0">
+                            <Package size={14} strokeWidth={2.5} />
+                          </div>
+                          <span className="font-bold text-primary text-sm">#{order.ticket_number}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-3">
+                          <Avatar name={`${order.client?.first_name || '?'} ${order.client?.last_name || ''}`} size="sm" />
+                          <div>
+                            <div className="font-semibold text-sm text-on-surface">
+                              {order.client?.first_name} {order.client?.last_name}
+                            </div>
+                            <div className="text-xs text-on-surface-variant">{order.client?.phone}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5">
+                        <span className="badge-modern bg-surface-container text-on-surface-variant">
+                          <Package size={12} />
+                          {order.clothes.length} article(s)
+                        </span>
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-on-surface text-sm">
+                              {order.total.toLocaleString('fr-FR')} XOF
+                            </span>
+                            <StatusBadge status={PAYMENT_TO_BADGE[order.payment_status] || 'unpaid'} />
+                          </div>
+                          {order.remaining > 0 && (
+                            <span className="text-xs text-red-600 font-medium">
+                              Reste: {order.remaining.toLocaleString('fr-FR')} XOF
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      {/* ✅ COLONNE : Créée le */}
+                      <td className="py-4 px-5 text-sm text-on-surface-variant">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-on-surface">
+                            {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                          </span>
+                          <span className="text-xs text-on-surface-variant">
+                            {new Date(order.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5">
+                        <StatusBadge status={STATUS_TO_BADGE[order.status] || 'inProgress'} label={STATUS_LABELS[order.status] || order.status} />
+                      </td>
+                      <td className="py-4 px-5 text-sm text-on-surface-variant">
+                        {order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : '-'}
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <WhatsAppButton
+                            phone={order.client?.phone || ''}
+                            clientName={`${order.client?.first_name || ''} ${order.client?.last_name || ''}`.trim()}
+                            defaultMessage={getWhatsAppMessage(order)}
+                            label="WhatsApp"
+                            variant="compact"
+                          />
+                          <button onClick={() => setViewOrder(order)}
+                            className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-primary hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
+                            title="Voir details">
+                            <Eye size={15} />
+                          </button>
+                          <button onClick={() => printTicket(order).catch(console.error)}
+                            className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
+                            title="Imprimer ticket">
+                            <Printer size={15} />
+                          </button>
+                          {order.status === 'pret' && (
+                            <button onClick={() => sendReadyNotification(order)}
+                              className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
+                              title="Notifier client">
+                              <Bell size={15} />
+                            </button>
+                          )}
+                          {order.remaining > 0 && (
+                            <button onClick={() => { setShowPaymentModal(order); setPaymentAmount(order.remaining) }}
+                              className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-amber-500 hover:text-white transition-all flex items-center justify-center text-on-surface-variant"
+                              title="Encaisser paiement">
+                              <CreditCard size={15} />
+                            </button>
+                          )}
+                          <button onClick={async () => {
+                            if (!confirm('Supprimer cette commande ?')) return
+                            try {
+                              await deleteOrder(order.id)
+                              toast.success('Commande supprimée')
+                            } catch (err) {
+                              toast.error('Erreur', { description: 'Impossible de supprimer la commande' })
+                            }
+                          }}
+                            className="w-8 h-8 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-white hover:bg-red-500 transition-all flex items-center justify-center"
+                            title="Supprimer">
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* ===== PAGINATION ===== */}
+          {totalPages > 1 && (
+            <div className="card-modern flex items-center justify-between gap-4">
+              <div className="text-sm text-on-surface-variant">
+                Page <strong className="text-on-surface">{page}</strong> sur <strong className="text-on-surface">{totalPages}</strong> · <strong className="text-on-surface">{filteredAll.length}</strong> commande(s)
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-sm font-semibold text-on-surface disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  <ChevronLeft size={16} />
+                  Précédent
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-sm font-semibold text-on-surface disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  Suivant
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         <div className="card-modern text-center py-16">
           <div className="w-16 h-16 rounded-full bg-surface-container mx-auto flex items-center justify-center mb-4">
             <Package size={28} className="text-on-surface-variant" />
           </div>
-          <p className="text-on-surface-variant mb-4">Aucune commande trouvee</p>
-          <button onClick={() => setShowForm(true)} className="btn-modern-primary mx-auto">
-            <Plus size={18} strokeWidth={2.5} />
-            Créer une commande
+          <p className="text-on-surface-variant mb-2">Aucune commande trouvée</p>
+          <p className="text-xs text-on-surface-variant mb-4">
+            {period !== 'all' && <> dans <strong>{PERIODS.find(p => p.key === period)?.label}</strong></>}
+            {search && <> pour "<strong>{search}</strong>"</>}
+            {filterStatus && <> · filtre <strong>{filterStatus}</strong></>}
+          </p>
+          <button onClick={() => { setPeriod('all'); setSearch(''); setFilterStatus('') }}
+            className="text-primary hover:underline text-sm font-semibold">
+            Voir toutes les commandes
           </button>
         </div>
       )}
