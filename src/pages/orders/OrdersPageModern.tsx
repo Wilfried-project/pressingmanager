@@ -414,6 +414,11 @@ export const OrdersPageModern: React.FC = () => {
     }
     addOrder(order)
 
+    sendNotification('Nouvelle commande', {
+      body: `#${ticket} - ${client.first_name} ${client.last_name} - ${total.toLocaleString('fr-FR')} XOF`,
+      url: '/orders'
+    })
+
     try {
       await ordersService.create({
         id: order.id, ticket_number: ticket, client_id: client.id,
