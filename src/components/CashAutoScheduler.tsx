@@ -2,8 +2,11 @@
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { cashService } from '../lib/db'
+import { useNotifications } from '../hooks/useNotifications'
 
 export const CashAutoScheduler: React.FC = () => {
+  const { sendNotification } = useNotifications()
+
   useEffect(() => {
     const checkAutoSchedule = async () => {
       try {
@@ -35,6 +38,32 @@ export const CashAutoScheduler: React.FC = () => {
 
         const allSessions = await cashService.getSessions()
         const currentSession = allSessions.find((s: any) => s.status === 'open')
+
+        // Rappel 18h : caisse encore ouverte (anti-spam : une fois par jour)
+        const REMIND_HOUR = 18
+        if (currentSession && now.getHours() >= REMIND_HOUR && nowMinutes < closeMinutes) {
+          const todayKey = `pm-cash-notif-sent-${now.toISOString().split('T')[0]}`
+          let alreadySent = false
+          try {
+            alreadySent = window.localStorage.getItem(todayKey) === '1'
+          } catch {
+            // localStorage indisponible (mode prive) : on envoie quand meme
+          }
+          if (!alreadySent) {
+            const sent = sendNotification('Caisse non fermée', {
+              body: 'N\u2019oubliez pas de fermer la caisse avant de partir',
+              tag: todayKey,
+              url: '/cashier'
+            })
+            if (sent) {
+              try {
+                window.localStorage.setItem(todayKey, '1')
+              } catch {
+                // localStorage indisponible : on ignore
+              }
+            }
+          }
+        }
 
         if (!currentSession && nowMinutes >= openMinutes && nowMinutes < closeMinutes) {
           const lastClosed = allSessions
