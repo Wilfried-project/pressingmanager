@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import { useOrderStore, useClientStore, useNotificationStore, useLoyaltyStore, useClientStore as useCS, useCashStore, useAuthStore, useTransactionStore, useShopConfig, useAgendaStore } from '../../lib/store'
 import { clientsService, ordersService, generateTicketNumber, servicePriceService, cashService } from '../../lib/db'
 import { toast } from '../../lib/toast'
+import { useNotifications } from '../../hooks/useNotifications'
 import { supabase } from '../../lib/supabase'
 import {
   PageHeader, Button, SearchInput, Modal, Field, Input, Select, Textarea,
@@ -133,6 +134,7 @@ const PAGE_SIZE = 50
 
 export const OrdersPageModern: React.FC = () => {
   const { orders, addOrder, updateOrder, deleteOrder, loadOrders, loading: ordersLoading } = useOrderStore()
+  const { sendNotification } = useNotifications()
   const { clients: localClients, addClient } = useClientStore()
   const [dbClients, setDbClients] = useState<Client[]>([])
   const [customPrices, setCustomPrices] = useState<any[]>([])
@@ -773,6 +775,11 @@ export const OrdersPageModern: React.FC = () => {
   }
 
   const sendReadyNotification = (order: Order) => {
+    sendNotification('Commande prête !', {
+      body: `#${order.ticket_number} - ${order.client?.first_name} ${order.client?.last_name}`,
+      url: '/orders'
+    })
+
     const msgPret = (config.msgPret || '')
       .replace('{prenom}', order.client?.first_name || '')
       .replace('{nb}', String(order.clothes.length))

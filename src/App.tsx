@@ -7,6 +7,7 @@ import { useTheme } from './lib/useTheme'
 import { Toaster } from 'sonner'
 import { CommandPalette } from './components/CommandPalette'
 import { CashAutoScheduler } from './components/CashAutoScheduler'
+import { NotificationPrompt } from './components/NotificationPrompt'
 import { BillingPage } from './pages/billing/BillingPage'
 import { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/auth/LoginPage'
@@ -316,6 +317,7 @@ function App() {
   return (
     <BrowserRouter>
       <CashAutoScheduler />
+      <NotificationPrompt />
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
