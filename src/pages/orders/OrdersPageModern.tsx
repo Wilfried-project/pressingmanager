@@ -241,6 +241,7 @@ export const OrdersPageModern: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState<Order | null>(null)
   const [paymentAmount, setPaymentAmount] = useState(0)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('especes')
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null)
 
   const [clientSearch, setClientSearch] = useState('')
   const [showNewClientForm, setShowNewClientForm] = useState(false)
@@ -323,7 +324,7 @@ export const OrdersPageModern: React.FC = () => {
     return `${d.toISOString().split('T')[0]}T09:00`
   }
 
-  const suggestedDate = getSuggestedDate()
+  const suggestedDate = useMemo(() => getSuggestedDate(), [orders, events])
   const discount = manualDiscount
   const totalAfterDiscount = subtotal - discount
   const expressMultiplier = form.priority === 'express' ? 1.2 : form.priority === 'vip' ? 1.5 : 1
@@ -396,7 +397,7 @@ export const OrdersPageModern: React.FC = () => {
     } as Cloth))
 
     const depositFinal = form.payment_status === 'paye' ? total : form.payment_status === 'non_paye' ? 0 : form.deposit
-    const remainingFinal = total - depositFinal
+    const remainingFinal = Math.max(0, total - depositFinal)
 
     const order: Order = {
       id: crypto.randomUUID(), ticket_number: ticket, agency_id: 'default',
@@ -504,6 +505,18 @@ export const OrdersPageModern: React.FC = () => {
     setShowForm(false)
   }
 
+  const confirmDelete = async () => {
+    if (!orderToDelete) return
+    try {
+      await deleteOrder(orderToDelete.id)
+      toast.success('Commande supprimée', { description: `Ticket #${orderToDelete.ticket_number}` })
+    } catch (err) {
+      toast.error('Erreur', { description: 'Impossible de supprimer la commande' })
+    } finally {
+      setOrderToDelete(null)
+    }
+  }
+
   const handlePaymentOnPickup = async () => {
     if (!showPaymentModal) return
     const order = showPaymentModal
@@ -513,9 +526,10 @@ export const OrdersPageModern: React.FC = () => {
 
     try {
       await updateOrder(order.id, {
-        deposit: newDeposit, remaining: Math.max(0, newRemaining),
-        payment_status: newStatus, payment_method: paymentMethod,
-        ...(newRemaining <= 0 ? { status: 'livre', delivered_at: new Date().toISOString() } : {})
+        deposit: Math.min(order.total, newDeposit),
+        remaining: Math.max(0, newRemaining),
+        payment_status: newStatus,
+        payment_method: paymentMethod,
       })
     } catch (err) {
       toast.error('Erreur', { description: 'Impossible de mettre à jour le paiement' })
@@ -1034,15 +1048,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                               <CreditCard size={15} />
                             </button>
                           )}
-                          <button onClick={async () => {
-                            if (!confirm('Supprimer cette commande ?')) return
-                            try {
-                              await deleteOrder(order.id)
-                              toast.success('Commande supprimée')
-                            } catch (err) {
-                              toast.error('Erreur', { description: 'Impossible de supprimer la commande' })
-                            }
-                          }}
+                          <button onClick={() => setOrderToDelete(order)}
                             className="w-8 h-8 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-white hover:bg-red-500 transition-all flex items-center justify-center"
                             title="Supprimer">
                             <Trash2 size={15} />
@@ -1529,6 +1535,49 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                 </Button>
               )}
               {viewOrder.status === 'pret' && <Button icon={<Bell size={16} />} variant="success" className="flex-1" onClick={() => sendReadyNotification(viewOrder)}>Notifier client</Button>}
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {orderToDelete && (
+        <Modal open={!!orderToDelete} onClose={() => setOrderToDelete(null)} title="Supprimer la commande" size="sm">
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-2">
+              <div className="flex justify-between text-sm gap-4">
+                <span className="text-on-surface-variant">Ticket</span>
+                <span className="font-bold text-red-700">#{orderToDelete.ticket_number}</span>
+              </div>
+              <div className="flex justify-between text-sm gap-4">
+                <span className="text-on-surface-variant">Client</span>
+                <span className="font-bold text-on-surface text-right">
+                  {orderToDelete.client?.first_name} {orderToDelete.client?.last_name}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm gap-4">
+                <span className="text-on-surface-variant">Total</span>
+                <span className="font-bold text-on-surface">{orderToDelete.total.toLocaleString('fr-FR')} XOF</span>
+              </div>
+              <div className="flex justify-between text-sm gap-4">
+                <span className="text-on-surface-variant">Deja encaisse</span>
+                <span className="font-bold text-emerald-600">{orderToDelete.deposit.toLocaleString('fr-FR')} XOF</span>
+              </div>
+            </div>
+            {orderToDelete.deposit > 0 && (
+              <p className="text-xs text-orange-800 bg-orange-50 border border-orange-200 rounded-2xl p-3">
+                Attention : {orderToDelete.deposit.toLocaleString('fr-FR')} XOF ont deja ete encaisses et seront perdus des comptes de caisse.
+              </p>
+            )}
+            <p className="text-sm text-on-surface-variant">
+              Cette action est <strong className="text-on-surface">irreversible</strong>. Les linge(s) et l&apos;historique de cette commande seront supprimes.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="danger" icon={<Trash2 size={16} />} className="flex-1" onClick={confirmDelete}>
+                Supprimer
+              </Button>
+              <Button variant="secondary" className="flex-1" onClick={() => setOrderToDelete(null)}>
+                Annuler
+              </Button>
             </div>
           </div>
         </Modal>
