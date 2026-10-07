@@ -13,7 +13,7 @@ import {
 import {
   Plus, Eye, Trash2, ChevronRight, ChevronLeft, Printer, Bell, Camera, X, CreditCard,
   Search, Filter, Clock, Package, CheckCircle2, Truck, XCircle, ArrowRight, AlertCircle,
-  Calendar, CalendarDays, CalendarRange, Inbox, RotateCcw
+  RotateCcw
 } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
 import { WhatsAppButton } from '../../components/ui/WhatsAppButton'
@@ -85,49 +85,6 @@ function getRibbon(order: Order): RibbonInfo {
   if (order.payment_status === 'paye') return { className: 'paid-not-delivered', label: 'PAYÉ, PAS LIVRÉ' }
   if (order.payment_status === 'acompte') return { className: 'partial', label: 'ACOMPTE' }
   return { className: 'unpaid', label: 'NON PAYÉ' }
-}
-
-// ============================================
-// ⭐ PÉRIODES (onglets)
-// ============================================
-type PeriodKey = 'today' | 'yesterday' | 'week' | 'month' | 'all'
-
-const PERIODS: { key: PeriodKey; label: string; icon: any }[] = [
-  { key: 'today',     label: "Aujourd'hui", icon: Calendar },
-  { key: 'yesterday', label: 'Hier',        icon: CalendarDays },
-  { key: 'week',      label: '7 jours',     icon: CalendarRange },
-  { key: 'month',     label: '30 jours',    icon: CalendarRange },
-  { key: 'all',       label: 'Tout',        icon: Inbox },
-]
-
-function isInPeriod(dateStr: string, period: PeriodKey): boolean {
-  if (period === 'all') return true
-  const date = new Date(dateStr)
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const orderDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-
-  if (period === 'today') return orderDay.getTime() === today.getTime()
-
-  if (period === 'yesterday') {
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-    return orderDay.getTime() === yesterday.getTime()
-  }
-
-  if (period === 'week') {
-    const weekAgo = new Date(today)
-    weekAgo.setDate(weekAgo.getDate() - 6)
-    return orderDay >= weekAgo && orderDay <= today
-  }
-
-  if (period === 'month') {
-    const monthAgo = new Date(today)
-    monthAgo.setDate(monthAgo.getDate() - 29)
-    return orderDay >= monthAgo && orderDay <= today
-  }
-
-  return true
 }
 
 const PAGE_SIZE = 50
@@ -235,7 +192,6 @@ export const OrdersPageModern: React.FC = () => {
   const { addEvent, events } = useAgendaStore()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
-  const [period, setPeriod] = useState<PeriodKey>('today')
   const [page, setPage] = useState(1)
 
   const [showForm, setShowForm] = useState(false)
@@ -264,20 +220,8 @@ export const OrdersPageModern: React.FC = () => {
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetail[]>([])
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const periodCounts = useMemo(() => {
-    const counts: Record<PeriodKey, number> = { today: 0, yesterday: 0, week: 0, month: 0, all: 0 }
-    orders.forEach(o => {
-      if (!o.created_at) return
-      ;(['today', 'yesterday', 'week', 'month', 'all'] as PeriodKey[]).forEach(p => {
-        if (isInPeriod(o.created_at, p)) counts[p]++
-      })
-    })
-    return counts
-  }, [orders])
-
   const filteredAll = useMemo(() => {
     return orders.filter(o => {
-      if (o.created_at && !isInPeriod(o.created_at, period)) return false
       const q = search.toLowerCase().trim()
       if (q) {
         const matchTicket = o.ticket_number.toLowerCase().includes(q)
@@ -291,7 +235,7 @@ export const OrdersPageModern: React.FC = () => {
       }
       return true
     }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  }, [orders, period, search, filterStatus])
+  }, [orders, search, filterStatus])
 
   const totalPages = Math.max(1, Math.ceil(filteredAll.length / PAGE_SIZE))
   const filtered = useMemo(() => {
@@ -301,7 +245,7 @@ export const OrdersPageModern: React.FC = () => {
 
   useEffect(() => {
     setPage(1)
-  }, [period, search, filterStatus])
+  }, [search, filterStatus])
 
   const filteredClients = useMemo(() =>
     clients.filter(c => !c.is_blacklisted && (
@@ -913,36 +857,6 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
         </button>
       </div>
 
-      {/* ===== ONGLETS PÉRIODE ===== */}
-      <div className="card-modern !p-2">
-        <div className="flex items-center gap-1 overflow-x-auto">
-          {PERIODS.map(p => {
-            const Icon = p.icon
-            const count = periodCounts[p.key]
-            const isActive = period === p.key
-            return (
-              <button
-                key={p.key}
-                onClick={() => setPeriod(p.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
-                  isActive
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-on-surface-variant hover:bg-surface-container-low'
-                }`}
-              >
-                <Icon size={15} />
-                <span>{p.label}</span>
-                <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-bold ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-surface-container text-on-surface-variant'
-                }`}>
-                  {count}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
       {/* ===== KPI STATUTS ===== */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
@@ -999,11 +913,10 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
       </div>
 
       {/* ===== INFO RÉSULTATS ===== */}
-      {(search || filterStatus || period !== 'all') && (
+      {(search || filterStatus) && (
         <div className="flex items-center gap-2 text-xs text-on-surface-variant">
           <span>
             <strong className="text-on-surface">{filteredAll.length}</strong> résultat(s)
-            {period !== 'all' && <> dans <strong className="text-primary">{PERIODS.find(p => p.key === period)?.label}</strong></>}
             {filterStatus && <> · filtre <strong className="text-primary">{
               filterStatus === 'impaye' ? 'Impayés' :
               filterStatus === 'en_cours' ? 'En cours' :
@@ -1214,11 +1127,10 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
           </div>
           <p className="text-on-surface-variant mb-2">Aucune commande trouvée</p>
           <p className="text-xs text-on-surface-variant mb-4">
-            {period !== 'all' && <> dans <strong>{PERIODS.find(p => p.key === period)?.label}</strong></>}
             {search && <> pour "<strong>{search}</strong>"</>}
             {filterStatus && <> · filtre <strong>{filterStatus}</strong></>}
           </p>
-          <button onClick={() => { setPeriod('all'); setSearch(''); setFilterStatus('') }}
+          <button onClick={() => { setSearch(''); setFilterStatus('') }}
             className="text-primary hover:underline text-sm font-semibold">
             Voir toutes les commandes
           </button>

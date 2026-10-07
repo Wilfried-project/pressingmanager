@@ -118,6 +118,8 @@ export const DashboardModern: React.FC = () => {
       })
       const completedOrders = orders.filter(o => o.status === 'livre').length
       const cancelledOrders = orders.filter(o => o.status === 'annule').length
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      const todayDeliveries = orders.filter(o => o.status === 'livre' && typeof o.delivered_at === 'string' && o.delivered_at.startsWith(todayKey)).length
 
       const { count: totalClients } = await supabase
         .from('clients').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId)
@@ -168,7 +170,7 @@ export const DashboardModern: React.FC = () => {
         todayOrders: todayOrders.length, todayClothes, readyOrders,
         todayCA, monthCA, totalClients: totalClients || 0,
         lateOrders: lateOrders.length, activeEmployees: activeEmployees || 0,
-        todayDeliveries: 0, completedOrders, cancelledOrders
+        todayDeliveries, completedOrders, cancelledOrders
       })
       setRecentOrders(orders.slice(0, 5))
       setOrdersByStatus(ordersByStatus)
