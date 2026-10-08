@@ -5,7 +5,7 @@ import { useAuthStore, useShopConfig } from '../../lib/store'
 import {
   Loader, Eye, EyeOff, Lock, Mail, Package, Users, Wallet,
   ShieldCheck, CheckCircle2, Sparkles, Timer, TrendingUp, Smartphone,
-  MessageCircle, Star, Quote, AlertCircle
+  Star, Quote
 } from 'lucide-react'
 
 export const LoginPage: React.FC = () => {
@@ -28,7 +28,7 @@ export const LoginPage: React.FC = () => {
   // Animation du cycle (réception → lavage → séchage → prêt)
   useEffect(() => {
     setMounted(true)
-    const savedEmail = localStorage.getItem('pm_remember_email')
+    const savedEmail = localStorage.getItem('pm_remember_email') || localStorage.getItem('pm-remember-me')
     if (savedEmail) { setEmail(savedEmail); setRememberMe(true) }
     const interval = setInterval(() => {
       setActiveStep(prev => (prev + 1) % 4)
@@ -55,8 +55,8 @@ export const LoginPage: React.FC = () => {
 
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-      if (rememberMe) localStorage.setItem('pm_remember_email', email)
-      else localStorage.removeItem('pm_remember_email')
+      if (rememberMe) { localStorage.setItem('pm-remember-me', email); localStorage.setItem('pm_remember_email', email) }
+      else { localStorage.removeItem('pm-remember-me'); localStorage.removeItem('pm_remember_email') }
 
       if (data.session) {
         setSession(data.session)
@@ -94,15 +94,6 @@ export const LoginPage: React.FC = () => {
     { icon: <TrendingUp size={18} />, title: '+30% de chiffre d’affaires', desc: 'Relances & fidélité auto', accent: '#fbbf24' },
     { icon: <Smartphone size={18} />, title: 'Clients notifiés auto', desc: 'WhatsApp & SMS prêts', accent: '#f472b6' },
   ]
-
-  // Numéro WhatsApp du pressing (config) — pas de numéro en dur
-  const waNumber = (config.phone || '').replace(/[^0-9]/g, '')
-  const waHelpUrl = waNumber
-    ? `https://wa.me/${waNumber}?text=${encodeURIComponent("Bonjour, j'ai besoin d'aide pour me connecter à PressingManager")}`
-    : '#'
-  const waAdminUrl = waNumber
-    ? `https://wa.me/${waNumber}?text=${encodeURIComponent("Bonjour, je souhaite obtenir un accès à PressingManager")}`
-    : '#'
 
   return (
     <>
@@ -279,62 +270,53 @@ export const LoginPage: React.FC = () => {
       <div className="lg:w-2/5 flex items-start justify-center p-4 lg:p-6 pt-6 lg:pt-6 lg:min-h-screen">
         <div className="w-full max-w-md">
 
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto sticky top-6">
-
-            {/* Header du formulaire */}
-            <div className="p-6 lg:p-8 pb-0">
-              <div className="flex items-center gap-2 mb-1">
-                <Lock size={16} className="text-purple-600" />
-                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider">Accès privé</span>
-              </div>
-              <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                {isForgot ? 'Mot de passe oublié' : 'Connexion'}
-              </h3>
-              <p className="text-sm text-slate-500 mt-1">
-                {isForgot
-                  ? 'Entrez votre email pour recevoir un lien de réinitialisation.'
-                  : 'Entrez vos identifiants pour accéder à la console.'
-                }
-              </p>
+          <div className="bg-white rounded-2xl shadow-md p-8 max-w-md w-full">
+            {/* Logo très grand — point focal */}
+            <div className="flex justify-center mb-4">
+              {config.logo ? (
+                <img src={config.logo} alt="Logo" className="w-24 h-24 lg:w-[120px] lg:h-[120px] object-contain rounded-2xl drop-shadow-md" />
+              ) : (
+                <div className="w-24 h-24 lg:w-[120px] lg:h-[120px] rounded-2xl bg-violet-100 flex items-center justify-center text-7xl drop-shadow-md">🧺</div>
+              )}
             </div>
+            <h1 className="text-center text-3xl font-bold text-gray-900 mb-2">
+              {isForgot ? 'Mot de passe oublié' : (config.name || 'PressingManager')}
+            </h1>
+            <p className="text-center text-sm text-gray-500 mb-8">
+              {isForgot ? 'Entrez votre email pour recevoir un lien de réinitialisation.' : 'Connectez-vous à votre espace'}
+            </p>
 
             {/* Messages */}
-            <div className="px-6 lg:px-8 pt-4">
-              {expired && (
-                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2">
-                  <span className="text-amber-600 text-lg leading-none mt-0.5">⏱️</span>
-                  <p className="text-xs text-amber-800 font-medium">
-                    Votre session a expiré après 30 minutes d'inactivité. Veuillez vous reconnecter.
-                  </p>
-                </div>
-              )}
-              {error && (
-                <div className={`mb-4 p-3 rounded-xl text-sm font-medium border flex items-start gap-2 ${
-                  error.includes('✅')
-                    ? 'bg-green-50 text-green-700 border-green-200'
-                    : 'bg-red-50 text-red-700 border-red-300 shadow-sm shadow-red-100'
-                }`}>
-                  {!error.includes('✅') && <AlertCircle size={16} className="shrink-0 mt-0.5" />}
-                  <span>{error}</span>
-                </div>
-              )}
-            </div>
+            {expired && (
+              <div className="mb-4 rounded-xl p-3 text-sm bg-amber-50 border border-amber-200 text-amber-700">
+                Votre session a expiré. Veuillez vous reconnecter.
+              </div>
+            )}
+            {error && (
+              <div className={`mb-4 rounded-xl p-3 text-sm border ${
+                error.includes('✅')
+                  ? 'bg-green-50 border-green-200 text-green-700'
+                  : 'bg-red-50 border-red-200 text-red-700'
+              }`}>
+                {error}
+              </div>
+            )}
 
             {/* Formulaire */}
-            <form onSubmit={handleSubmit} className="p-6 lg:p-8 pt-2 space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Email
                 </label>
                 <div className="relative">
-                  <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 focus:bg-white text-sm text-slate-900 placeholder:text-slate-400 transition"
+                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
                     placeholder="votre@email.com"
                   />
                 </div>
@@ -342,32 +324,23 @@ export const LoginPage: React.FC = () => {
 
               {!isForgot && (
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Mot de passe
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => { setIsForgot(true); setError('') }}
-                      className="text-xs font-semibold text-purple-600 hover:text-purple-800 hover:underline transition"
-                    >
-                      Mot de passe oublié ?
-                    </button>
-                  </div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Mot de passe
+                  </label>
                   <div className="relative">
-                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 focus:bg-white text-sm text-slate-900 placeholder:text-slate-400 transition"
+                      className="w-full pl-11 pr-11 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
                       placeholder="••••••••"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(s => !s)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -375,67 +348,49 @@ export const LoginPage: React.FC = () => {
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-shine w-full bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 hover:from-purple-700 hover:via-purple-700 hover:to-indigo-700 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-px active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 text-sm"
-              >
-                {loading && <Loader size={16} className="animate-spin" />}
-                {loading ? '⏳ Connexion...' : isForgot ? 'Envoyer le lien' : 'Se connecter'}
-              </button>
-
               {!isForgot && (
                 <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} className="w-4 h-4 rounded accent-purple-600 cursor-pointer" />
-                  <span className="text-xs font-medium text-slate-600">Se souvenir de moi</span>
+                  <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} className="w-4 h-4 rounded accent-violet-600 cursor-pointer" />
+                  <span className="text-sm text-gray-600">Se souvenir de moi</span>
                 </label>
               )}
 
-              {isForgot && (
+              <button
+                type="submit"
+                disabled={loading || !email || (!isForgot && !password)}
+                className="w-full bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm"
+              >
+                {loading && <Loader size={16} className="animate-spin" />}
+                {loading ? 'Connexion...' : isForgot ? 'Envoyer le lien' : 'Se connecter'}
+              </button>
+
+              {isForgot ? (
                 <button
                   type="button"
                   onClick={() => { setIsForgot(false); setError('') }}
-                  className="w-full text-center text-xs font-semibold text-slate-500 hover:text-purple-600 transition"
+                  className="w-full text-center text-sm text-violet-600 hover:underline mt-4"
                 >
                   ← Retour à la connexion
                 </button>
+              ) : (
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => { setIsForgot(true); setError('') }}
+                    className="text-sm text-violet-600 hover:underline"
+                  >
+                    Mot de passe oublié ?
+                  </button>
+                </div>
               )}
 
             </form>
 
-            {/* Aide WhatsApp */}
-            {waNumber && (
-              <div className="px-6 lg:px-8 pb-2">
-                <a href={waHelpUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition">
-                  <MessageCircle size={14} /> 💬 Besoin d’aide ? Contactez-nous
-                </a>
-              </div>
-            )}
-
-            {/* Pas de compte */}
-            <div className="px-6 lg:px-8 pb-6 lg:pb-8 pt-2">
-              <div className="flex items-center gap-3 my-4">
-                <div className="flex-1 h-px bg-slate-200" />
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">────────</span>
-                <div className="flex-1 h-px bg-slate-200" />
-              </div>
-              <p className="text-center text-sm font-bold text-slate-800">Pas encore de compte ?</p>
-              <p className="text-center text-xs text-slate-500 mt-1 mb-3">Les comptes sont créés par votre administrateur.</p>
-              {waNumber ? (
-                <a href={waAdminUrl} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-purple-700 border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 transition-all">
-                  💬 Contacter l’administrateur
-                </a>
-              ) : (
-                <button disabled className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-400 border-2 border-slate-200 cursor-not-allowed opacity-60">
-                  💬 Contacter l’administrateur
-                </button>
-              )}
-            </div>
+            <p className="text-center text-xs text-gray-500 mt-8">
+              Fait en Côte d'Ivoire 🇨🇮<br />
+              © 2026 {config.name || 'PressingManager'}
+            </p>
           </div>
-
-          <p className="text-center text-purple-200/50 text-xs mt-6">
-            Fait en Côte d'Ivoire 🇨🇮 · © {new Date().getFullYear()} {config.name || 'PressingManager'}
-          </p>
 
         </div>
       </div>
