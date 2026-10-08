@@ -41,11 +41,18 @@ const SERVICES: { value: ServiceType; label: string; basePrice: number }[] = [
 ]
 
 const ORDER_STATUSES = [
-  { key: 'en_cours',   label: 'En cours',   color: 'blue',  icon: 'local_laundry_service' },
-  { key: 'pret',       label: 'Prêt',       color: 'emerald', icon: 'check_circle' },
-  { key: 'livre',      label: 'Livré',      color: 'slate', icon: 'inventory' },
-  { key: 'annule',     label: 'Annulé',     color: 'red',   icon: 'cancel' },
+  { key: 'en_cours', label: 'En cours', color: 'blue', icon: 'local_laundry_service' },
+  { key: 'pret', label: 'Prêt', color: 'emerald', icon: 'check_circle' },
+  { key: 'livre', label: 'Livré', color: 'slate', icon: 'inventory' },
+  { key: 'annule', label: 'Annulé', color: 'red', icon: 'cancel' },
 ] as const
+
+// Mapping CANONIQUE unique : TOUT l'affichage (badge, KPI, filtre) passe par ici.
+// Les anciens statuts ('recu', 'en_attente', ...) sont des alias de 'en_cours'.
+const canonOrderStatus = (s: string) => {
+  if (s === 'pret' || s === 'livre' || s === 'annule') return s
+  return 'en_cours'
+}
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; bar: string }> = {
   en_cours:   { bg: 'bg-blue-50',    text: 'text-blue-700',    bar: 'bg-blue-500' },
@@ -62,7 +69,7 @@ const STATUS_TO_BADGE: Record<string, any> = {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  recu: 'Reçu', en_attente: 'En cours', tri: 'Tri', pretraitement: 'Prétraitement',
+  recu: 'En cours', en_attente: 'En cours', tri: 'Tri', pretraitement: 'Prétraitement',
   detachage: 'Détachage', lavage: 'Lavage', essorage: 'Essorage', sechage: 'Séchage',
   repassage: 'Repassage', controle: 'Contrôle', retouche: 'Retouche', emballage: 'Emballage',
   stock: 'Stock', pret: 'Prêt', livre: 'Livré', annule: 'Annulé',
@@ -231,7 +238,7 @@ export const OrdersPageModern: React.FC = () => {
       }
       if (filterStatus) {
         if (filterStatus === 'impaye') return o.remaining > 0 && o.status !== 'annule'
-        return o.status === filterStatus
+        return canonOrderStatus(o.status) === filterStatus
       }
       return true
     }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -818,13 +825,20 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
     return `Bonjour ${clientName}, concernant votre commande N°${order.ticket_number} chez ${shopName}.`
   }
 
-  const statusGroups = useMemo(() => ({
-    en_cours: orders.filter(o => o.status === 'en_cours').length,
+  const statusGroups = useMemo(() => {
+    if (typeof window !== 'undefined' && (window as any).__PM_DEBUG_STATUS__ !== false && orders.length > 0) {
+      const raw: Record<string, number> = {}
+      orders.forEach(o => { raw[o.status] = (raw[o.status] || 0) + 1 })
+      console.log('[Orders] VRAIS statuts en base (bruts):', raw)
+    }
+    return {
+    en_cours: orders.filter(o => canonOrderStatus(o.status) === 'en_cours').length,
     pret: orders.filter(o => o.status === 'pret').length,
     livre: orders.filter(o => o.status === 'livre').length,
     annule: orders.filter(o => o.status === 'annule').length,
     impaye: orders.filter(o => o.remaining > 0 && o.status !== 'annule').length,
-  }), [orders])
+    }
+  }, [orders])
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
@@ -1001,7 +1015,7 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                         </div>
                       </td>
                       <td className="py-4 px-5">
-                        <StatusBadge status={STATUS_TO_BADGE[order.status] || 'inProgress'} label={STATUS_LABELS[order.status] || order.status} />
+                        <StatusBadge status={STATUS_TO_BADGE[canonOrderStatus(order.status)] || 'inProgress'} label={STATUS_LABELS[canonOrderStatus(order.status)] || order.status} />
                       </td>
                       <td className="py-4 px-5 text-sm text-on-surface-variant">
                         {order.expected_at ? new Date(order.expected_at).toLocaleDateString('fr-FR') : '-'}
@@ -1443,7 +1457,10 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
                             status: s.key as Order['status'],
                             ...(s.key === 'livre' ? { delivered_at: new Date().toISOString() } : {})
                           })
-                          setViewOrder({ ...viewOrder, status: s.key as Order['status'] })
+                          const nextClothes = (s.key === 'pret' || s.key === 'livre')
+                            ? (viewOrder.clothes || []).map(c => ({ ...c, status: (s.key === 'pret' ? 'pret' : 'livre') as any }))
+                            : viewOrder.clothes
+                          setViewOrder({ ...viewOrder, status: s.key as Order['status'], clothes: nextClothes })
                           if (s.key === 'pret') sendReadyNotification(viewOrder)
                           toast.success('Statut mis à jour')
                         } catch (err) {

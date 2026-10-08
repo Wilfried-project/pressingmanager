@@ -1,0 +1,97 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - paragraph [ref=e8]: Activez les notifications pour être alerté quand une commande est prête
+    - generic [ref=e9]:
+      - button "Activer" [ref=e10] [cursor=pointer]
+      - button "Plus tard" [ref=e11] [cursor=pointer]
+      - button "Fermer" [ref=e12] [cursor=pointer]
+  - generic [ref=e16]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - generic [ref=e21]: 🧺
+            - generic [ref=e23]:
+              - heading "PressingManager" [level=1] [ref=e24]
+              - paragraph [ref=e25]: Console de gestion
+          - generic [ref=e26]:
+            - generic [ref=e27]: 🇨🇮
+            - generic [ref=e28]: Côte d'Ivoire
+        - generic [ref=e29]:
+          - generic [ref=e30]: Back-office privé
+          - heading "Du linge propre, un code propre." [level=2] [ref=e34]: Du linge propre,un code propre.
+          - paragraph [ref=e35]: Votre pressing, votre rythme. Suivez vos commandes, votre équipe et vos clients depuis un espace unique et sécurisé.
+          - generic [ref=e36]:
+            - generic [ref=e48]: 4.9/5
+            - generic [ref=e49]: — +50 pressings nous font confiance
+        - generic [ref=e50]:
+          - paragraph [ref=e51]: Un cycle complet pour chaque commande
+          - generic [ref=e52]:
+            - generic [ref=e53]:
+              - generic [ref=e54]: 🧺
+              - generic [ref=e56]: Réception
+            - generic [ref=e58]:
+              - generic [ref=e59]: 💧
+              - generic [ref=e61]: Lavage
+            - generic [ref=e63]:
+              - generic [ref=e64]: ☀️
+              - generic [ref=e66]: Séchage
+            - generic [ref=e68]:
+              - generic [ref=e69]: ✨
+              - generic [ref=e71]: Prêt
+        - generic [ref=e72]:
+          - generic [ref=e73]:
+            - paragraph [ref=e79]: Commandes
+            - paragraph [ref=e80]: Suivi en temps réel
+          - generic [ref=e81]:
+            - paragraph [ref=e88]: Clients
+            - paragraph [ref=e89]: Fidélité et groupes
+          - generic [ref=e90]:
+            - paragraph [ref=e95]: Caisse
+            - paragraph [ref=e96]: Paiements et bilans
+        - generic [ref=e97]:
+          - generic [ref=e103]:
+            - paragraph [ref=e104]: Gagnez 2h par jour
+            - paragraph [ref=e105]: Tickets & caisse en 1 clic
+          - generic [ref=e111]:
+            - paragraph [ref=e112]: Zéro perte de vêtements
+            - paragraph [ref=e113]: Suivi ticket par ticket
+          - generic [ref=e119]:
+            - paragraph [ref=e120]: +30% de chiffre d’affaires
+            - paragraph [ref=e121]: Relances & fidélité auto
+          - generic [ref=e126]:
+            - paragraph [ref=e127]: Clients notifiés auto
+            - paragraph [ref=e128]: WhatsApp & SMS prêts
+        - generic [ref=e129]:
+          - paragraph [ref=e133]: « PressingManager a changé ma vie »
+          - paragraph [ref=e134]:
+            - text: — Kouassi A.
+            - generic [ref=e135]: · Pressing Étoile, Abidjan
+          - generic [ref=e136]:
+            - button [ref=e137] [cursor=pointer]
+            - button [ref=e138] [cursor=pointer]
+            - button [ref=e139] [cursor=pointer]
+      - generic [ref=e141]:
+        - generic [ref=e142]: Données chiffrées
+        - generic [ref=e147]: Conforme RGPD
+        - generic [ref=e152]: Accès sécurisé
+    - generic [ref=e159]:
+      - generic [ref=e160]: 🧺
+      - heading "PressingManager" [level=1] [ref=e162]
+      - paragraph [ref=e163]: Connectez-vous à votre espace
+      - generic [ref=e164]:
+        - generic [ref=e165]:
+          - generic [ref=e166]: Email
+          - textbox "votre@email.com" [ref=e171]
+        - generic [ref=e172]:
+          - generic [ref=e173]: Mot de passe
+          - generic [ref=e174]:
+            - textbox "••••••••" [ref=e178]
+            - button [ref=e179] [cursor=pointer]
+        - generic [ref=e183] [cursor=pointer]:
+          - checkbox "Se souvenir de moi" [ref=e184]
+          - generic [ref=e185]: Se souvenir de moi
+        - button "Se connecter" [disabled] [ref=e186]
+        - button "Mot de passe oublié ?" [ref=e188] [cursor=pointer]
+      - paragraph [ref=e189]: Fait en Côte d'Ivoire 🇨🇮© 2026 PressingManager
+  - region "Notifications alt+T"

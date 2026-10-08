@@ -1,0 +1,108 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - paragraph [ref=e8]: Activez les notifications pour être alerté quand une commande est prête
+    - generic [ref=e9]:
+      - button "Activer" [ref=e10] [cursor=pointer]
+      - button "Plus tard" [ref=e11] [cursor=pointer]
+      - button "Fermer" [ref=e12] [cursor=pointer]
+  - generic [ref=e214]:
+    - complementary [ref=e215]:
+      - generic [ref=e216]:
+        - generic [ref=e217]:
+          - generic [ref=e218]: local_laundry_service
+          - generic [ref=e220]:
+            - generic [ref=e221]: PressingManager
+            - generic [ref=e222]: Kouadou TEST
+        - navigation [ref=e223]:
+          - generic [ref=e224]:
+            - generic [ref=e225]: Principal
+            - link "grid_view Tableau de bord" [ref=e226] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e227]: grid_view
+              - generic [ref=e228]: Tableau de bord
+            - link "receipt_long Commandes" [ref=e229] [cursor=pointer]:
+              - /url: /orders
+              - generic [ref=e230]: receipt_long
+              - generic [ref=e231]: Commandes
+          - generic [ref=e232]:
+            - generic [ref=e233]: Clients & Ventes
+            - link "groups Clients" [ref=e234] [cursor=pointer]:
+              - /url: /clients
+              - generic [ref=e235]: groups
+              - generic [ref=e236]: Clients
+            - link "request_quote Facturation" [ref=e237] [cursor=pointer]:
+              - /url: /billing
+              - generic [ref=e238]: request_quote
+              - generic [ref=e239]: Facturation
+            - link "point_of_sale Caisse" [ref=e240] [cursor=pointer]:
+              - /url: /cashier
+              - generic [ref=e241]: point_of_sale
+              - generic [ref=e242]: Caisse
+            - link "loyalty Fidélité" [ref=e243] [cursor=pointer]:
+              - /url: /loyalty
+              - generic [ref=e244]: loyalty
+              - generic [ref=e245]: Fidélité
+          - generic [ref=e246]:
+            - generic [ref=e247]: Opérations
+            - link "inventory_2 Stock" [ref=e248] [cursor=pointer]:
+              - /url: /stock
+              - generic [ref=e249]: inventory_2
+              - generic [ref=e250]: Stock
+            - link "local_shipping Livraisons" [ref=e251] [cursor=pointer]:
+              - /url: /delivery
+              - generic [ref=e252]: local_shipping
+              - generic [ref=e253]: Livraisons
+            - link "calendar_month Agenda" [ref=e254] [cursor=pointer]:
+              - /url: /agenda
+              - generic [ref=e255]: calendar_month
+              - generic [ref=e256]: Agenda
+            - link "qr_code_scanner Atelier" [ref=e257] [cursor=pointer]:
+              - /url: /atelier
+              - generic [ref=e258]: qr_code_scanner
+              - generic [ref=e259]: Atelier
+          - generic [ref=e260]:
+            - generic [ref=e261]: Équipe & Finance
+            - link "badge Employés & RH" [ref=e262] [cursor=pointer]:
+              - /url: /hr
+              - generic [ref=e263]: badge
+              - generic [ref=e264]: Employés & RH
+            - link "account_balance_wallet Comptabilité" [ref=e265] [cursor=pointer]:
+              - /url: /accounting
+              - generic [ref=e266]: account_balance_wallet
+              - generic [ref=e267]: Comptabilité
+            - link "monitoring Rapports" [ref=e268] [cursor=pointer]:
+              - /url: /reports
+              - generic [ref=e269]: monitoring
+              - generic [ref=e270]: Rapports
+          - generic [ref=e271]:
+            - generic [ref=e272]: Configuration
+            - link "settings Paramètres" [ref=e273] [cursor=pointer]:
+              - /url: /settings
+              - generic [ref=e274]: settings
+              - generic [ref=e275]: Paramètres
+            - link "manage_accounts Utilisateurs" [ref=e276] [cursor=pointer]:
+              - /url: /users
+              - generic [ref=e277]: manage_accounts
+              - generic [ref=e278]: Utilisateurs
+      - generic [ref=e279]:
+        - generic [ref=e280]: Atelier en ligne
+        - generic [ref=e283]: v1.0.0
+    - generic [ref=e284]:
+      - banner [ref=e285]:
+        - generic [ref=e286]:
+          - generic [ref=e288]:
+            - generic: search
+            - textbox "Rechercher un ticket, client, téléphone..." [ref=e289]
+          - generic [ref=e290]:
+            - button "add Nouvelle Commande" [ref=e291] [cursor=pointer]:
+              - generic [ref=e292]: add
+              - generic [ref=e293]: Nouvelle Commande
+            - generic [ref=e294]:
+              - generic [ref=e295]:
+                - generic [ref=e296]: Kouadou TEST
+                - generic [ref=e297]: admin
+              - generic [ref=e298]: KT
+              - button "logout" [ref=e299] [cursor=pointer]
+      - main [ref=e301]:
+        - paragraph [ref=e305]: Chargement du tableau de bord...
+  - region "Notifications alt+T"

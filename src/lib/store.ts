@@ -81,16 +81,40 @@ export const useOrderStore = create<OrderStore>()(persist((set, get) => ({
 
   addOrder: (o) => set(s => ({ orders: [...s.orders, o] })),
 
-  // ✅ CORRIGÉ : met à jour le store local ET Supabase
+  // ✅ CORRIGÉ : met à jour le store local ET Supabase.
+  // Synchronise aussi les vêtements (table `clothes`) quand le statut
+  // global ou la liste des vêtements change — sinon l'Atelier (qui lit
+  // les statuts des vêtements) et la page Commandes (statut global)
+  // se désynchronisent.
   updateOrder: async (id, d) => {
-    // 1. Mise à jour locale immédiate (interface réactive)
-    set(s => ({ orders: s.orders.map(o => o.id === id ? { ...o, ...d } : o) }))
+    // 1. Si le statut global passe à "pret"/"livre" sans vêtements fournis,
+    // on propage le statut à TOUS les vêtements de la commande.
+    let patch: Partial<Order> = { ...d }
+    try {
+      const current = get().orders.find(o => o.id === id)
+      if (current && (d.status === 'pret' || d.status === 'livre') && !d.clothes) {
+        const now = new Date().toISOString()
+        const clothStatus = d.status === 'pret' ? 'pret' : 'livre'
+        patch.clothes = (current.clothes || []).map(c => ({
+          ...c,
+          status: clothStatus as any,
+          status_history: [...(c.status_history || []), {
+            status: clothStatus as any,
+            changed_at: now,
+            changed_by: 'system',
+            notes: `Sync statut commande → ${clothStatus}`,
+          }],
+        }))
+      }
+    } catch { /* jamais bloquant */ }
+    // 2. Mise à jour locale immédiate (interface réactive)
+    set(s => ({ orders: s.orders.map(o => o.id === id ? { ...o, ...patch } : o) }))
 
-    // 2. Mise à jour Supabase (persistance)
+    // 3. Mise à jour Supabase (persistance)
     try {
       // Filtrer les champs qui ne doivent PAS être envoyés à Supabase
       // (champs calculés ou relations locales)
-      const { client, clothes, ...dbFields } = d as any
+      const { client, clothes: patchClothes, ...dbFields } = patch as any
 
       const { error } = await supabase
         .from('orders')
@@ -100,6 +124,26 @@ export const useOrderStore = create<OrderStore>()(persist((set, get) => ({
       if (error) {
         console.error('Erreur updateOrder Supabase:', error)
         throw error
+      }
+
+      // 4. Persister les vêtements synchronisés (table `clothes`) :
+      // `updateOrder` exclut `clothes` de l'update `orders`, il faut donc
+      // les écrire explicitement — sinon le statut global et les vêtements
+      // se désynchronisent (bug Atelier : commande "Prêt" bloquée à "Reçu").
+      if (Array.isArray(patchClothes)) {
+        const results = await Promise.all(
+          patchClothes.map((c: any) =>
+            supabase
+              .from('clothes')
+              .update({ status: c.status, status_history: c.status_history })
+              .eq('id', c.id)
+          )
+        )
+        const clothError = results.find(r => (r as any)?.error)?.error as any
+        if (clothError) {
+          console.error('Erreur updateOrder clothes Supabase:', clothError)
+          throw clothError
+        }
       }
     } catch (err) {
       console.error('Erreur updateOrder:', err)

@@ -18,9 +18,12 @@ const ETAPES = [
 ]
 
 const getEtape = (key: string) => ETAPES.find(e => e.key === key) || ETAPES[0]
+const normTicket = (v: string) => { let s = (v || '').trim(); try { s = decodeURIComponent(s) } catch { s = (v || '').trim() } const li = s.toLowerCase().lastIndexOf('/scan/'); if (li >= 0) s = s.slice(li + 6); else if (s.indexOf('/') >= 0) { const p = s.split('/'); s = p[p.length - 1] || s } s = s.split('?')[0].split('#')[0].trim(); if (s.charAt(0) === '#') s = s.slice(1); return s.toUpperCase() }
+const ticketMatches = (stored: string, query: string) => { const a = (stored || '').trim().toUpperCase(); const b = (query || '').trim().toUpperCase(); if (!a || !b) return false; if (a === b) return true; const pa = a.split('/'); const pb = b.split('/'); const sa = pa[pa.length - 1] || a; const sb = pb[pb.length - 1] || b; if (sa === sb) return true; const na = normTicket(a); const nb = normTicket(b); if (na && na === nb) return true; return a.indexOf(b) >= 0 || b.indexOf(a) >= 0 }
 
 const getEtapeCommande = (order: Order) => {
-  const statuts = order.clothes.map(c => c.status)
+  if (order.status === 'pret' || order.status === 'livre') return ETAPES[ETAPES.length - 1]
+  const statuts = (order.clothes || []).map(c => c.status)
   for (const etape of ETAPES) {
     if (statuts.some(s => s === etape.key)) return etape
   }
@@ -44,12 +47,12 @@ export const AtelierPageModern: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null)
 
   const stats = useMemo(() => {
-    const enCours = orders.filter(o => o.status !== 'livre' && o.status !== 'annule')
+    const enCours = orders.filter(o => o.status !== 'pret' && o.status !== 'livre' && o.status !== 'annule')
     return {
-      tri: enCours.filter(o => o.clothes.some(c => c.status === 'recu' || c.status === 'tri')).length,
-      lavage: enCours.filter(o => o.clothes.some(c => c.status === 'lavage')).length,
-      repassage: enCours.filter(o => o.clothes.some(c => c.status === 'sechage' || c.status === 'repassage')).length,
-      controle: enCours.filter(o => o.clothes.some(c => c.status === 'emballage')).length,
+      tri: enCours.filter(o => (o.clothes || []).some(c => c.status === 'recu' || c.status === 'tri')).length,
+      lavage: enCours.filter(o => (o.clothes || []).some(c => c.status === 'lavage')).length,
+      repassage: enCours.filter(o => (o.clothes || []).some(c => c.status === 'sechage' || c.status === 'repassage')).length,
+      controle: enCours.filter(o => (o.clothes || []).some(c => c.status === 'emballage')).length,
       prets: orders.filter(o => o.status === 'pret').length,
     }
   }, [orders])
@@ -57,16 +60,17 @@ export const AtelierPageModern: React.FC = () => {
   const filePrioritaire = useMemo(() => {
     const priorityMap: Record<string, number> = { vip: 0, express: 1, normal: 2, economique: 3 }
     return orders
-      .filter(o => o.status !== 'livre' && o.status !== 'annule')
+      .filter(o => o.status !== 'pret' && o.status !== 'livre' && o.status !== 'annule')
       .sort((a, b) => (priorityMap[a.priority] || 2) - (priorityMap[b.priority] || 2))
       .slice(0, 8)
   }, [orders])
 
   const handleFound = (ticketNum: string) => {
-    const clean = ticketNum.split('/').pop() || ticketNum
-    setTicket(clean.toUpperCase())
+    const raw = (ticketNum || '').trim()
+    const clean = normTicket(raw)
+    setTicket(clean)
     const found = orders.find(o =>
-      o.ticket_number.toLowerCase() === clean.toLowerCase() &&
+      ticketMatches(o.ticket_number, raw) &&
       o.status !== 'livre' && o.status !== 'annule'
     )
     if (found) { setOrder(found); setError(''); setSuccess(false) }
