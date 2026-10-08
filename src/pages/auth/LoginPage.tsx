@@ -4,7 +4,8 @@ import { supabase } from '../../lib/supabase'
 import { useAuthStore, useShopConfig } from '../../lib/store'
 import {
   Loader, Eye, EyeOff, Lock, Mail, Package, Users, Wallet,
-  ShieldCheck, CheckCircle2, Sparkles
+  ShieldCheck, CheckCircle2, Sparkles, Timer, TrendingUp, Smartphone,
+  MessageCircle, Star, Quote, AlertCircle
 } from 'lucide-react'
 
 export const LoginPage: React.FC = () => {
@@ -15,6 +16,9 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState('')
   const [isForgot, setIsForgot] = useState(false)
   const [activeStep, setActiveStep] = useState(0)
+  const [testimonialIdx, setTestimonialIdx] = useState(0)
+  const [rememberMe, setRememberMe] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const expired = searchParams.get('expired')
@@ -23,10 +27,16 @@ export const LoginPage: React.FC = () => {
 
   // Animation du cycle (réception → lavage → séchage → prêt)
   useEffect(() => {
+    setMounted(true)
+    const savedEmail = localStorage.getItem('pm_remember_email')
+    if (savedEmail) { setEmail(savedEmail); setRememberMe(true) }
     const interval = setInterval(() => {
       setActiveStep(prev => (prev + 1) % 4)
     }, 1800)
-    return () => clearInterval(interval)
+    const testi = setInterval(() => {
+      setTestimonialIdx(prev => (prev + 1) % 3)
+    }, 4000)
+    return () => { clearInterval(interval); clearInterval(testi) }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +55,8 @@ export const LoginPage: React.FC = () => {
 
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
+      if (rememberMe) localStorage.setItem('pm_remember_email', email)
+      else localStorage.removeItem('pm_remember_email')
 
       if (data.session) {
         setSession(data.session)
@@ -70,8 +82,44 @@ export const LoginPage: React.FC = () => {
     { label: 'Prêt', icon: '✨', color: '#34d399' },
   ]
 
+  const TESTIMONIALS = [
+    { text: 'PressingManager a changé ma vie', author: 'Kouassi A.', role: 'Pressing Étoile, Abidjan' },
+    { text: 'Je gagne 2h par jour', author: 'Fanta K.', role: 'Pressing Fanta, Cocody' },
+    { text: '+30% de CA en 3 mois', author: 'Diallo M.', role: 'Pressing Royal, Plateau' },
+  ]
+
+  const BENEFITS = [
+    { icon: <Timer size={18} />, title: 'Gagnez 2h par jour', desc: 'Tickets & caisse en 1 clic', accent: '#34d399' },
+    { icon: <CheckCircle2 size={18} />, title: 'Zéro perte de vêtements', desc: 'Suivi ticket par ticket', accent: '#60a5fa' },
+    { icon: <TrendingUp size={18} />, title: '+30% de chiffre d’affaires', desc: 'Relances & fidélité auto', accent: '#fbbf24' },
+    { icon: <Smartphone size={18} />, title: 'Clients notifiés auto', desc: 'WhatsApp & SMS prêts', accent: '#f472b6' },
+  ]
+
+  // Numéro WhatsApp du pressing (config) — pas de numéro en dur
+  const waNumber = (config.phone || '').replace(/[^0-9]/g, '')
+  const waHelpUrl = waNumber
+    ? `https://wa.me/${waNumber}?text=${encodeURIComponent("Bonjour, j'ai besoin d'aide pour me connecter à PressingManager")}`
+    : '#'
+  const waAdminUrl = waNumber
+    ? `https://wa.me/${waNumber}?text=${encodeURIComponent("Bonjour, je souhaite obtenir un accès à PressingManager")}`
+    : '#'
+
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-[#1e0b40] via-[#2d1264] to-[#4c1d95]">
+    <>
+    <style>{`
+      @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+      @keyframes logoPop { 0% { opacity: 0; transform: scale(0.7); } 100% { opacity: 1; transform: scale(1); } }
+      @keyframes shineSweep { 0% { transform: translateX(-150%) skewX(-20deg); } 100% { transform: translateX(250%) skewX(-20deg); } }
+      @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.35); } 70% { box-shadow: 0 0 0 12px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
+      @keyframes fadeSlide { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
+      .animate-gradient-slow { background-size: 200% 200%; animation: gradientMove 20s ease infinite; }
+      .animate-logo-pop { animation: logoPop 0.7s cubic-bezier(0.34,1.56,0.64,1) both; }
+      .animate-fade-slide { animation: fadeSlide 0.5s ease both; }
+      .btn-shine { position: relative; overflow: hidden; }
+      .btn-shine::after { content: ''; position: absolute; top: 0; left: 0; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent); transform: translateX(-150%) skewX(-20deg); animation: shineSweep 3s ease-in-out infinite; }
+      .cycle-active { animation: pulseRing 1.8s ease-out infinite; }
+    `}</style>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-[#1e0b40] via-[#2d1264] via-[#3b1478] to-[#4c1d95] animate-gradient-slow">
 
       {/* ===== PARTIE GAUCHE — PRÉSENTATION ===== */}
       <div className="lg:w-3/5 flex flex-col justify-between p-8 lg:p-16 relative overflow-hidden">
@@ -84,8 +132,8 @@ export const LoginPage: React.FC = () => {
         <div className="relative z-10">
           {/* Header avec logo + badge pays */}
           <div className="flex items-center justify-between mb-16 lg:mb-24">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+            <div className={`flex items-center gap-3 ${mounted ? 'animate-logo-pop' : 'opacity-0'}`}>
+              <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-lg shadow-purple-900/40">
                 {config.logo
                   ? <img src={config.logo} alt="logo" className="w-8 h-8 object-contain" />
                   : <span className="text-2xl">🧺</span>
@@ -122,6 +170,13 @@ export const LoginPage: React.FC = () => {
             <p className="text-purple-100/80 text-base lg:text-lg leading-relaxed max-w-xl">
               Votre pressing, votre rythme. Suivez vos commandes, votre équipe et vos clients depuis un espace unique et sécurisé.
             </p>
+            <div className="flex items-center gap-2 mt-4 flex-wrap">
+              <div className="flex items-center gap-0.5">
+                {[0,1,2,3,4].map(i => <Star key={i} size={15} className="text-amber-300 fill-amber-300" />)}
+              </div>
+              <span className="text-white text-sm font-bold">4.9/5</span>
+              <span className="text-purple-200/70 text-sm">— +50 pressings nous font confiance</span>
+            </div>
           </div>
 
           {/* CYCLE DU LINGE — Élément signature */}
@@ -137,7 +192,7 @@ export const LoginPage: React.FC = () => {
                     <div
                       className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all duration-500 ${
                         activeStep === i
-                          ? 'bg-white/20 backdrop-blur-md scale-110 shadow-lg shadow-purple-500/50'
+                          ? 'bg-white/20 backdrop-blur-md scale-110 shadow-lg shadow-purple-500/50 cycle-active animate-pulse'
                           : 'bg-white/5 backdrop-blur-md'
                       }`}
                       style={{
@@ -172,6 +227,33 @@ export const LoginPage: React.FC = () => {
             <FeatureCard icon={<Users size={20} />} title="Clients" description="Fidélité et groupes" accent="#60a5fa" />
             <FeatureCard icon={<Wallet size={20} />} title="Caisse" description="Paiements et bilans" accent="#f472b6" />
           </div>
+
+          {/* ===== BÉNÉFICES VISUELS ===== */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mt-4">
+            {BENEFITS.map((b, i) => (
+              <div key={i} className="flex items-start gap-3 p-3.5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-[1.03] hover:shadow-xl hover:shadow-purple-900/30 transition-all duration-300">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${b.accent}20`, color: b.accent, border: `1px solid ${b.accent}30` }}>
+                  {b.icon}
+                </div>
+                <div>
+                  <p className="text-white font-bold text-xs">{b.title}</p>
+                  <p className="text-purple-200/60 text-[11px]">{b.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Témoignage rotatif */}
+          <div key={testimonialIdx} className="animate-fade-slide max-w-2xl mt-5 p-4 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10">
+            <Quote size={14} className="text-pink-300 mb-1.5" />
+            <p className="text-white text-sm font-semibold italic leading-relaxed">« {TESTIMONIALS[testimonialIdx].text} »</p>
+            <p className="text-purple-200/70 text-xs mt-1.5 font-semibold">— {TESTIMONIALS[testimonialIdx].author} <span className="font-normal">· {TESTIMONIALS[testimonialIdx].role}</span></p>
+            <div className="flex gap-1 mt-2">
+              {TESTIMONIALS.map((_, j) => (
+                <button key={j} onClick={() => setTestimonialIdx(j)} className={`h-1 rounded-full transition-all ${j === testimonialIdx ? 'w-5 bg-pink-300' : 'w-2 bg-white/20 hover:bg-white/40'}`} />
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Footer gauche */}
@@ -194,10 +276,10 @@ export const LoginPage: React.FC = () => {
       </div>
 
       {/* ===== PARTIE DROITE — FORMULAIRE ===== */}
-      <div className="lg:w-2/5 flex items-center justify-center p-6 lg:p-12">
+      <div className="lg:w-2/5 flex items-start justify-center p-4 lg:p-6 pt-6 lg:pt-6 lg:min-h-screen">
         <div className="w-full max-w-md">
 
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto sticky top-6">
 
             {/* Header du formulaire */}
             <div className="p-6 lg:p-8 pb-0">
@@ -227,12 +309,13 @@ export const LoginPage: React.FC = () => {
                 </div>
               )}
               {error && (
-                <div className={`mb-4 p-3 rounded-xl text-sm font-medium border ${
+                <div className={`mb-4 p-3 rounded-xl text-sm font-medium border flex items-start gap-2 ${
                   error.includes('✅')
                     ? 'bg-green-50 text-green-700 border-green-200'
-                    : 'bg-red-50 text-red-700 border-red-200'
+                    : 'bg-red-50 text-red-700 border-red-300 shadow-sm shadow-red-100'
                 }`}>
-                  {error}
+                  {!error.includes('✅') && <AlertCircle size={16} className="shrink-0 mt-0.5" />}
+                  <span>{error}</span>
                 </div>
               )}
             </div>
@@ -295,11 +378,18 @@ export const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 hover:from-purple-700 hover:via-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 text-sm"
+                className="btn-shine w-full bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 hover:from-purple-700 hover:via-purple-700 hover:to-indigo-700 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-px active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 text-sm"
               >
                 {loading && <Loader size={16} className="animate-spin" />}
-                {isForgot ? 'Envoyer le lien' : 'Se connecter'}
+                {loading ? '⏳ Connexion...' : isForgot ? 'Envoyer le lien' : 'Se connecter'}
               </button>
+
+              {!isForgot && (
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} className="w-4 h-4 rounded accent-purple-600 cursor-pointer" />
+                  <span className="text-xs font-medium text-slate-600">Se souvenir de moi</span>
+                </label>
+              )}
 
               {isForgot && (
                 <button
@@ -312,6 +402,35 @@ export const LoginPage: React.FC = () => {
               )}
 
             </form>
+
+            {/* Aide WhatsApp */}
+            {waNumber && (
+              <div className="px-6 lg:px-8 pb-2">
+                <a href={waHelpUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition">
+                  <MessageCircle size={14} /> 💬 Besoin d’aide ? Contactez-nous
+                </a>
+              </div>
+            )}
+
+            {/* Pas de compte */}
+            <div className="px-6 lg:px-8 pb-6 lg:pb-8 pt-2">
+              <div className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-px bg-slate-200" />
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">────────</span>
+                <div className="flex-1 h-px bg-slate-200" />
+              </div>
+              <p className="text-center text-sm font-bold text-slate-800">Pas encore de compte ?</p>
+              <p className="text-center text-xs text-slate-500 mt-1 mb-3">Les comptes sont créés par votre administrateur.</p>
+              {waNumber ? (
+                <a href={waAdminUrl} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-purple-700 border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 transition-all">
+                  💬 Contacter l’administrateur
+                </a>
+              ) : (
+                <button disabled className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-400 border-2 border-slate-200 cursor-not-allowed opacity-60">
+                  💬 Contacter l’administrateur
+                </button>
+              )}
+            </div>
           </div>
 
           <p className="text-center text-purple-200/50 text-xs mt-6">
@@ -321,6 +440,7 @@ export const LoginPage: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   )
 }
 
@@ -328,7 +448,7 @@ export const LoginPage: React.FC = () => {
 // Composant FeatureCard avec accent unique
 // ============================================
 const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; description: string; accent: string }> = ({ icon, title, description, accent }) => (
-  <div className="group p-4 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300">
+  <div className="group p-4 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-105 hover:shadow-xl hover:shadow-purple-900/40 transition-all duration-300 cursor-default">
     <div
       className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-all duration-300"
       style={{
