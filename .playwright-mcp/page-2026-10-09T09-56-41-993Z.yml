@@ -1,0 +1,374 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e8]:
+      - paragraph [ref=e13]: Activez les notifications pour être alerté quand une commande est prête
+      - generic [ref=e14]:
+        - button "Activer" [ref=e15] [cursor=pointer]
+        - button "Plus tard" [ref=e16] [cursor=pointer]
+        - button "Fermer" [ref=e17] [cursor=pointer]
+    - generic [ref=e21]:
+      - complementary [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - generic [ref=e25]: local_laundry_service
+            - generic [ref=e27]:
+              - generic [ref=e28]: PressingManager
+              - generic [ref=e29]: Kouadou TEST
+          - navigation [ref=e30]:
+            - generic [ref=e31]:
+              - generic [ref=e32]: Principal
+              - link "grid_view Tableau de bord" [ref=e33] [cursor=pointer]:
+                - /url: /
+                - generic [ref=e34]: grid_view
+                - generic [ref=e35]: Tableau de bord
+              - link "receipt_long Commandes" [ref=e36] [cursor=pointer]:
+                - /url: /orders
+                - generic [ref=e37]: receipt_long
+                - generic [ref=e38]: Commandes
+            - generic [ref=e39]:
+              - generic [ref=e40]: Clients & Ventes
+              - link "groups Clients" [ref=e41] [cursor=pointer]:
+                - /url: /clients
+                - generic [ref=e42]: groups
+                - generic [ref=e43]: Clients
+              - link "request_quote Facturation" [ref=e44] [cursor=pointer]:
+                - /url: /billing
+                - generic [ref=e45]: request_quote
+                - generic [ref=e46]: Facturation
+              - link "point_of_sale Caisse" [ref=e47] [cursor=pointer]:
+                - /url: /cashier
+                - generic [ref=e48]: point_of_sale
+                - generic [ref=e49]: Caisse
+              - link "loyalty Fidélité" [ref=e50] [cursor=pointer]:
+                - /url: /loyalty
+                - generic [ref=e51]: loyalty
+                - generic [ref=e52]: Fidélité
+            - generic [ref=e53]:
+              - generic [ref=e54]: Opérations
+              - link "inventory_2 Stock" [ref=e55] [cursor=pointer]:
+                - /url: /stock
+                - generic [ref=e56]: inventory_2
+                - generic [ref=e57]: Stock
+              - link "local_shipping Livraisons" [ref=e58] [cursor=pointer]:
+                - /url: /delivery
+                - generic [ref=e59]: local_shipping
+                - generic [ref=e60]: Livraisons
+              - link "calendar_month Agenda" [ref=e61] [cursor=pointer]:
+                - /url: /agenda
+                - generic [ref=e62]: calendar_month
+                - generic [ref=e63]: Agenda
+              - link "qr_code_scanner Atelier" [ref=e64] [cursor=pointer]:
+                - /url: /atelier
+                - generic [ref=e65]: qr_code_scanner
+                - generic [ref=e66]: Atelier
+            - generic [ref=e67]:
+              - generic [ref=e68]: Équipe & Finance
+              - link "badge Employés & RH" [ref=e69] [cursor=pointer]:
+                - /url: /hr
+                - generic [ref=e70]: badge
+                - generic [ref=e71]: Employés & RH
+              - link "account_balance_wallet Comptabilité" [ref=e72] [cursor=pointer]:
+                - /url: /accounting
+                - generic [ref=e73]: account_balance_wallet
+                - generic [ref=e74]: Comptabilité
+              - link "monitoring Rapports" [ref=e75] [cursor=pointer]:
+                - /url: /reports
+                - generic [ref=e76]: monitoring
+                - generic [ref=e77]: Rapports
+            - generic [ref=e78]:
+              - generic [ref=e79]: Configuration
+              - link "settings Paramètres" [ref=e80] [cursor=pointer]:
+                - /url: /settings
+                - generic [ref=e81]: settings
+                - generic [ref=e82]: Paramètres
+              - link "manage_accounts Utilisateurs" [ref=e83] [cursor=pointer]:
+                - /url: /users
+                - generic [ref=e84]: manage_accounts
+                - generic [ref=e85]: Utilisateurs
+        - generic [ref=e86]:
+          - generic [ref=e87]: Atelier en ligne
+          - generic [ref=e90]: v1.0.0
+      - generic [ref=e91]:
+        - banner [ref=e92]:
+          - generic [ref=e93]:
+            - generic [ref=e95]:
+              - generic: search
+              - textbox "Rechercher un ticket, client, téléphone..." [ref=e96]
+            - generic [ref=e97]:
+              - button "add Nouvelle Commande" [ref=e98] [cursor=pointer]:
+                - generic [ref=e99]: add
+                - generic [ref=e100]: Nouvelle Commande
+              - generic [ref=e101]:
+                - generic [ref=e102]:
+                  - generic [ref=e103]: Kouadou TEST
+                  - generic [ref=e104]: admin
+                - generic [ref=e105]: KT
+                - button "logout" [ref=e106] [cursor=pointer]
+        - main [ref=e108]:
+          - generic [ref=e110]:
+            - generic [ref=e111]:
+              - generic [ref=e113]:
+                - generic [ref=e114]:
+                  - heading "Tableau de Bord" [level=1] [ref=e115]
+                  - generic [ref=e116]: EN TEMPS REEL
+                - paragraph [ref=e118]: vendredi 9 octobre 2026
+              - button "add_circle Nouvelle commande" [ref=e119] [cursor=pointer]:
+                - generic [ref=e120]: add_circle
+                - text: Nouvelle commande
+            - generic [ref=e121] [cursor=pointer]:
+              - generic [ref=e122]: notification_important
+              - generic [ref=e124]:
+                - paragraph [ref=e125]: 20 commande(s) en retard
+                - paragraph [ref=e126]: 3 affichee(s) ci-dessous - Clients a contacter immediatement - cliquez pour voir
+            - generic [ref=e129]:
+              - generic [ref=e130]:
+                - generic [ref=e131]:
+                  - generic [ref=e132]: Commandes aujourd'hui
+                  - generic [ref=e133]: receipt_long
+                - generic [ref=e135]:
+                  - generic [ref=e136]: "0"
+                  - generic [ref=e137]: tickets
+                - paragraph [ref=e138]: 0 vetements
+                - paragraph [ref=e139]: ↑ +14% vs mois dernier
+              - generic [ref=e140]:
+                - generic [ref=e141]:
+                  - generic [ref=e142]: Vetements recus
+                  - generic [ref=e143]: local_laundry_service
+                - generic [ref=e145]:
+                  - generic [ref=e146]: "0"
+                  - generic [ref=e147]: pieces
+                - paragraph [ref=e148]: ↑ +8% vs mois dernier
+              - generic [ref=e149]:
+                - generic [ref=e150]:
+                  - generic [ref=e151]: Prets a recuperer
+                  - generic [ref=e152]: check_circle
+                - generic [ref=e154]:
+                  - generic [ref=e155]: "5"
+                  - generic [ref=e156]: commandes
+                - paragraph [ref=e157]: A notifier
+              - generic [ref=e158]:
+                - generic [ref=e159]:
+                  - generic [ref=e160]: Livre aujourd'hui
+                  - generic [ref=e161]: local_shipping
+                - generic [ref=e163]:
+                  - generic [ref=e164]: "0"
+                  - generic [ref=e165]: commandes
+            - generic [ref=e166]:
+              - generic [ref=e167]:
+                - generic [ref=e168]:
+                  - generic [ref=e169]: CA encaisse aujourd'hui
+                  - generic [ref=e170]: payments
+                - generic [ref=e172]:
+                  - generic [ref=e173]: 59 000
+                  - generic [ref=e174]: XOF
+                - paragraph [ref=e175]: Entrees de la session de caisse en cours
+                - paragraph [ref=e176]: ↑ +14% vs mois dernier
+              - generic [ref=e177]:
+                - generic [ref=e178]: CA du mois
+                - generic [ref=e184]:
+                  - generic [ref=e185]: 58 500
+                  - generic [ref=e186]: XOF
+                - paragraph [ref=e187]: ↑ +6% vs mois dernier
+              - generic [ref=e188]:
+                - generic [ref=e189]:
+                  - generic [ref=e190]: Clients actifs
+                  - generic [ref=e191]: groups
+                - generic [ref=e193]:
+                  - generic [ref=e194]: "13"
+                  - generic [ref=e195]: clients
+              - generic [ref=e196]:
+                - generic [ref=e197]:
+                  - generic [ref=e198]: Commandes en retard
+                  - generic [ref=e199]: warning
+                - generic [ref=e201]:
+                  - generic [ref=e202]: "20"
+                  - generic [ref=e203]: a traiter
+                - paragraph [ref=e204]: Action requise
+            - generic [ref=e205]:
+              - generic [ref=e206]:
+                - generic [ref=e207]:
+                  - generic [ref=e208]:
+                    - heading "Evolution du chiffre d'affaires" [level=3] [ref=e209]
+                    - paragraph [ref=e210]: 7 derniers jours
+                  - generic [ref=e211]:
+                    - generic [ref=e212]: 58 500 XOF
+                    - paragraph [ref=e215]: Total semaine
+                - img [ref=e219]:
+                  - generic [ref=e223]:
+                    - generic [ref=e224]: Sam
+                    - generic [ref=e226]: Dim
+                    - generic [ref=e228]: Lun
+                    - generic [ref=e230]: Mar
+                    - generic [ref=e232]: Mer
+                    - generic [ref=e234]: Jeu
+                    - generic [ref=e236]: Ven
+                  - generic [ref=e239]:
+                    - generic [ref=e240]: "0"
+                    - generic [ref=e242]: 15k
+                    - generic [ref=e244]: 30k
+                    - generic [ref=e246]: 45k
+                    - generic [ref=e248]: 60k
+              - generic [ref=e264]:
+                - heading "Commandes par statut" [level=3] [ref=e265]
+                - paragraph [ref=e266]: Repartition actuelle
+                - generic [ref=e267]:
+                  - generic:
+                    - generic:
+                      - generic: "28"
+                      - generic: Total
+                - generic [ref=e279]:
+                  - generic [ref=e280]:
+                    - generic [ref=e281]: Pret
+                    - generic [ref=e284]: "5"
+                  - generic [ref=e285]:
+                    - generic [ref=e286]: Livre
+                    - generic [ref=e289]: "2"
+                  - generic [ref=e290]:
+                    - generic [ref=e291]: En cours
+                    - generic [ref=e294]: "21"
+            - generic [ref=e295]:
+              - generic [ref=e296]:
+                - generic [ref=e297]:
+                  - generic [ref=e298]:
+                    - heading "Top Clients" [level=3] [ref=e299]
+                    - paragraph [ref=e300]: Meilleurs chiffres d'affaires
+                  - button "Voir tous" [ref=e301] [cursor=pointer]
+                - generic [ref=e302]:
+                  - generic [ref=e303]:
+                    - generic [ref=e304]: "1"
+                    - generic [ref=e305]: AK
+                    - generic [ref=e306]:
+                      - generic [ref=e307]:
+                        - paragraph [ref=e308]: aman K
+                        - paragraph [ref=e309]: 135 000 XOF
+                      - generic [ref=e310]: 1 cmd
+                  - generic [ref=e314]:
+                    - generic [ref=e315]: "2"
+                    - generic [ref=e316]: EB
+                    - generic [ref=e317]:
+                      - generic [ref=e318]:
+                        - paragraph [ref=e319]: Elvira Blanche
+                        - paragraph [ref=e320]: 82 700 XOF
+                      - generic [ref=e321]: 12 cmd
+                  - generic [ref=e325]:
+                    - generic [ref=e326]: "3"
+                    - generic [ref=e327]: DL
+                    - generic [ref=e328]:
+                      - generic [ref=e329]:
+                        - paragraph [ref=e330]: Denise Lali
+                        - paragraph [ref=e331]: 28 000 XOF
+                      - generic [ref=e332]: 3 cmd
+                  - generic [ref=e336]:
+                    - generic [ref=e337]: "4"
+                    - generic [ref=e338]: TV
+                    - generic [ref=e339]:
+                      - generic [ref=e340]:
+                        - paragraph [ref=e341]: Test VIP
+                        - paragraph [ref=e342]: 25 000 XOF
+                      - generic [ref=e343]: 1 cmd
+                  - generic [ref=e347]:
+                    - generic [ref=e348]: "5"
+                    - generic [ref=e349]: FF
+                    - generic [ref=e350]:
+                      - generic [ref=e351]:
+                        - paragraph [ref=e352]: Fatou Fofana
+                        - paragraph [ref=e353]: 16 000 XOF
+                      - generic [ref=e354]: 1 cmd
+              - generic [ref=e358]:
+                - generic [ref=e360]:
+                  - heading "Volume de vetements" [level=3] [ref=e361]
+                  - paragraph [ref=e362]: 7 derniers jours
+                - img [ref=e366]:
+                  - generic [ref=e370]:
+                    - generic [ref=e371]: Sam
+                    - generic [ref=e373]: Dim
+                    - generic [ref=e375]: Lun
+                    - generic [ref=e377]: Mar
+                    - generic [ref=e379]: Mer
+                    - generic [ref=e381]: Jeu
+                    - generic [ref=e383]: Ven
+                  - generic [ref=e386]:
+                    - generic [ref=e387]: "0"
+                    - generic [ref=e389]: "2"
+                    - generic [ref=e391]: "4"
+                    - generic [ref=e393]: "6"
+                    - generic [ref=e395]: "8"
+            - generic [ref=e411]:
+              - generic [ref=e412]:
+                - generic [ref=e413]:
+                  - heading "Commandes recentes" [level=3] [ref=e414]
+                  - paragraph [ref=e415]: 5 dernieres commandes
+                - button "Voir tout" [ref=e416] [cursor=pointer]
+              - generic [ref=e419]:
+                - generic [ref=e420] [cursor=pointer]:
+                  - generic [ref=e421]:
+                    - generic [ref=e422]: TA
+                    - generic [ref=e423]:
+                      - paragraph [ref=e424]: "#PM/2026/10/00029"
+                      - paragraph [ref=e425]: Test Audit2 - 1 vet.
+                  - generic [ref=e426]: Pret
+                  - generic [ref=e429]:
+                    - paragraph [ref=e430]: 3 000
+                    - paragraph [ref=e431]: XOF
+                - generic [ref=e434] [cursor=pointer]:
+                  - generic [ref=e435]:
+                    - generic [ref=e436]: TF
+                    - generic [ref=e437]:
+                      - paragraph [ref=e438]: "#PM/2026/10/00028"
+                      - paragraph [ref=e439]: Test Fix - 1 vet.
+                  - generic [ref=e440]: Pret
+                  - generic [ref=e443]:
+                    - paragraph [ref=e444]: 1 500
+                    - paragraph [ref=e445]: XOF
+                - generic [ref=e448] [cursor=pointer]:
+                  - generic [ref=e449]:
+                    - generic [ref=e450]: TI
+                    - generic [ref=e451]:
+                      - paragraph [ref=e452]: "#PM/2026/10/00027"
+                      - paragraph [ref=e453]: Test Impaye - 1 vet.
+                  - generic [ref=e454]: Pret
+                  - generic [ref=e457]:
+                    - paragraph [ref=e458]: 1 500
+                    - paragraph [ref=e459]: XOF
+                - generic [ref=e462] [cursor=pointer]:
+                  - generic [ref=e463]:
+                    - generic [ref=e464]: TV
+                    - generic [ref=e465]:
+                      - paragraph [ref=e466]: "#PM/2026/10/00026"
+                      - paragraph [ref=e467]: Test VIP - 1 vet.
+                  - generic [ref=e468]: Livre
+                  - generic [ref=e471]:
+                    - paragraph [ref=e472]: 25 000
+                    - paragraph [ref=e473]: XOF
+                - generic [ref=e476] [cursor=pointer]:
+                  - generic [ref=e477]:
+                    - generic [ref=e478]: TN
+                    - generic [ref=e479]:
+                      - paragraph [ref=e480]: "#PM/2026/10/00025"
+                      - paragraph [ref=e481]: Test NonPaye - 1 vet.
+                  - generic [ref=e482]: Pret
+                  - generic [ref=e485]:
+                    - paragraph [ref=e486]: 4 500
+                    - paragraph [ref=e487]: XOF
+            - generic [ref=e490]:
+              - heading "Raccourcis operationnels" [level=3] [ref=e491]
+              - generic [ref=e492]:
+                - button [ref=e493] [cursor=pointer]:
+                  - generic [ref=e500]:
+                    - paragraph [ref=e501]: Scan QR Atelier
+                    - paragraph [ref=e502]: Pointer les lots
+                - button [ref=e503] [cursor=pointer]:
+                  - generic [ref=e508]:
+                    - paragraph [ref=e509]: Ouvrir la Caisse
+                    - paragraph [ref=e510]: Enregistrer les paiements
+                - button [ref=e511] [cursor=pointer]:
+                  - generic [ref=e515]:
+                    - paragraph [ref=e516]: SMS Groupe
+                    - paragraph [ref=e517]: Informer les clients
+                - button [ref=e518] [cursor=pointer]:
+                  - generic [ref=e523]:
+                    - paragraph [ref=e524]: Grille tarifs
+                    - paragraph [ref=e525]: Prix des prestations
+            - paragraph [ref=e526]: 2026 - PressingManager. Tous droits reserves.
+    - region "Notifications alt+T"
+  - generic [aria-hidden] [ref=e527]: "2"

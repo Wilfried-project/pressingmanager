@@ -11,6 +11,7 @@ import {
   ScanLine, Wallet, MessageSquare, Tag,
   TrendingUp, TrendingDown, ArrowRight, Sparkles
 } from 'lucide-react'
+import { canonOrderStatus, isLateOrder, toLocalDay } from '../../lib/orderStatus'
 import { KpiCard, StatusBadge, Avatar } from '../../components/ui'
 
 // ============================================
@@ -47,7 +48,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const STATUS_TO_BADGE: Record<string, any> = {
-  recu: 'pending', en_attente: 'pending', tri: 'inProgress', lavage: 'inProgress',
+  recu: 'inProgress', en_attente: 'inProgress', tri: 'inProgress', lavage: 'inProgress',
   sechage: 'inProgress', repassage: 'inProgress', emballage: 'inProgress',
   pret: 'ready', livre: 'delivered', annule: 'cancelled'
 }
@@ -108,17 +109,17 @@ export const DashboardModern: React.FC = () => {
 
       const todayOrders = orders.filter(o => new Date(o.created_at) >= today)
       const todayClothes = todayOrders.reduce((s, o) => s + (o.clothes?.length || 0), 0)
+      const todayKey = toLocalDay(today)
+      const { data: cashSessions } = await supabase.from('cash_sessions').select('id,opened_at').eq('tenant_id', tenantId).order('opened_at', { ascending: false })
+      const { data: cashTxs } = await supabase.from('cash_transactions').select('amount,type,created_at,session_id').eq('tenant_id', tenantId)
       const readyOrders = orders.filter(o => o.status === 'pret').length
-      const todayCA = todayOrders.reduce((s, o) => s + (o.total || 0), 0)
+      const openSessionId = (cashSessions || []).find((s: any) => { const d = String(s.opened_at || '').slice(0, 10); return d === todayKey })?.id || (cashSessions || [])[0]?.id
+      const todayCA = (cashTxs || []).filter(t => t.type === 'entree' && (!openSessionId || t.session_id === openSessionId)).reduce((s, t) => s + (Number(t.amount) || 0), 0)
       const monthOrders = orders.filter(o => new Date(o.created_at) >= new Date(monthStart))
       const monthCA = monthOrders.reduce((s, o) => s + (o.total || 0), 0)
-      const lateOrders = orders.filter(o => {
-        if (!o.expected_at || ['livre', 'annule'].includes(o.status)) return false
-        return new Date(o.expected_at) < new Date()
-      })
+      const lateOrders = orders.filter(o => isLateOrder(o, today))
       const completedOrders = orders.filter(o => o.status === 'livre').length
       const cancelledOrders = orders.filter(o => o.status === 'annule').length
-      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
       const todayDeliveries = orders.filter(o => o.status === 'livre' && typeof o.delivered_at === 'string' && o.delivered_at.startsWith(todayKey)).length
 
       const { count: totalClients } = await supabase
@@ -130,7 +131,7 @@ export const DashboardModern: React.FC = () => {
 
       const statusMap: Record<string, number> = {}
       orders.forEach(o => {
-        const s = STATUS_LABELS[o.status] || o.status
+        const s = canonOrderStatus(o.status) === 'en_cours' ? 'En cours' : (STATUS_LABELS[o.status] || o.status)
         statusMap[s] = (statusMap[s] || 0) + 1
       })
       const ordersByStatus = Object.entries(statusMap).map(([name, value]) => ({ name, value }))
@@ -229,7 +230,7 @@ export const DashboardModern: React.FC = () => {
       </div>
 
       {/* ============ BANDEAU ALERTES ============ */}
-      {lateOrdersList.length > 0 && (
+      {stats.lateOrders > 0 && (
         <div
           onClick={() => navigate('/orders')}
           className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-red-50 via-red-50/50 to-white border border-red-100 cursor-pointer hover:shadow-md transition-all animate-fade-in"
@@ -238,11 +239,11 @@ export const DashboardModern: React.FC = () => {
             <Icon name="notification_important" size={22} />
           </div>
           <div className="flex-1">
-            <p className="font-bold text-red-800 text-sm">
-              {lateOrdersList.length} commande(s) en retard
+            <p className="font-bold text-red-800 text-sm" data-testid="late-banner-count">
+              {stats.lateOrders} commande(s) en retard
             </p>
             <p className="text-xs text-red-600 mt-0.5">
-              Clients a contacter immediatement - cliquez pour voir
+              {lateOrdersList.length} affichee(s) ci-dessous - Clients a contacter immediatement - cliquez pour voir
             </p>
           </div>
           <ArrowRight size={18} className="text-red-500 shrink-0" />
@@ -284,11 +285,12 @@ export const DashboardModern: React.FC = () => {
       {/* ============ KPI LIGNE 2 - FINANCE ============ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          label="CA aujourd'hui"
+          label="CA encaisse aujourd'hui"
           value={stats.todayCA.toLocaleString('fr-FR')}
           unit="XOF"
           icon={<Icon name="payments" size={18} />}
           variant="primary"
+          sub="Entrees de la session de caisse en cours"
           trend={14}
         />
         <KpiCard
@@ -305,7 +307,7 @@ export const DashboardModern: React.FC = () => {
           icon={<Icon name="groups" size={18} />}
         />
         <KpiCard
-          label="Retards"
+          label="Commandes en retard"
           value={stats.lateOrders}
           unit="a traiter"
           icon={<Icon name="warning" size={18} />}

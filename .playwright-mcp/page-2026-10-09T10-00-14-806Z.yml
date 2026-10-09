@@ -1,0 +1,950 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e8]:
+      - paragraph [ref=e13]: Activez les notifications pour être alerté quand une commande est prête
+      - generic [ref=e14]:
+        - button "Activer" [ref=e15] [cursor=pointer]
+        - button "Plus tard" [ref=e16] [cursor=pointer]
+        - button "Fermer" [ref=e17] [cursor=pointer]
+    - generic [ref=e21]:
+      - complementary [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - generic [ref=e25]: local_laundry_service
+            - generic [ref=e27]:
+              - generic [ref=e28]: PressingManager
+              - generic [ref=e29]: Kouadou TEST
+          - navigation [ref=e30]:
+            - generic [ref=e31]:
+              - generic [ref=e32]: Principal
+              - link "grid_view Tableau de bord" [ref=e33] [cursor=pointer]:
+                - /url: /
+                - generic [ref=e34]: grid_view
+                - generic [ref=e35]: Tableau de bord
+              - link "receipt_long Commandes" [ref=e36] [cursor=pointer]:
+                - /url: /orders
+                - generic [ref=e37]: receipt_long
+                - generic [ref=e38]: Commandes
+            - generic [ref=e39]:
+              - generic [ref=e40]: Clients & Ventes
+              - link "groups Clients" [ref=e41] [cursor=pointer]:
+                - /url: /clients
+                - generic [ref=e42]: groups
+                - generic [ref=e43]: Clients
+              - link "request_quote Facturation" [ref=e44] [cursor=pointer]:
+                - /url: /billing
+                - generic [ref=e45]: request_quote
+                - generic [ref=e46]: Facturation
+              - link "point_of_sale Caisse" [ref=e47] [cursor=pointer]:
+                - /url: /cashier
+                - generic [ref=e48]: point_of_sale
+                - generic [ref=e49]: Caisse
+              - link "loyalty Fidélité" [ref=e50] [cursor=pointer]:
+                - /url: /loyalty
+                - generic [ref=e51]: loyalty
+                - generic [ref=e52]: Fidélité
+            - generic [ref=e53]:
+              - generic [ref=e54]: Opérations
+              - link "inventory_2 Stock" [ref=e55] [cursor=pointer]:
+                - /url: /stock
+                - generic [ref=e56]: inventory_2
+                - generic [ref=e57]: Stock
+              - link "local_shipping Livraisons" [ref=e58] [cursor=pointer]:
+                - /url: /delivery
+                - generic [ref=e59]: local_shipping
+                - generic [ref=e60]: Livraisons
+              - link "calendar_month Agenda" [ref=e61] [cursor=pointer]:
+                - /url: /agenda
+                - generic [ref=e62]: calendar_month
+                - generic [ref=e63]: Agenda
+              - link "qr_code_scanner Atelier" [ref=e64] [cursor=pointer]:
+                - /url: /atelier
+                - generic [ref=e65]: qr_code_scanner
+                - generic [ref=e66]: Atelier
+            - generic [ref=e67]:
+              - generic [ref=e68]: Équipe & Finance
+              - link "badge Employés & RH" [ref=e69] [cursor=pointer]:
+                - /url: /hr
+                - generic [ref=e70]: badge
+                - generic [ref=e71]: Employés & RH
+              - link "account_balance_wallet Comptabilité" [ref=e72] [cursor=pointer]:
+                - /url: /accounting
+                - generic [ref=e73]: account_balance_wallet
+                - generic [ref=e74]: Comptabilité
+              - link "monitoring Rapports" [ref=e75] [cursor=pointer]:
+                - /url: /reports
+                - generic [ref=e76]: monitoring
+                - generic [ref=e77]: Rapports
+            - generic [ref=e78]:
+              - generic [ref=e79]: Configuration
+              - link "settings Paramètres" [ref=e80] [cursor=pointer]:
+                - /url: /settings
+                - generic [ref=e81]: settings
+                - generic [ref=e82]: Paramètres
+              - link "manage_accounts Utilisateurs" [ref=e83] [cursor=pointer]:
+                - /url: /users
+                - generic [ref=e84]: manage_accounts
+                - generic [ref=e85]: Utilisateurs
+        - generic [ref=e86]:
+          - generic [ref=e87]: Atelier en ligne
+          - generic [ref=e90]: v1.0.0
+      - generic [ref=e91]:
+        - banner [ref=e528]:
+          - generic [ref=e529]:
+            - link "local_laundry_service PressingManager Kouadou TEST" [ref=e530] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e531]: local_laundry_service
+              - generic [ref=e533]:
+                - generic [ref=e534]: PressingManager
+                - generic [ref=e535]: Kouadou TEST
+            - generic [ref=e536]:
+              - button "Recherche" [ref=e537] [cursor=pointer]:
+                - generic [ref=e538]: search
+              - button "Notifications" [ref=e539] [cursor=pointer]:
+                - generic [ref=e540]: notifications
+              - link "Mon compte" [ref=e541] [cursor=pointer]:
+                - /url: /settings
+                - text: KT
+        - banner [ref=e92]:
+          - generic [ref=e93]:
+            - button "menu" [ref=e542] [cursor=pointer]
+            - generic [ref=e97]:
+              - button "add Nouvelle Commande" [ref=e98] [cursor=pointer]:
+                - generic [ref=e99]: add
+                - generic [ref=e100]: Nouvelle Commande
+              - generic [ref=e101]:
+                - generic [ref=e102]:
+                  - generic [ref=e103]: Kouadou TEST
+                  - generic [ref=e104]: admin
+                - generic [ref=e105]: KT
+                - button "logout" [ref=e106] [cursor=pointer]
+        - main [ref=e108]:
+          - generic [ref=e847]:
+            - generic [ref=e848]:
+              - generic [ref=e849]:
+                - generic [ref=e850]:
+                  - heading "Commandes" [level=1] [ref=e851]
+                  - generic [ref=e852]: 28 au total
+                - paragraph [ref=e857]: Suivi complet des depots, traitements et livraisons
+              - button "Nouvelle commande" [ref=e858] [cursor=pointer]
+            - generic [ref=e860]:
+              - button "En cours 21 cmd" [ref=e861] [cursor=pointer]:
+                - generic [ref=e862]: En cours
+                - generic [ref=e869]:
+                  - generic [ref=e870]: "21"
+                  - generic [ref=e871]: cmd
+              - button "Prets 5 cmd" [ref=e874] [cursor=pointer]:
+                - generic [ref=e875]: Prets
+                - generic [ref=e881]:
+                  - generic [ref=e882]: "5"
+                  - generic [ref=e883]: cmd
+              - button "Livres 2 cmd" [ref=e886] [cursor=pointer]:
+                - generic [ref=e887]: Livres
+                - generic [ref=e895]:
+                  - generic [ref=e896]: "2"
+                  - generic [ref=e897]: cmd
+              - button "Annules 0 cmd" [ref=e900] [cursor=pointer]:
+                - generic [ref=e901]: Annules
+                - generic [ref=e908]:
+                  - generic [ref=e909]: "0"
+                  - generic [ref=e910]: cmd
+            - button [ref=e912] [cursor=pointer]:
+              - generic [ref=e916]:
+                - paragraph [ref=e917]: Paiement — indicateur transverse
+                - paragraph [ref=e918]: "Commandes avec solde impaye : 13 cmd"
+                - paragraph [ref=e919]: Ne s'additionne pas aux statuts ci-dessus — cliquez pour filtrer
+            - generic [ref=e920]:
+              - textbox "Numéro ticket, nom client, téléphone..." [ref=e925]
+              - combobox [ref=e929] [cursor=pointer]:
+                - option "Tous les statuts" [selected]
+                - option "En cours"
+                - option "Pret"
+                - option "Livre"
+                - option "Annule"
+                - option "Impayes"
+            - table [ref=e932]:
+              - rowgroup [ref=e933]:
+                - row [ref=e934]:
+                  - columnheader "Ticket" [ref=e935]
+                  - columnheader "Client" [ref=e936]
+                  - columnheader "Articles" [ref=e937]
+                  - columnheader "Total / Paiement" [ref=e938]
+                  - columnheader "Créée le" [ref=e939]
+                  - columnheader "Statut" [ref=e940]
+                  - columnheader "Date limite" [ref=e941]
+                  - columnheader "Actions" [ref=e942]
+              - rowgroup [ref=e943]:
+                - row [ref=e944]:
+                  - cell "#PM/2026/10/00029" [ref=e945]
+                  - cell "TA Test Audit2 +225 07 07 07 07 07" [ref=e953]:
+                    - generic [ref=e954]:
+                      - generic [ref=e955]: TA
+                      - generic [ref=e956]:
+                        - generic [ref=e957]: Test Audit2
+                        - generic [ref=e958]: +225 07 07 07 07 07
+                  - cell "1 article(s)" [ref=e959]
+                  - cell "3 000 XOF Paye" [ref=e965]:
+                    - generic [ref=e967]:
+                      - generic [ref=e968]: 3 000 XOF
+                      - generic [ref=e969]: Paye
+                  - cell "08/10/2026 14:52" [ref=e971]:
+                    - generic [ref=e972]:
+                      - generic [ref=e973]: 08/10/2026
+                      - generic [ref=e974]: 14:52
+                  - cell "Prêt" [ref=e975]
+                  - cell "11/10/2026" [ref=e978]
+                  - cell [ref=e979]:
+                    - generic [ref=e980]:
+                      - button "WhatsApp" [ref=e981] [cursor=pointer]
+                      - button "Voir details" [ref=e985] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e989] [cursor=pointer]
+                      - button "Notifier client" [ref=e994] [cursor=pointer]
+                      - button "Supprimer" [ref=e998] [cursor=pointer]
+                - row [ref=e1002]:
+                  - cell "#PM/2026/10/00028" [ref=e1003]
+                  - cell "TF Test Fix +225 06 06 06 06 06" [ref=e1011]:
+                    - generic [ref=e1012]:
+                      - generic [ref=e1013]: TF
+                      - generic [ref=e1014]:
+                        - generic [ref=e1015]: Test Fix
+                        - generic [ref=e1016]: +225 06 06 06 06 06
+                  - cell "1 article(s)" [ref=e1017]
+                  - 'cell "1 500 XOF Non paye Reste: 1 500 XOF" [ref=e1023]':
+                    - generic [ref=e1024]:
+                      - generic [ref=e1025]:
+                        - generic [ref=e1026]: 1 500 XOF
+                        - generic [ref=e1027]: Non paye
+                      - generic [ref=e1029]: "Reste: 1 500 XOF"
+                  - cell "08/10/2026 14:30" [ref=e1030]:
+                    - generic [ref=e1031]:
+                      - generic [ref=e1032]: 08/10/2026
+                      - generic [ref=e1033]: 14:30
+                  - cell "Prêt" [ref=e1034]
+                  - cell "11/10/2026" [ref=e1037]
+                  - cell [ref=e1038]:
+                    - generic [ref=e1039]:
+                      - button "WhatsApp" [ref=e1040] [cursor=pointer]
+                      - button "Voir details" [ref=e1044] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1048] [cursor=pointer]
+                      - button "Notifier client" [ref=e1053] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1057] [cursor=pointer]
+                      - button "Supprimer" [ref=e1060] [cursor=pointer]
+                - row [ref=e1064]:
+                  - cell "#PM/2026/10/00027" [ref=e1065]
+                  - cell "TI Test Impaye +225 05 05 05 05 05" [ref=e1073]:
+                    - generic [ref=e1074]:
+                      - generic [ref=e1075]: TI
+                      - generic [ref=e1076]:
+                        - generic [ref=e1077]: Test Impaye
+                        - generic [ref=e1078]: +225 05 05 05 05 05
+                  - cell "1 article(s)" [ref=e1079]
+                  - 'cell "1 500 XOF Non paye Reste: 1 500 XOF" [ref=e1085]':
+                    - generic [ref=e1086]:
+                      - generic [ref=e1087]:
+                        - generic [ref=e1088]: 1 500 XOF
+                        - generic [ref=e1089]: Non paye
+                      - generic [ref=e1091]: "Reste: 1 500 XOF"
+                  - cell "08/10/2026 13:39" [ref=e1092]:
+                    - generic [ref=e1093]:
+                      - generic [ref=e1094]: 08/10/2026
+                      - generic [ref=e1095]: 13:39
+                  - cell "Prêt" [ref=e1096]
+                  - cell "15/10/2026" [ref=e1099]
+                  - cell [ref=e1100]:
+                    - generic [ref=e1101]:
+                      - button "WhatsApp" [ref=e1102] [cursor=pointer]
+                      - button "Voir details" [ref=e1106] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1110] [cursor=pointer]
+                      - button "Notifier client" [ref=e1115] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1119] [cursor=pointer]
+                      - button "Supprimer" [ref=e1122] [cursor=pointer]
+                - row [ref=e1126]:
+                  - cell "#PM/2026/10/00026" [ref=e1127]
+                  - cell "TV Test VIP +225 04 04 04 04 04" [ref=e1135]:
+                    - generic [ref=e1136]:
+                      - generic [ref=e1137]: TV
+                      - generic [ref=e1138]:
+                        - generic [ref=e1139]: Test VIP
+                        - generic [ref=e1140]: +225 04 04 04 04 04
+                  - cell "1 article(s)" [ref=e1141]
+                  - cell "25 000 XOF Paye" [ref=e1147]:
+                    - generic [ref=e1149]:
+                      - generic [ref=e1150]: 25 000 XOF
+                      - generic [ref=e1151]: Paye
+                  - cell "08/10/2026 13:39" [ref=e1153]:
+                    - generic [ref=e1154]:
+                      - generic [ref=e1155]: 08/10/2026
+                      - generic [ref=e1156]: 13:39
+                  - cell "Livré" [ref=e1157]
+                  - cell "09/10/2026" [ref=e1160]
+                  - cell [ref=e1161]:
+                    - generic [ref=e1162]:
+                      - button "WhatsApp" [ref=e1163] [cursor=pointer]
+                      - button "Voir details" [ref=e1167] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1171] [cursor=pointer]
+                      - button "Supprimer" [ref=e1176] [cursor=pointer]
+                - row [ref=e1180]:
+                  - cell "#PM/2026/10/00025" [ref=e1181]
+                  - cell "TN Test NonPaye +225 03 03 03 03 03" [ref=e1189]:
+                    - generic [ref=e1190]:
+                      - generic [ref=e1191]: TN
+                      - generic [ref=e1192]:
+                        - generic [ref=e1193]: Test NonPaye
+                        - generic [ref=e1194]: +225 03 03 03 03 03
+                  - cell "1 article(s)" [ref=e1195]
+                  - 'cell "4 500 XOF Non paye Reste: 4 500 XOF" [ref=e1201]':
+                    - generic [ref=e1202]:
+                      - generic [ref=e1203]:
+                        - generic [ref=e1204]: 4 500 XOF
+                        - generic [ref=e1205]: Non paye
+                      - generic [ref=e1207]: "Reste: 4 500 XOF"
+                  - cell "08/10/2026 13:39" [ref=e1208]:
+                    - generic [ref=e1209]:
+                      - generic [ref=e1210]: 08/10/2026
+                      - generic [ref=e1211]: 13:39
+                  - cell "Prêt" [ref=e1212]
+                  - cell "13/10/2026" [ref=e1215]
+                  - cell [ref=e1216]:
+                    - generic [ref=e1217]:
+                      - button "WhatsApp" [ref=e1218] [cursor=pointer]
+                      - button "Voir details" [ref=e1222] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1226] [cursor=pointer]
+                      - button "Notifier client" [ref=e1231] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1235] [cursor=pointer]
+                      - button "Supprimer" [ref=e1238] [cursor=pointer]
+                - row [ref=e1242]:
+                  - cell "#PM/2026/10/00024" [ref=e1243]
+                  - cell "TP Test PayeTotal +225 02 02 02 02 02" [ref=e1251]:
+                    - generic [ref=e1252]:
+                      - generic [ref=e1253]: TP
+                      - generic [ref=e1254]:
+                        - generic [ref=e1255]: Test PayeTotal
+                        - generic [ref=e1256]: +225 02 02 02 02 02
+                  - cell "1 article(s)" [ref=e1257]
+                  - cell "5 000 XOF Paye" [ref=e1263]:
+                    - generic [ref=e1265]:
+                      - generic [ref=e1266]: 5 000 XOF
+                      - generic [ref=e1267]: Paye
+                  - cell "08/10/2026 13:39" [ref=e1269]:
+                    - generic [ref=e1270]:
+                      - generic [ref=e1271]: 08/10/2026
+                      - generic [ref=e1272]: 13:39
+                  - cell "Livré" [ref=e1273]
+                  - cell "10/10/2026" [ref=e1276]
+                  - cell [ref=e1277]:
+                    - generic [ref=e1278]:
+                      - button "WhatsApp" [ref=e1279] [cursor=pointer]
+                      - button "Voir details" [ref=e1283] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1287] [cursor=pointer]
+                      - button "Supprimer" [ref=e1292] [cursor=pointer]
+                - row [ref=e1296]:
+                  - cell "#PM/2026/10/00023" [ref=e1297]
+                  - cell "TA Test Acompte +225 01 01 01 01 01" [ref=e1305]:
+                    - generic [ref=e1306]:
+                      - generic [ref=e1307]: TA
+                      - generic [ref=e1308]:
+                        - generic [ref=e1309]: Test Acompte
+                        - generic [ref=e1310]: +225 01 01 01 01 01
+                  - cell "1 article(s)" [ref=e1311]
+                  - 'cell "3 000 XOF Partiel Reste: 1 500 XOF" [ref=e1317]':
+                    - generic [ref=e1318]:
+                      - generic [ref=e1319]:
+                        - generic [ref=e1320]: 3 000 XOF
+                        - generic [ref=e1321]: Partiel
+                      - generic [ref=e1323]: "Reste: 1 500 XOF"
+                  - cell "08/10/2026 13:38" [ref=e1324]:
+                    - generic [ref=e1325]:
+                      - generic [ref=e1326]: 08/10/2026
+                      - generic [ref=e1327]: 13:38
+                  - cell "Prêt" [ref=e1328]
+                  - cell "11/10/2026" [ref=e1331]
+                  - cell [ref=e1332]:
+                    - generic [ref=e1333]:
+                      - button "WhatsApp" [ref=e1334] [cursor=pointer]
+                      - button "Voir details" [ref=e1338] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1342] [cursor=pointer]
+                      - button "Notifier client" [ref=e1347] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1351] [cursor=pointer]
+                      - button "Supprimer" [ref=e1354] [cursor=pointer]
+                - row [ref=e1358]:
+                  - cell "#PM/2026/10/00022" [ref=e1359]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e1367]:
+                    - generic [ref=e1368]:
+                      - generic [ref=e1369]: EB
+                      - generic [ref=e1370]:
+                        - generic [ref=e1371]: Elvira Blanche
+                        - generic [ref=e1372]: "0749389299"
+                  - cell "1 article(s)" [ref=e1373]
+                  - 'cell "15 000 XOF Non paye Reste: 15 000 XOF" [ref=e1379]':
+                    - generic [ref=e1380]:
+                      - generic [ref=e1381]:
+                        - generic [ref=e1382]: 15 000 XOF
+                        - generic [ref=e1383]: Non paye
+                      - generic [ref=e1385]: "Reste: 15 000 XOF"
+                  - cell "08/10/2026 13:31" [ref=e1386]:
+                    - generic [ref=e1387]:
+                      - generic [ref=e1388]: 08/10/2026
+                      - generic [ref=e1389]: 13:31
+                  - cell "En cours" [ref=e1390]
+                  - cell "09/10/2026" [ref=e1393]
+                  - cell [ref=e1394]:
+                    - generic [ref=e1395]:
+                      - button "WhatsApp" [ref=e1396] [cursor=pointer]
+                      - button "Voir details" [ref=e1400] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1404] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1409] [cursor=pointer]
+                      - button "Supprimer" [ref=e1412] [cursor=pointer]
+                - row [ref=e1416]:
+                  - cell "#PM/2026/09/00021" [ref=e1417]
+                  - cell "DL Denise Lali +2250707070707" [ref=e1425]:
+                    - generic [ref=e1426]:
+                      - generic [ref=e1427]: DL
+                      - generic [ref=e1428]:
+                        - generic [ref=e1429]: Denise Lali
+                        - generic [ref=e1430]: "+2250707070707"
+                  - cell "1 article(s)" [ref=e1431]
+                  - 'cell "15 000 XOF Partiel Reste: 9 000 XOF" [ref=e1437]':
+                    - generic [ref=e1438]:
+                      - generic [ref=e1439]:
+                        - generic [ref=e1440]: 15 000 XOF
+                        - generic [ref=e1441]: Partiel
+                      - generic [ref=e1443]: "Reste: 9 000 XOF"
+                  - cell "20/09/2026 10:56" [ref=e1444]:
+                    - generic [ref=e1445]:
+                      - generic [ref=e1446]: 20/09/2026
+                      - generic [ref=e1447]: 10:56
+                  - cell "En cours" [ref=e1448]
+                  - cell "23/09/2026" [ref=e1451]
+                  - cell [ref=e1452]:
+                    - generic [ref=e1453]:
+                      - button "WhatsApp" [ref=e1454] [cursor=pointer]
+                      - button "Voir details" [ref=e1458] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1462] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1467] [cursor=pointer]
+                      - button "Supprimer" [ref=e1470] [cursor=pointer]
+                - row [ref=e1474]:
+                  - cell "#PM/2026/09/00020" [ref=e1475]
+                  - cell "LK Loris Kessie 0707132344" [ref=e1483]:
+                    - generic [ref=e1484]:
+                      - generic [ref=e1485]: LK
+                      - generic [ref=e1486]:
+                        - generic [ref=e1487]: Loris Kessie
+                        - generic [ref=e1488]: "0707132344"
+                  - cell "1 article(s)" [ref=e1489]
+                  - 'cell "7 500 XOF Partiel Reste: 3 500 XOF" [ref=e1495]':
+                    - generic [ref=e1496]:
+                      - generic [ref=e1497]:
+                        - generic [ref=e1498]: 7 500 XOF
+                        - generic [ref=e1499]: Partiel
+                      - generic [ref=e1501]: "Reste: 3 500 XOF"
+                  - cell "20/09/2026 10:49" [ref=e1502]:
+                    - generic [ref=e1503]:
+                      - generic [ref=e1504]: 20/09/2026
+                      - generic [ref=e1505]: 10:49
+                  - cell "En cours" [ref=e1506]
+                  - cell "23/09/2026" [ref=e1509]
+                  - cell [ref=e1510]:
+                    - generic [ref=e1511]:
+                      - button "WhatsApp" [ref=e1512] [cursor=pointer]
+                      - button "Voir details" [ref=e1516] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1520] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1525] [cursor=pointer]
+                      - button "Supprimer" [ref=e1528] [cursor=pointer]
+                - row [ref=e1532]:
+                  - cell "#PM/2026/09/00019" [ref=e1533]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e1541]:
+                    - generic [ref=e1542]:
+                      - generic [ref=e1543]: EB
+                      - generic [ref=e1544]:
+                        - generic [ref=e1545]: Elvira Blanche
+                        - generic [ref=e1546]: "0749389299"
+                  - cell "1 article(s)" [ref=e1547]
+                  - 'cell "2 500 XOF Non paye Reste: 2 500 XOF" [ref=e1553]':
+                    - generic [ref=e1554]:
+                      - generic [ref=e1555]:
+                        - generic [ref=e1556]: 2 500 XOF
+                        - generic [ref=e1557]: Non paye
+                      - generic [ref=e1559]: "Reste: 2 500 XOF"
+                  - cell "07/09/2026 16:41" [ref=e1560]:
+                    - generic [ref=e1561]:
+                      - generic [ref=e1562]: 07/09/2026
+                      - generic [ref=e1563]: 16:41
+                  - cell "En cours" [ref=e1564]
+                  - cell "03/10/2026" [ref=e1567]
+                  - cell [ref=e1568]:
+                    - generic [ref=e1569]:
+                      - button "WhatsApp" [ref=e1570] [cursor=pointer]
+                      - button "Voir details" [ref=e1574] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1578] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1583] [cursor=pointer]
+                      - button "Supprimer" [ref=e1586] [cursor=pointer]
+                - row [ref=e1590]:
+                  - cell "#PM/2026/09/00018" [ref=e1591]
+                  - cell "DL Denise Lali +2250707070707" [ref=e1599]:
+                    - generic [ref=e1600]:
+                      - generic [ref=e1601]: DL
+                      - generic [ref=e1602]:
+                        - generic [ref=e1603]: Denise Lali
+                        - generic [ref=e1604]: "+2250707070707"
+                  - cell "1 article(s)" [ref=e1605]
+                  - 'cell "2 000 XOF Non paye Reste: 2 000 XOF" [ref=e1611]':
+                    - generic [ref=e1612]:
+                      - generic [ref=e1613]:
+                        - generic [ref=e1614]: 2 000 XOF
+                        - generic [ref=e1615]: Non paye
+                      - generic [ref=e1617]: "Reste: 2 000 XOF"
+                  - cell "06/09/2026 18:15" [ref=e1618]:
+                    - generic [ref=e1619]:
+                      - generic [ref=e1620]: 06/09/2026
+                      - generic [ref=e1621]: 18:15
+                  - cell "En cours" [ref=e1622]
+                  - cell "19/09/2026" [ref=e1625]
+                  - cell [ref=e1626]:
+                    - generic [ref=e1627]:
+                      - button "WhatsApp" [ref=e1628] [cursor=pointer]
+                      - button "Voir details" [ref=e1632] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1636] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1641] [cursor=pointer]
+                      - button "Supprimer" [ref=e1644] [cursor=pointer]
+                - row [ref=e1648]:
+                  - cell "#PM/2026/09/00017" [ref=e1649]
+                  - cell "DL Denise Lali +2250707070707" [ref=e1657]:
+                    - generic [ref=e1658]:
+                      - generic [ref=e1659]: DL
+                      - generic [ref=e1660]:
+                        - generic [ref=e1661]: Denise Lali
+                        - generic [ref=e1662]: "+2250707070707"
+                  - cell "4 article(s)" [ref=e1663]
+                  - 'cell "11 000 XOF Partiel Reste: 6 000 XOF" [ref=e1669]':
+                    - generic [ref=e1670]:
+                      - generic [ref=e1671]:
+                        - generic [ref=e1672]: 11 000 XOF
+                        - generic [ref=e1673]: Partiel
+                      - generic [ref=e1675]: "Reste: 6 000 XOF"
+                  - cell "06/09/2026 12:54" [ref=e1676]:
+                    - generic [ref=e1677]:
+                      - generic [ref=e1678]: 06/09/2026
+                      - generic [ref=e1679]: 12:54
+                  - cell "En cours" [ref=e1680]
+                  - cell "11/09/2026" [ref=e1683]
+                  - cell [ref=e1684]:
+                    - generic [ref=e1685]:
+                      - button "WhatsApp" [ref=e1686] [cursor=pointer]
+                      - button "Voir details" [ref=e1690] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1694] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1699] [cursor=pointer]
+                      - button "Supprimer" [ref=e1702] [cursor=pointer]
+                - row [ref=e1706]:
+                  - cell "#PM/2026/09/00016" [ref=e1707]
+                  - cell "DO Desiree OULOTO 0934012345" [ref=e1715]:
+                    - generic [ref=e1716]:
+                      - generic [ref=e1717]: DO
+                      - generic [ref=e1718]:
+                        - generic [ref=e1719]: Desiree OULOTO
+                        - generic [ref=e1720]: "0934012345"
+                  - cell "8 article(s)" [ref=e1721]
+                  - cell "5 600 XOF Paye" [ref=e1727]:
+                    - generic [ref=e1729]:
+                      - generic [ref=e1730]: 5 600 XOF
+                      - generic [ref=e1731]: Paye
+                  - cell "06/09/2026 12:23" [ref=e1733]:
+                    - generic [ref=e1734]:
+                      - generic [ref=e1735]: 06/09/2026
+                      - generic [ref=e1736]: 12:23
+                  - cell "En cours" [ref=e1737]
+                  - cell "19/09/2026" [ref=e1740]
+                  - cell [ref=e1741]:
+                    - generic [ref=e1742]:
+                      - button "WhatsApp" [ref=e1743] [cursor=pointer]
+                      - button "Voir details" [ref=e1747] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1751] [cursor=pointer]
+                      - button "Supprimer" [ref=e1756] [cursor=pointer]
+                - row [ref=e1760]:
+                  - cell "#PM/2026/09/00015" [ref=e1761]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e1769]:
+                    - generic [ref=e1770]:
+                      - generic [ref=e1771]: EB
+                      - generic [ref=e1772]:
+                        - generic [ref=e1773]: Elvira Blanche
+                        - generic [ref=e1774]: "0749389299"
+                  - cell "2 article(s)" [ref=e1775]
+                  - cell "1 400 XOF Paye" [ref=e1781]:
+                    - generic [ref=e1783]:
+                      - generic [ref=e1784]: 1 400 XOF
+                      - generic [ref=e1785]: Paye
+                  - cell "06/09/2026 10:53" [ref=e1787]:
+                    - generic [ref=e1788]:
+                      - generic [ref=e1789]: 06/09/2026
+                      - generic [ref=e1790]: 10:53
+                  - cell "En cours" [ref=e1791]
+                  - cell "12/09/2026" [ref=e1794]
+                  - cell [ref=e1795]:
+                    - generic [ref=e1796]:
+                      - button "WhatsApp" [ref=e1797] [cursor=pointer]
+                      - button "Voir details" [ref=e1801] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1805] [cursor=pointer]
+                      - button "Supprimer" [ref=e1810] [cursor=pointer]
+                - row [ref=e1814]:
+                  - cell "#PM/2026/09/00014" [ref=e1815]
+                  - cell "DO Desiree OULOTO 0934012345" [ref=e1823]:
+                    - generic [ref=e1824]:
+                      - generic [ref=e1825]: DO
+                      - generic [ref=e1826]:
+                        - generic [ref=e1827]: Desiree OULOTO
+                        - generic [ref=e1828]: "0934012345"
+                  - cell "6 article(s)" [ref=e1829]
+                  - cell "9 000 XOF Paye" [ref=e1835]:
+                    - generic [ref=e1837]:
+                      - generic [ref=e1838]: 9 000 XOF
+                      - generic [ref=e1839]: Paye
+                  - cell "05/09/2026 11:51" [ref=e1841]:
+                    - generic [ref=e1842]:
+                      - generic [ref=e1843]: 05/09/2026
+                      - generic [ref=e1844]: 11:51
+                  - cell "En cours" [ref=e1845]
+                  - cell "08/09/2026" [ref=e1848]
+                  - cell [ref=e1849]:
+                    - generic [ref=e1850]:
+                      - button "WhatsApp" [ref=e1851] [cursor=pointer]
+                      - button "Voir details" [ref=e1855] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1859] [cursor=pointer]
+                      - button "Supprimer" [ref=e1864] [cursor=pointer]
+                - row [ref=e1868]:
+                  - cell "#PM/2026/09/00013" [ref=e1869]
+                  - cell "FF Fatou Fofana 0723456789" [ref=e1877]:
+                    - generic [ref=e1878]:
+                      - generic [ref=e1879]: FF
+                      - generic [ref=e1880]:
+                        - generic [ref=e1881]: Fatou Fofana
+                        - generic [ref=e1882]: "0723456789"
+                  - cell "2 article(s)" [ref=e1883]
+                  - 'cell "16 000 XOF Partiel Reste: 11 000 XOF" [ref=e1889]':
+                    - generic [ref=e1890]:
+                      - generic [ref=e1891]:
+                        - generic [ref=e1892]: 16 000 XOF
+                        - generic [ref=e1893]: Partiel
+                      - generic [ref=e1895]: "Reste: 11 000 XOF"
+                  - cell "05/09/2026 11:45" [ref=e1896]:
+                    - generic [ref=e1897]:
+                      - generic [ref=e1898]: 05/09/2026
+                      - generic [ref=e1899]: 11:45
+                  - cell "En cours" [ref=e1900]
+                  - cell "08/09/2026" [ref=e1903]
+                  - cell [ref=e1904]:
+                    - generic [ref=e1905]:
+                      - button "WhatsApp" [ref=e1906] [cursor=pointer]
+                      - button "Voir details" [ref=e1910] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1914] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1919] [cursor=pointer]
+                      - button "Supprimer" [ref=e1922] [cursor=pointer]
+                - row [ref=e1926]:
+                  - cell "#PM/2026/09/00012" [ref=e1927]
+                  - cell "LK Loris Kessie 0707132344" [ref=e1935]:
+                    - generic [ref=e1936]:
+                      - generic [ref=e1937]: LK
+                      - generic [ref=e1938]:
+                        - generic [ref=e1939]: Loris Kessie
+                        - generic [ref=e1940]: "0707132344"
+                  - cell "4 article(s)" [ref=e1941]
+                  - 'cell "3 000 XOF Partiel Reste: 1 000 XOF" [ref=e1947]':
+                    - generic [ref=e1948]:
+                      - generic [ref=e1949]:
+                        - generic [ref=e1950]: 3 000 XOF
+                        - generic [ref=e1951]: Partiel
+                      - generic [ref=e1953]: "Reste: 1 000 XOF"
+                  - cell "05/09/2026 09:27" [ref=e1954]:
+                    - generic [ref=e1955]:
+                      - generic [ref=e1956]: 05/09/2026
+                      - generic [ref=e1957]: 09:27
+                  - cell "En cours" [ref=e1958]
+                  - cell "08/09/2026" [ref=e1961]
+                  - cell [ref=e1962]:
+                    - generic [ref=e1963]:
+                      - button "WhatsApp" [ref=e1964] [cursor=pointer]
+                      - button "Voir details" [ref=e1968] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e1972] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e1977] [cursor=pointer]
+                      - button "Supprimer" [ref=e1980] [cursor=pointer]
+                - row [ref=e1984]:
+                  - cell "#PM/2026/08/00011" [ref=e1985]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e1993]:
+                    - generic [ref=e1994]:
+                      - generic [ref=e1995]: EB
+                      - generic [ref=e1996]:
+                        - generic [ref=e1997]: Elvira Blanche
+                        - generic [ref=e1998]: "0749389299"
+                  - cell "3 article(s)" [ref=e1999]
+                  - cell "2 100 XOF Paye" [ref=e2005]:
+                    - generic [ref=e2007]:
+                      - generic [ref=e2008]: 2 100 XOF
+                      - generic [ref=e2009]: Paye
+                  - cell "31/08/2026 15:14" [ref=e2011]:
+                    - generic [ref=e2012]:
+                      - generic [ref=e2013]: 31/08/2026
+                      - generic [ref=e2014]: 15:14
+                  - cell "En cours" [ref=e2015]
+                  - cell "06/09/2026" [ref=e2018]
+                  - cell [ref=e2019]:
+                    - generic [ref=e2020]:
+                      - button "WhatsApp" [ref=e2021] [cursor=pointer]
+                      - button "Voir details" [ref=e2025] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e2029] [cursor=pointer]
+                      - button "Supprimer" [ref=e2034] [cursor=pointer]
+                - row [ref=e2038]:
+                  - cell "#PM/2026/08/00010" [ref=e2039]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e2047]:
+                    - generic [ref=e2048]:
+                      - generic [ref=e2049]: EB
+                      - generic [ref=e2050]:
+                        - generic [ref=e2051]: Elvira Blanche
+                        - generic [ref=e2052]: "0749389299"
+                  - cell "1 article(s)" [ref=e2053]
+                  - cell "20 000 XOF Paye" [ref=e2059]:
+                    - generic [ref=e2061]:
+                      - generic [ref=e2062]: 20 000 XOF
+                      - generic [ref=e2063]: Paye
+                  - cell "31/08/2026 14:43" [ref=e2065]:
+                    - generic [ref=e2066]:
+                      - generic [ref=e2067]: 31/08/2026
+                      - generic [ref=e2068]: 14:43
+                  - cell "En cours" [ref=e2069]
+                  - cell "01/09/2026" [ref=e2072]
+                  - cell [ref=e2073]:
+                    - generic [ref=e2074]:
+                      - button "WhatsApp" [ref=e2075] [cursor=pointer]
+                      - button "Voir details" [ref=e2079] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e2083] [cursor=pointer]
+                      - button "Supprimer" [ref=e2088] [cursor=pointer]
+                - row [ref=e2092]:
+                  - cell "#PM/2026/08/00009" [ref=e2093]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e2101]:
+                    - generic [ref=e2102]:
+                      - generic [ref=e2103]: EB
+                      - generic [ref=e2104]:
+                        - generic [ref=e2105]: Elvira Blanche
+                        - generic [ref=e2106]: "0749389299"
+                  - cell "1 article(s)" [ref=e2107]
+                  - cell "14 000 XOF Paye" [ref=e2113]:
+                    - generic [ref=e2115]:
+                      - generic [ref=e2116]: 14 000 XOF
+                      - generic [ref=e2117]: Paye
+                  - cell "31/08/2026 14:37" [ref=e2119]:
+                    - generic [ref=e2120]:
+                      - generic [ref=e2121]: 31/08/2026
+                      - generic [ref=e2122]: 14:37
+                  - cell "En cours" [ref=e2123]
+                  - cell "01/09/2026" [ref=e2126]
+                  - cell [ref=e2127]:
+                    - generic [ref=e2128]:
+                      - button "WhatsApp" [ref=e2129] [cursor=pointer]
+                      - button "Voir details" [ref=e2133] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e2137] [cursor=pointer]
+                      - button "Supprimer" [ref=e2142] [cursor=pointer]
+                - row [ref=e2146]:
+                  - cell "#PM/2026/08/00008" [ref=e2147]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e2155]:
+                    - generic [ref=e2156]:
+                      - generic [ref=e2157]: EB
+                      - generic [ref=e2158]:
+                        - generic [ref=e2159]: Elvira Blanche
+                        - generic [ref=e2160]: "0749389299"
+                  - cell "1 article(s)" [ref=e2161]
+                  - cell "10 000 XOF Paye" [ref=e2167]:
+                    - generic [ref=e2169]:
+                      - generic [ref=e2170]: 10 000 XOF
+                      - generic [ref=e2171]: Paye
+                  - cell "31/08/2026 14:21" [ref=e2173]:
+                    - generic [ref=e2174]:
+                      - generic [ref=e2175]: 31/08/2026
+                      - generic [ref=e2176]: 14:21
+                  - cell "En cours" [ref=e2177]
+                  - cell "01/09/2026" [ref=e2180]
+                  - cell [ref=e2181]:
+                    - generic [ref=e2182]:
+                      - button "WhatsApp" [ref=e2183] [cursor=pointer]
+                      - button "Voir details" [ref=e2187] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e2191] [cursor=pointer]
+                      - button "Supprimer" [ref=e2196] [cursor=pointer]
+                - row [ref=e2200]:
+                  - cell "#PM/2026/08/00007" [ref=e2201]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e2209]:
+                    - generic [ref=e2210]:
+                      - generic [ref=e2211]: EB
+                      - generic [ref=e2212]:
+                        - generic [ref=e2213]: Elvira Blanche
+                        - generic [ref=e2214]: "0749389299"
+                  - cell "1 article(s)" [ref=e2215]
+                  - 'cell "1 400 XOF Partiel Reste: 400 XOF" [ref=e2221]':
+                    - generic [ref=e2222]:
+                      - generic [ref=e2223]:
+                        - generic [ref=e2224]: 1 400 XOF
+                        - generic [ref=e2225]: Partiel
+                      - generic [ref=e2227]: "Reste: 400 XOF"
+                  - cell "31/08/2026 14:18" [ref=e2228]:
+                    - generic [ref=e2229]:
+                      - generic [ref=e2230]: 31/08/2026
+                      - generic [ref=e2231]: 14:18
+                  - cell "En cours" [ref=e2232]
+                  - cell "01/09/2026" [ref=e2235]
+                  - cell [ref=e2236]:
+                    - generic [ref=e2237]:
+                      - button "WhatsApp" [ref=e2238] [cursor=pointer]
+                      - button "Voir details" [ref=e2242] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e2246] [cursor=pointer]
+                      - button "Encaisser paiement" [ref=e2251] [cursor=pointer]
+                      - button "Supprimer" [ref=e2254] [cursor=pointer]
+                - row [ref=e2258]:
+                  - cell "#PM/2026/08/00006" [ref=e2259]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e2267]:
+                    - generic [ref=e2268]:
+                      - generic [ref=e2269]: EB
+                      - generic [ref=e2270]:
+                        - generic [ref=e2271]: Elvira Blanche
+                        - generic [ref=e2272]: "0749389299"
+                  - cell "1 article(s)" [ref=e2273]
+                  - cell "3 500 XOF Paye" [ref=e2279]:
+                    - generic [ref=e2281]:
+                      - generic [ref=e2282]: 3 500 XOF
+                      - generic [ref=e2283]: Paye
+                  - cell "31/08/2026 14:13" [ref=e2285]:
+                    - generic [ref=e2286]:
+                      - generic [ref=e2287]: 31/08/2026
+                      - generic [ref=e2288]: 14:13
+                  - cell "En cours" [ref=e2289]
+                  - cell "30/08/2026" [ref=e2292]
+                  - cell [ref=e2293]:
+                    - generic [ref=e2294]:
+                      - button "WhatsApp" [ref=e2295] [cursor=pointer]
+                      - button "Voir details" [ref=e2299] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e2303] [cursor=pointer]
+                      - button "Supprimer" [ref=e2308] [cursor=pointer]
+                - row [ref=e2312]:
+                  - cell "#PM/2026/08/00005" [ref=e2313]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e2321]:
+                    - generic [ref=e2322]:
+                      - generic [ref=e2323]: EB
+                      - generic [ref=e2324]:
+                        - generic [ref=e2325]: Elvira Blanche
+                        - generic [ref=e2326]: "0749389299"
+                  - cell "1 article(s)" [ref=e2327]
+                  - cell "4 900 XOF Paye" [ref=e2333]:
+                    - generic [ref=e2335]:
+                      - generic [ref=e2336]: 4 900 XOF
+                      - generic [ref=e2337]: Paye
+                  - cell "31/08/2026 13:32" [ref=e2339]:
+                    - generic [ref=e2340]:
+                      - generic [ref=e2341]: 31/08/2026
+                      - generic [ref=e2342]: 13:32
+                  - cell "En cours" [ref=e2343]
+                  - cell "05/09/2026" [ref=e2346]
+                  - cell [ref=e2347]:
+                    - generic [ref=e2348]:
+                      - button "WhatsApp" [ref=e2349] [cursor=pointer]
+                      - button "Voir details" [ref=e2353] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e2357] [cursor=pointer]
+                      - button "Supprimer" [ref=e2362] [cursor=pointer]
+                - row [ref=e2366]:
+                  - cell "#PM/2026/08/00004" [ref=e2367]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e2375]:
+                    - generic [ref=e2376]:
+                      - generic [ref=e2377]: EB
+                      - generic [ref=e2378]:
+                        - generic [ref=e2379]: Elvira Blanche
+                        - generic [ref=e2380]: "0749389299"
+                  - cell "1 article(s)" [ref=e2381]
+                  - cell "1 400 XOF Paye" [ref=e2387]:
+                    - generic [ref=e2389]:
+                      - generic [ref=e2390]: 1 400 XOF
+                      - generic [ref=e2391]: Paye
+                  - cell "31/08/2026 13:31" [ref=e2393]:
+                    - generic [ref=e2394]:
+                      - generic [ref=e2395]: 31/08/2026
+                      - generic [ref=e2396]: 13:31
+                  - cell "En cours" [ref=e2397]
+                  - cell "05/09/2026" [ref=e2400]
+                  - cell [ref=e2401]:
+                    - generic [ref=e2402]:
+                      - button "WhatsApp" [ref=e2403] [cursor=pointer]
+                      - button "Voir details" [ref=e2407] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e2411] [cursor=pointer]
+                      - button "Supprimer" [ref=e2416] [cursor=pointer]
+                - row [ref=e2420]:
+                  - cell "#PM/2026/08/00003" [ref=e2421]
+                  - cell "EB Elvira Blanche 0749389299" [ref=e2429]:
+                    - generic [ref=e2430]:
+                      - generic [ref=e2431]: EB
+                      - generic [ref=e2432]:
+                        - generic [ref=e2433]: Elvira Blanche
+                        - generic [ref=e2434]: "0749389299"
+                  - cell "2 article(s)" [ref=e2435]
+                  - cell "6 500 XOF Paye" [ref=e2441]:
+                    - generic [ref=e2443]:
+                      - generic [ref=e2444]: 6 500 XOF
+                      - generic [ref=e2445]: Paye
+                  - cell "31/08/2026 13:27" [ref=e2447]:
+                    - generic [ref=e2448]:
+                      - generic [ref=e2449]: 31/08/2026
+                      - generic [ref=e2450]: 13:27
+                  - cell "En cours" [ref=e2451]
+                  - cell "05/09/2026" [ref=e2454]
+                  - cell [ref=e2455]:
+                    - generic [ref=e2456]:
+                      - button "WhatsApp" [ref=e2457] [cursor=pointer]
+                      - button "Voir details" [ref=e2461] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e2465] [cursor=pointer]
+                      - button "Supprimer" [ref=e2470] [cursor=pointer]
+                - row [ref=e2474]:
+                  - cell "#PM/2026/08/00001" [ref=e2475]
+                  - cell "AK aman K 0757568828" [ref=e2483]:
+                    - generic [ref=e2484]:
+                      - generic [ref=e2485]: AK
+                      - generic [ref=e2486]:
+                        - generic [ref=e2487]: aman K
+                        - generic [ref=e2488]: "0757568828"
+                  - cell "1 article(s)" [ref=e2489]
+                  - cell "135 000 XOF Paye" [ref=e2495]:
+                    - generic [ref=e2497]:
+                      - generic [ref=e2498]: 135 000 XOF
+                      - generic [ref=e2499]: Paye
+                  - cell "18/08/2026 13:23" [ref=e2501]:
+                    - generic [ref=e2502]:
+                      - generic [ref=e2503]: 18/08/2026
+                      - generic [ref=e2504]: 13:23
+                  - cell "En cours" [ref=e2505]
+                  - cell "18/08/2026" [ref=e2508]
+                  - cell [ref=e2509]:
+                    - generic [ref=e2510]:
+                      - button "WhatsApp" [ref=e2511] [cursor=pointer]
+                      - button "Voir details" [ref=e2515] [cursor=pointer]
+                      - button "Imprimer ticket" [ref=e2519] [cursor=pointer]
+                      - button "Supprimer" [ref=e2524] [cursor=pointer]
+            - generic [ref=e2528]:
+              - generic [ref=e2533]:
+                - heading "Scan Rapide Atelier" [level=3] [ref=e2534]
+                - paragraph [ref=e2535]: Utilisez le pistolet code-barres ou la camera mobile pour passer les commandes a l'etat suivant.
+              - link "Demarrer le scan" [ref=e2536] [cursor=pointer]:
+                - /url: /atelier
+        - navigation [ref=e597]:
+          - generic [ref=e598]:
+            - link "grid_view Accueil" [ref=e599] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e601]: grid_view
+              - generic [ref=e603]: Accueil
+            - link "receipt_long Commandes" [active] [ref=e604] [cursor=pointer]:
+              - /url: /orders
+              - generic [ref=e605]: receipt_long
+              - generic [ref=e607]: Commandes
+            - link "qr_code_scanner Scan" [ref=e608] [cursor=pointer]:
+              - /url: /atelier
+              - generic [ref=e609]: qr_code_scanner
+              - generic [ref=e611]: Scan
+            - link "point_of_sale Caisse" [ref=e612] [cursor=pointer]:
+              - /url: /cashier
+              - generic [ref=e613]: point_of_sale
+              - generic [ref=e615]: Caisse
+            - link "groups Clients" [ref=e616] [cursor=pointer]:
+              - /url: /clients
+              - generic [ref=e617]: groups
+              - generic [ref=e619]: Clients
+    - region "Notifications alt+T"
+  - generic [aria-hidden] [ref=e527]: "2"

@@ -16,6 +16,7 @@ import {
   RotateCcw
 } from 'lucide-react'
 import type { Order, Cloth, ClothType, ServiceType, Priority, PaymentMethod, PaymentStatus, PaymentDetail, Client } from '../../types'
+import { canonOrderStatus } from '../../lib/orderStatus'
 import { WhatsAppButton } from '../../components/ui/WhatsAppButton'
 
 const CLOTH_TYPES: { value: ClothType; label: string; icon: string }[] = [
@@ -49,10 +50,7 @@ const ORDER_STATUSES = [
 
 // Mapping CANONIQUE unique : TOUT l'affichage (badge, KPI, filtre) passe par ici.
 // Les anciens statuts ('recu', 'en_attente', ...) sont des alias de 'en_cours'.
-const canonOrderStatus = (s: string) => {
-  if (s === 'pret' || s === 'livre' || s === 'annule') return s
-  return 'en_cours'
-}
+// Source de vérité : src/lib/orderStatus.ts (partagée avec le Dashboard).
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; bar: string }> = {
   en_cours:   { bg: 'bg-blue-50',    text: 'text-blue-700',    bar: 'bg-blue-500' },
@@ -871,14 +869,13 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
         </button>
       </div>
 
-      {/* ===== KPI STATUTS ===== */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      {/* ===== KPI STATUTS (s'additionnent = total commandes) ===== */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { s: 'en_cours', l: 'En cours', icon: Package, color: 'bg-blue-50 text-blue-600', numColor: 'text-blue-600', bar: 'bg-blue-500' },
           { s: 'pret', l: 'Prets', icon: CheckCircle2, color: 'bg-emerald-50 text-emerald-600', numColor: 'text-emerald-600', bar: 'bg-emerald-500' },
           { s: 'livre', l: 'Livres', icon: Truck, color: 'bg-slate-100 text-slate-600', numColor: 'text-slate-600', bar: 'bg-slate-400' },
           { s: 'annule', l: 'Annules', icon: XCircle, color: 'bg-red-50 text-red-600', numColor: 'text-red-600', bar: 'bg-red-500' },
-          { s: 'impaye', l: 'Impayes', icon: AlertCircle, color: 'bg-orange-50 text-orange-600', numColor: 'text-orange-600', bar: 'bg-orange-500' },
         ].map(({ s, l, icon: Icon, color, numColor, bar }) => {
           const count = statusGroups[s as keyof typeof statusGroups]
           const pct = orders.length > 0 ? Math.round((count / orders.length) * 100) : 0
@@ -903,6 +900,19 @@ Si c'est une erreur ou pour plus d'informations, contactez-nous :
           )
         })}
       </div>
+
+      {/* ===== KPI PAIEMENT (indicateur transverse, ne s'additionne pas aux statuts) ===== */}
+      <button onClick={() => setFilterStatus(filterStatus === 'impaye' ? '' : 'impaye')}
+        className={`flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed transition-all text-left ${filterStatus === 'impaye' ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-500/20' : 'border-orange-300 bg-orange-50/50 hover:bg-orange-50'}`}>
+        <div className="w-11 h-11 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+          <AlertCircle size={20} strokeWidth={2.2} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-orange-600">Paiement — indicateur transverse</p>
+          <p className="text-sm font-bold text-on-surface mt-0.5">Commandes avec solde impaye : <span className="text-orange-600 text-base">{statusGroups.impaye}</span> cmd</p>
+          <p className="text-xs text-on-surface-variant mt-0.5">Ne s'additionne pas aux statuts ci-dessus — cliquez pour filtrer</p>
+        </div>
+      </button>
 
       {/* ===== RECHERCHE + FILTRES ===== */}
       <div className="card-modern flex flex-col lg:flex-row items-center gap-3">

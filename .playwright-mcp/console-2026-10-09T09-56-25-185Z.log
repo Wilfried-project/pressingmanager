@@ -1,0 +1,20 @@
+[    1208ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:3001/node_modules/.vite/deps/chunk-PJEEZAML.js?v=a54d33f8:21550
+[    1799ms] [LOG] [PWA] Service Worker enregistre: http://localhost:3001/ @ http://localhost:3001/src/main.tsx:9
+[    2270ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://localhost:3001/node_modules/.vite/deps/react-router-dom.js?v=a54d33f8:4426
+[    2270ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://localhost:3001/node_modules/.vite/deps/react-router-dom.js?v=a54d33f8:4426
+[  228467ms] [LOG] [Orders] VRAIS statuts en base (bruts): {pret: 5, livre: 2, en_cours: 1, en_attente: 20} @ http://localhost:3001/src/pages/orders/OrdersPageModern.tsx:910
+[  228500ms] [LOG] [Orders] VRAIS statuts en base (bruts): {pret: 5, livre: 2, en_cours: 1, en_attente: 20} @ http://localhost:3001/src/pages/orders/OrdersPageModern.tsx:910
+[  229224ms] [LOG] [Orders] VRAIS statuts en base (bruts): {pret: 5, livre: 2, en_cours: 1, en_attente: 20} @ http://localhost:3001/src/pages/orders/OrdersPageModern.tsx:910
+[  229247ms] [LOG] [Orders] VRAIS statuts en base (bruts): {pret: 5, livre: 2, en_cours: 1, en_attente: 20} @ http://localhost:3001/src/pages/orders/OrdersPageModern.tsx:910
+[  359561ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:3001/@vite/client:559
+[  359780ms] [ERROR] WebSocket connection to 'ws://localhost:3001/?token=lRrEO-HAtTLq' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/@vite/client:535
+[  359791ms] [ERROR] WebSocket connection to 'ws://localhost:3001/?token=lRrEO-HAtTLq' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/@vite/client:535
+[  359792ms] [ERROR] [vite] failed to connect to websocket.
+your current setup:
+  (browser) localhost:3001/ <--[HTTP]--> localhost:3001/ (server)
+  (browser) localhost:3001/ <--[WebSocket (failing)]--> localhost:3001/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr . @ http://localhost:3001/@vite/client:511
+[  360072ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:3001/node_modules/.vite/deps/chunk-PJEEZAML.js?v=a54d33f8:21550
+[  360200ms] [LOG] [PWA] Service Worker enregistre: http://localhost:3001/ @ http://localhost:3001/src/main.tsx:9
+[  361123ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://localhost:3001/node_modules/.vite/deps/react-router-dom.js?v=a54d33f8:4426
+[  361124ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://localhost:3001/node_modules/.vite/deps/react-router-dom.js?v=a54d33f8:4426
