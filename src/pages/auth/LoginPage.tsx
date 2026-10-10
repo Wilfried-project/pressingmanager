@@ -5,7 +5,7 @@ import { useAuthStore, useShopConfig } from '../../lib/store'
 import {
   Loader, Eye, EyeOff, Lock, Mail, Package, Users, Wallet,
   ShieldCheck, CheckCircle2, Sparkles, Timer, TrendingUp, Smartphone,
-  Star, Quote
+  Quote, Droplet, Wind
 } from 'lucide-react'
 
 export const LoginPage: React.FC = () => {
@@ -76,10 +76,10 @@ export const LoginPage: React.FC = () => {
   }
 
   const CYCLE_STEPS = [
-    { label: 'Réception', icon: '🧺', color: '#a78bfa' },
-    { label: 'Lavage', icon: '💧', color: '#60a5fa' },
-    { label: 'Séchage', icon: '☀️', color: '#fbbf24' },
-    { label: 'Prêt', icon: '✨', color: '#34d399' },
+    { label: 'Réception', Icon: Package, color: '#c4b5fd' },
+    { label: 'Lavage', Icon: Droplet, color: '#c4b5fd' },
+    { label: 'Séchage', Icon: Wind, color: '#c4b5fd' },
+    { label: 'Prêt', Icon: CheckCircle2, color: '#c4b5fd' },
   ]
 
   const TESTIMONIALS = [
@@ -154,7 +154,7 @@ export const LoginPage: React.FC = () => {
             <h2 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-6 tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               Du linge propre,<br />
               <span className="bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 bg-clip-text text-transparent">
-                un code propre.
+                une gestion propre.
               </span>
             </h2>
 
@@ -162,11 +162,7 @@ export const LoginPage: React.FC = () => {
               Votre pressing, votre rythme. Suivez vos commandes, votre équipe et vos clients depuis un espace unique et sécurisé.
             </p>
             <div className="flex items-center gap-2 mt-4 flex-wrap">
-              <div className="flex items-center gap-0.5">
-                {[0,1,2,3,4].map(i => <Star key={i} size={15} className="text-amber-300 fill-amber-300" />)}
-              </div>
-              <span className="text-white text-sm font-bold">4.9/5</span>
-              <span className="text-purple-200/70 text-sm">— +50 pressings nous font confiance</span>
+              <span className="text-purple-200/70 text-sm">🇨🇮 Fait en Côte d'Ivoire · Conçu pour les pressings</span>
             </div>
           </div>
 
@@ -181,17 +177,16 @@ export const LoginPage: React.FC = () => {
                 <React.Fragment key={i}>
                   <div className="flex flex-col items-center gap-2">
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all duration-500 ${
+                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 border ${
                         activeStep === i
-                          ? 'bg-white/20 backdrop-blur-md scale-110 shadow-lg shadow-purple-500/50 cycle-active animate-pulse'
-                          : 'bg-white/5 backdrop-blur-md'
+                          ? 'bg-white/10 backdrop-blur-md scale-110 shadow-lg shadow-purple-500/30 animate-pulse border-violet-300/50'
+                          : 'bg-transparent border-white/15'
                       }`}
                       style={{
-                        border: activeStep === i ? `2px solid ${step.color}` : '1px solid rgba(255,255,255,0.1)',
-                        boxShadow: activeStep === i ? `0 0 24px ${step.color}40` : 'none',
+                        boxShadow: activeStep === i ? '0 0 24px rgba(196,181,253,0.25)' : 'none',
                       }}
                     >
-                      <span>{step.icon}</span>
+                      <step.Icon size={20} className="text-violet-200" strokeWidth={1.5} />
                     </div>
                     <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${
                       activeStep === i ? 'text-white' : 'text-purple-200/50'
@@ -381,6 +376,13 @@ export const LoginPage: React.FC = () => {
                   >
                     Mot de passe oublié ?
                   </button>
+                  <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+                    <p className="text-xs text-gray-500 font-medium">Pas encore de compte ?</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Les comptes sont créés par votre administrateur.<br />
+                      Contactez-le directement pour obtenir vos identifiants.
+                    </p>
+                  </div>
                 </div>
               )}
 

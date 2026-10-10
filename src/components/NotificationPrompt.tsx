@@ -49,14 +49,14 @@ export const NotificationPrompt: React.FC = () => {
   }
 
   return (
-    <div className="card-modern !py-3 !px-4 flex items-center gap-3 animate-fade-in" role="banner">
-      <div className="w-9 h-9 rounded-xl bg-primary-fixed text-primary flex items-center justify-center shrink-0">
-        <Bell size={18} />
+    <div className="border border-gray-200 bg-transparent rounded-lg !py-1.5 !px-3 flex items-center gap-2 animate-fade-in" role="banner">
+      <div className="w-6 h-6 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center shrink-0">
+        <Bell size={13} />
       </div>
-      <p className="text-sm text-on-surface flex-1 min-w-0">
+      <p className="text-xs text-gray-500 flex-1 min-w-0">
         Activez les notifications pour être alerté quand une commande est prête
       </p>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1 shrink-0">
         <Button size="sm" onClick={handleEnable}>
           Activer
         </Button>
