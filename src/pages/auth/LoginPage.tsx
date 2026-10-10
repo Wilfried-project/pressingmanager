@@ -5,7 +5,7 @@ import { useAuthStore, useShopConfig } from '../../lib/store'
 import {
   Loader, Eye, EyeOff, Lock, Mail, Package, Users, Wallet,
   ShieldCheck, CheckCircle2, Sparkles, Timer, TrendingUp, Smartphone,
-  Quote, Droplet, Wind
+  Droplet, Wind
 } from 'lucide-react'
 
 export const LoginPage: React.FC = () => {
@@ -16,7 +16,6 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState('')
   const [isForgot, setIsForgot] = useState(false)
   const [activeStep, setActiveStep] = useState(0)
-  const [testimonialIdx, setTestimonialIdx] = useState(0)
   const [rememberMe, setRememberMe] = useState(false)
   const [mounted, setMounted] = useState(false)
   const navigate = useNavigate()
@@ -33,10 +32,7 @@ export const LoginPage: React.FC = () => {
     const interval = setInterval(() => {
       setActiveStep(prev => (prev + 1) % 4)
     }, 1800)
-    const testi = setInterval(() => {
-      setTestimonialIdx(prev => (prev + 1) % 3)
-    }, 4000)
-    return () => { clearInterval(interval); clearInterval(testi) }
+    return () => { clearInterval(interval) }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,16 +78,10 @@ export const LoginPage: React.FC = () => {
     { label: 'Prêt', Icon: CheckCircle2, color: '#c4b5fd' },
   ]
 
-  const TESTIMONIALS = [
-    { text: 'PressingManager a changé ma vie', author: 'Kouassi A.', role: 'Pressing Étoile, Abidjan' },
-    { text: 'Je gagne 2h par jour', author: 'Fanta K.', role: 'Pressing Fanta, Cocody' },
-    { text: '+30% de CA en 3 mois', author: 'Diallo M.', role: 'Pressing Royal, Plateau' },
-  ]
-
   const BENEFITS = [
-    { icon: <Timer size={18} />, title: 'Gagnez 2h par jour', desc: 'Tickets & caisse en 1 clic', accent: '#34d399' },
-    { icon: <CheckCircle2 size={18} />, title: 'Zéro perte de vêtements', desc: 'Suivi ticket par ticket', accent: '#60a5fa' },
-    { icon: <TrendingUp size={18} />, title: '+30% de chiffre d’affaires', desc: 'Relances & fidélité auto', accent: '#fbbf24' },
+    { icon: <Timer size={18} />, title: 'Saisie rapide des commandes', desc: 'Tickets & caisse en 1 clic', accent: '#34d399' },
+    { icon: <CheckCircle2 size={18} />, title: 'Suivi fiable des statuts', desc: 'Suivi ticket par ticket', accent: '#60a5fa' },
+    { icon: <TrendingUp size={18} />, title: 'Relances automatiques', desc: 'Relances & fidélité auto', accent: '#fbbf24' },
     { icon: <Smartphone size={18} />, title: 'Clients notifiés auto', desc: 'WhatsApp & SMS prêts', accent: '#f472b6' },
   ]
 
@@ -227,18 +217,6 @@ export const LoginPage: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Témoignage rotatif */}
-          <div key={testimonialIdx} className="animate-fade-slide max-w-2xl mt-5 p-4 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10">
-            <Quote size={14} className="text-pink-300 mb-1.5" />
-            <p className="text-white text-sm font-semibold italic leading-relaxed">« {TESTIMONIALS[testimonialIdx].text} »</p>
-            <p className="text-purple-200/70 text-xs mt-1.5 font-semibold">— {TESTIMONIALS[testimonialIdx].author} <span className="font-normal">· {TESTIMONIALS[testimonialIdx].role}</span></p>
-            <div className="flex gap-1 mt-2">
-              {TESTIMONIALS.map((_, j) => (
-                <button key={j} onClick={() => setTestimonialIdx(j)} className={`h-1 rounded-full transition-all ${j === testimonialIdx ? 'w-5 bg-pink-300' : 'w-2 bg-white/20 hover:bg-white/40'}`} />
-              ))}
-            </div>
           </div>
         </div>
 
